@@ -36,6 +36,15 @@ public class Chunk {
                         else blocks[x][y][z] = 2;
                     }
                 }
+
+                // Add water lakes! Sea level is 50.
+                for (int y = 50; y > height; y--) {
+                    blocks[x][y][z] = 7; // 7 is water
+                }
+                // If ground is under water, turn top block to dirt instead of grass
+                if (height < 50 && blocks[x][height][z] == 1) {
+                    blocks[x][height][z] = 1; // It's just dirt/grass for now, could be sand.
+                }
             }
         }
     }
@@ -43,7 +52,7 @@ public class Chunk {
     private void addDecorations() {
         for (int x = 2; x < 14; x++) {
             for (int z = 2; z < 14; z++) {
-                for (int y = 100; y > 10; y--) {
+                for (int y = 100; y > 50; y--) { // Trees don't grow underwater
                     if (blocks[x][y][z] == 1 && blocks[x][y+1][z] == 0) {
                         if (Math.random() < 0.02) {
                             for(int h=1; h<=4; h++) blocks[x][y+h][z] = 3;
@@ -65,9 +74,11 @@ public class Chunk {
         return world.getBlock((chunkX * 16) + lx, ly, (chunkZ * 16) + lz);
     }
 
-    private boolean isTransparent(int x, int y, int z) {
+    private boolean isTransparent(int x, int y, int z, byte sourceBlockType) {
         byte b = getBlockWorldAware(x, y, z);
-        return b == 0 || b == 6;
+        if (b == 0 || b == 6) return true; // Air and fire are transparent
+        if (sourceBlockType != 7 && b == 7) return true; // Non-water sees water as transparent
+        return false;
     }
 
     public void buildMesh() {
@@ -80,28 +91,33 @@ public class Chunk {
                 for (int z = 0; z < 16; z++) {
                     byte type = blocks[x][y][z];
                     if (type == 0) continue;
-                    float r = 1f, g = 1f, b = 1f;
+
+                    float r = 1f, g = 1f, b = 1f, a = 1f;
                     if (type == 1) { r = 0.3f; g = 0.7f; b = 0.2f; }
                     else if (type == 2) { r = 0.4f; g = 0.4f; b = 0.4f; }
                     else if (type == 3) { r = 0.4f; g = 0.25f; b = 0.1f; }
                     else if (type == 4) { r = 0.1f; g = 0.5f; b = 0.1f; }
                     else if (type == 5) { r = 0.9f; g = 0.2f; b = 0.2f; }
-                    if (type == 1 && y < 127 && blocks[x][y+1][z] != 0) { r = 0.4f; g = 0.25f; b = 0.1f; }
+                    else if (type == 7) { r = 0.2f; g = 0.4f; b = 0.9f; a = 0.7f; } // Water
+
+                    if (type == 1 && y < 127 && blocks[x][y+1][z] != 0 && blocks[x][y+1][z] != 7) {
+                        r = 0.4f; g = 0.25f; b = 0.1f;
+                    }
 
                     if (type == 6) { addFireCross(vData, cData, x, y, z, 0.9f, 0.5f, 0.1f); continue; }
 
-                    if (isTransparent(x, y+1, z)) addFace(vData, cData, x, y, z, 0, r, g, b);
-                    if (isTransparent(x, y-1, z)) addFace(vData, cData, x, y, z, 1, r*0.5f, g*0.5f, b*0.5f);
-                    if (isTransparent(x-1, y, z)) addFace(vData, cData, x, y, z, 2, r*0.8f, g*0.8f, b*0.8f);
-                    if (isTransparent(x+1, y, z)) addFace(vData, cData, x, y, z, 3, r*0.8f, g*0.8f, b*0.8f);
-                    if (isTransparent(x, y, z-1)) addFace(vData, cData, x, y, z, 4, r*0.9f, g*0.9f, b*0.9f);
-                    if (isTransparent(x, y, z+1)) addFace(vData, cData, x, y, z, 5, r*0.9f, g*0.9f, b*0.9f);
+                    if (isTransparent(x, y+1, z, type)) addFace(vData, cData, x, y, z, 0, r, g, b, a);
+                    if (isTransparent(x, y-1, z, type)) addFace(vData, cData, x, y, z, 1, r*0.5f, g*0.5f, b*0.5f, a);
+                    if (isTransparent(x-1, y, z, type)) addFace(vData, cData, x, y, z, 2, r*0.8f, g*0.8f, b*0.8f, a);
+                    if (isTransparent(x+1, y, z, type)) addFace(vData, cData, x, y, z, 3, r*0.8f, g*0.8f, b*0.8f, a);
+                    if (isTransparent(x, y, z-1, type)) addFace(vData, cData, x, y, z, 4, r*0.9f, g*0.9f, b*0.9f, a);
+                    if (isTransparent(x, y, z+1, type)) addFace(vData, cData, x, y, z, 5, r*0.9f, g*0.9f, b*0.9f, a);
 
                     if (type == 5) {
-                        if (isTransparent(x, y, z-1)) drawLetterT(vData, cData, x, y, z, 4);
-                        if (isTransparent(x, y, z+1)) drawLetterT(vData, cData, x, y, z, 5);
-                        if (isTransparent(x-1, y, z)) drawLetterT(vData, cData, x, y, z, 2);
-                        if (isTransparent(x+1, y, z)) drawLetterT(vData, cData, x, y, z, 3);
+                        if (isTransparent(x, y, z-1, type)) drawLetterT(vData, cData, x, y, z, 4);
+                        if (isTransparent(x, y, z+1, type)) drawLetterT(vData, cData, x, y, z, 5);
+                        if (isTransparent(x-1, y, z, type)) drawLetterT(vData, cData, x, y, z, 2);
+                        if (isTransparent(x+1, y, z, type)) drawLetterT(vData, cData, x, y, z, 3);
                     }
                 }
             }
@@ -112,7 +128,7 @@ public class Chunk {
         colorBuffer.put(cData, 0, vertexCount * 4).position(0);
     }
 
-    private void addFace(float[] v, float[] c, float x, float y, float z, int s, float r, float g, float b) {
+    private void addFace(float[] v, float[] c, float x, float y, float z, int s, float r, float g, float b, float a) {
         float[] fs = null;
         switch(s) {
             case 0: fs = new float[]{x,y+1,z, x,y+1,z+1, x+1,y+1,z+1, x,y+1,z, x+1,y+1,z+1, x+1,y+1,z}; break;
@@ -123,7 +139,7 @@ public class Chunk {
             case 5: fs = new float[]{x,y+1,z+1, x,y,z+1, x+1,y,z+1, x,y+1,z+1, x+1,y,z+1, x+1,y+1,z+1}; break;
         }
         for(int i=0; i<18; i++) v[vertexCount*3 + i] = fs[i];
-        for(int i=0; i<6; i++) { c[vertexCount*4 + i*4] = r; c[vertexCount*4 + i*4+1] = g; c[vertexCount*4 + i*4+2] = b; c[vertexCount*4 + i*4+3] = 1.0f; }
+        for(int i=0; i<6; i++) { c[vertexCount*4 + i*4] = r; c[vertexCount*4 + i*4+1] = g; c[vertexCount*4 + i*4+2] = b; c[vertexCount*4 + i*4+3] = a; }
         vertexCount += 6;
     }
 

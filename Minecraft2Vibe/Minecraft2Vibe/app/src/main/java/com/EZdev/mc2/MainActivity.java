@@ -25,7 +25,8 @@ public class MainActivity extends Activity {
         FrameLayout root = new FrameLayout(this);
         root.addView(surfaceView);
 
-        uiManager = new UIManager(this, root, engine);
+        uiManager = new UIManager(this, engine);
+        uiManager.setupUI(root);
 
         setContentView(root);
     }
