@@ -18,6 +18,12 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
 
     private long lastTime;
 
+    private int frames = 0;
+    private long lastFPSUpdate = 0;
+    public int currentFPS = 0;
+
+    private float screenRatio = 1.0f;
+
     public MyGdxGame(MainActivity act) {
         this.activity = act;
     }
@@ -30,12 +36,14 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
 
         Booster.initGeometry();
         lastTime = System.nanoTime();
+        lastFPSUpdate = System.currentTimeMillis();
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         GLES20.glViewport(0, 0, width, height);
-        Matrix.perspectiveM(projectionMatrix, 0, 70f, (float)width/height, 0.1f, 300f);
+        screenRatio = (float)width/height;
+        Matrix.perspectiveM(projectionMatrix, 0, 70f, screenRatio, 0.1f, 300f);
     }
 
     @Override
@@ -44,6 +52,13 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
         float dt = (now - lastTime) / 1000000000.0f;
         lastTime = now;
 
+        frames++;
+        if (System.currentTimeMillis() - lastFPSUpdate >= 1000) {
+            currentFPS = frames;
+            frames = 0;
+            lastFPSUpdate = System.currentTimeMillis();
+        }
+
         gameplay.update(dt, world);
         world.updateChunks(gameplay.camX, gameplay.camZ);
 
@@ -51,20 +66,33 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
             activity.uiManager.touchOverlay.postInvalidate();
         }
 
+        // Apply Dynamic FOV
+        float fov = 70f;
+        if(gameplay.isSprinting || gameplay.isFlying) fov = 90f;
+        Matrix.perspectiveM(projectionMatrix, 0, fov, screenRatio, 0.1f, 300f);
+
         float eyeHeight = gameplay.camY + gameplay.playerHeight - 0.2f;
+
+        // Feature 7: Apply Screen Shake
+        float shakeX = 0, shakeY = 0, shakeZ = 0;
+        if (gameplay.shakeIntensity > 0) {
+            shakeX = ((float)Math.random() - 0.5f) * gameplay.shakeIntensity;
+            shakeY = ((float)Math.random() - 0.5f) * gameplay.shakeIntensity;
+            shakeZ = ((float)Math.random() - 0.5f) * gameplay.shakeIntensity;
+        }
+
         float dirX = (float) (Math.cos(Math.toRadians(gameplay.pitch)) * Math.sin(Math.toRadians(gameplay.yaw)));
         float dirY = (float) Math.sin(Math.toRadians(gameplay.pitch));
         float dirZ = (float) (-Math.cos(Math.toRadians(gameplay.pitch)) * Math.cos(Math.toRadians(gameplay.yaw)));
 
         Matrix.setLookAtM(viewMatrix, 0,
-            gameplay.camX, eyeHeight, gameplay.camZ,
-            gameplay.camX + dirX, eyeHeight + dirY, gameplay.camZ + dirZ,
+            gameplay.camX + shakeX, eyeHeight + shakeY, gameplay.camZ + shakeZ,
+            gameplay.camX + dirX + shakeX, eyeHeight + dirY + shakeY, gameplay.camZ + dirZ + shakeZ,
             0f, 1f, 0f);
         Matrix.multiplyMM(vpMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-        // Übergibt die Spielzeit an die Grafikkarte (für Feuer und TNT-Blinken)
         GLES20.glUseProgram(Booster.shaderProgram);
         GLES20.glUniform1f(Booster.timeHandle, gameplay.gameTime);
 

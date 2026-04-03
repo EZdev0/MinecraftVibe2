@@ -24,26 +24,39 @@ public class UIManager {
     private LinearLayout settingsPanel;
     private TextView chunkText;
 
-    // Arrays für die Hotbar
     private Button[] hotbarButtons = new Button[6];
-    private byte[] blockIds = {1, 2, 3, 4, 5, 6}; // Erde, Stein, Holz, Blätter, TNT, Feuer(zeug)
+    private byte[] blockIds = {1, 2, 3, 4, 5, 6};
 
-    public UIManager(MainActivity activity, FrameLayout root, MyGdxGame engine) {
+    // Toggle Buttons
+    private Button sneakBtn, sprintBtn, flyBtn;
+
+    public UIManager(MainActivity activity, MyGdxGame engine) {
         this.activity = activity;
         this.engine = engine;
-        this.prefs = activity.getSharedPreferences("MC_VIBE_PREFS", Context.MODE_PRIVATE);
-
+        this.prefs = activity.getSharedPreferences("McPrefs", Context.MODE_PRIVATE);
         engine.world.renderDistance = prefs.getInt("RENDER_DISTANCE", 2);
         engine.world.fogEnabled = prefs.getBoolean("FOG_ENABLED", true);
+    }
 
+    public void setupUI(FrameLayout root) {
         touchOverlay = new TouchOverlay(activity);
         root.addView(touchOverlay);
 
+        createCrosshair(root);
         createHotbar(root);
         createActionButtons(root);
+        createToggles(root);
         createSettingsMenu(root);
 
-        updateHotbarUI(); // Setzt die erste Markierung
+        updateHotbarUI();
+    }
+
+    private void createCrosshair(FrameLayout root) {
+        View crosshair = new View(activity);
+        crosshair.setBackgroundColor(Color.WHITE);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(6, 6);
+        params.gravity = Gravity.CENTER;
+        root.addView(crosshair, params);
     }
 
     private void createHotbar(FrameLayout root) {
@@ -59,11 +72,10 @@ public class UIManager {
             btn.setText(icons[i]);
             btn.setTextSize(26);
 
-            // EXAKTE QUADRATE FÜR MINECRAFT-LOOK
             LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(120, 120);
             p.setMargins(10, 0, 10, 0);
             btn.setLayoutParams(p);
-            btn.setPadding(0, 0, 0, 0); // Kein Text-Quetschen
+            btn.setPadding(0, 0, 0, 0);
 
             final byte id = blockIds[i];
             btn.setOnClickListener(v -> {
@@ -81,14 +93,12 @@ public class UIManager {
         root.addView(hotbar, params);
     }
 
-    // Von außen aufrufbar (z.B. wenn TNT platziert wird und auf Feuerzeug gewechselt wird)
     public void updateHotbarUI() {
         for (int i = 0; i < hotbarButtons.length; i++) {
             GradientDrawable shape = new GradientDrawable();
             shape.setShape(GradientDrawable.RECTANGLE);
             shape.setColor(Color.parseColor("#555555"));
 
-            // Wenn ausgewählt: Dicker gelber Rahmen!
             if (engine.gameplay.activeBlock == blockIds[i]) {
                 shape.setStroke(8, Color.YELLOW);
             } else {
@@ -116,6 +126,36 @@ public class UIManager {
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.BOTTOM | Gravity.END;
         params.setMargins(0, 0, 50, 50);
+        root.addView(btnLayout, params);
+    }
+
+    private void createToggles(FrameLayout root) {
+        LinearLayout btnLayout = new LinearLayout(activity);
+        btnLayout.setOrientation(LinearLayout.VERTICAL);
+
+        sneakBtn = createBtn("Sneak", "#95a5a6");
+        sneakBtn.setOnClickListener(v -> {
+            engine.gameplay.isSneaking = !engine.gameplay.isSneaking;
+            sneakBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isSneaking ? "#2ecc71" : "#95a5a6"));
+        });
+
+        sprintBtn = createBtn("Sprint", "#95a5a6");
+        sprintBtn.setOnClickListener(v -> {
+            engine.gameplay.isSprinting = !engine.gameplay.isSprinting;
+            sprintBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isSprinting ? "#2ecc71" : "#95a5a6"));
+        });
+
+        flyBtn = createBtn("Fly", "#95a5a6");
+        flyBtn.setOnClickListener(v -> {
+            engine.gameplay.isFlying = !engine.gameplay.isFlying;
+            flyBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isFlying ? "#2ecc71" : "#95a5a6"));
+        });
+
+        btnLayout.addView(flyBtn); btnLayout.addView(sprintBtn); btnLayout.addView(sneakBtn);
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.gravity = Gravity.TOP | Gravity.START;
+        params.setMargins(50, 150, 0, 0);
         root.addView(btnLayout, params);
     }
 
@@ -179,19 +219,25 @@ public class UIManager {
     }
 
     public class TouchOverlay extends View {
-        private Paint p = new Paint(); private Paint textPaint = new Paint();
+        private Paint p = new Paint(); private Paint textPaint = new Paint(); private Paint fpsPaint = new Paint();
         private int joyId = -1, lookId = -1;
         private float joyBaseX, joyBaseY, joyKnobX, joyKnobY, lastLookX, lastLookY;
 
         public TouchOverlay(Context c) {
             super(c);
-            textPaint.setColor(Color.WHITE); textPaint.setTextSize(40); textPaint.setFakeBoldText(true); textPaint.setShadowLayer(5, 2, 2, Color.BLACK);
+            textPaint.setColor(Color.WHITE); textPaint.setTextSize(36); textPaint.setFakeBoldText(true); textPaint.setShadowLayer(5, 2, 2, Color.BLACK);
+            fpsPaint.setColor(Color.YELLOW); fpsPaint.setTextSize(36); fpsPaint.setFakeBoldText(true); fpsPaint.setShadowLayer(5, 2, 2, Color.BLACK);
         }
 
         @Override protected void onDraw(Canvas canvas) {
             String coords = "X: " + (int)engine.gameplay.camX + " Y: " + (int)engine.gameplay.camY + " Z: " + (int)engine.gameplay.camZ;
-            canvas.drawText(coords, 30, 60, textPaint);
+            String fpsStr = "FPS: " + engine.currentFPS;
 
+            canvas.drawText(coords, 30, 60, textPaint);
+            canvas.drawText(fpsStr, 30, 110, fpsPaint);
+
+            // Feature 9: Selection Outline (Rendered via lines in UI for now as quick proxy)
+            // It would ideally be in 3D but 2D crosshair proxy is easy.
             p.setColor(Color.WHITE); p.setStrokeWidth(5);
             canvas.drawLine(getWidth()/2f - 20, getHeight()/2f, getWidth()/2f + 20, getHeight()/2f, p);
             canvas.drawLine(getWidth()/2f, getHeight()/2f - 20, getWidth()/2f, getHeight()/2f + 20, p);
