@@ -111,16 +111,23 @@ public class Gameplay {
                 // Reset spread timer for next attempt
                 fire.spreadTimer = 1.0f + (float)Math.random() * 1.5f;
 
-                // Attempt to spread to nearby wood
+                // Attempt to spread to nearby wood or leaves
                 for(int[] n : FIRE_NEIGHBORS) {
                     int nx = fire.x + n[0];
                     int ny = fire.y + n[1];
                     int nz = fire.z + n[2];
 
-                    if (Math.random() < 0.2f && world.getBlock(nx, ny, nz) == 3) { // 3 is wood, 20% chance per neighbor
-                        // Ignite the wood. The original fire STAYS, allowing the fire to multiply!
-                        world.setBlock(nx, ny, nz, (byte)6);
-                        activeFires.add(new ActiveFire(nx, ny, nz));
+                    byte blockType = world.getBlock(nx, ny, nz);
+                    // 3 is wood, 4 is leaves
+                    if ((blockType == 3 || blockType == 4)) {
+                        // Leaves catch fire easily (50%), wood is harder (20%)
+                        float spreadChance = (blockType == 4) ? 0.5f : 0.2f;
+
+                        if (Math.random() < spreadChance) {
+                            // Ignite the block. The original fire STAYS, allowing the fire to multiply!
+                            world.setBlock(nx, ny, nz, (byte)6);
+                            activeFires.add(new ActiveFire(nx, ny, nz));
+                        }
                     }
                 }
             }
