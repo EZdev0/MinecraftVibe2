@@ -55,9 +55,8 @@ public class Gameplay {
             if(!checkCollisionPoint(world, tnt.x, nextY, tnt.z)) {
                 tnt.y = nextY;
             } else {
-                tnt.vy = 0f;
-                tnt.y = (float) Math.floor(nextY) + 1.0f; // Snap to block surface
-                tnt.vx *= 0.5f;
+                tnt.vy = 0f; // Stop falling
+                tnt.vx *= 0.5f; // Friction
                 tnt.vz *= 0.5f;
             }
 
@@ -104,7 +103,7 @@ public class Gameplay {
                     int ny = fire.y + n[1];
                     int nz = fire.z + n[2];
 
-                    if (Math.random() < 0.3f && world.getBlock(nx, ny, nz) == WorldLogic.BLOCK_WOOD) {
+                    if (Math.random() < 0.3f && world.getBlock(nx, ny, nz) == 3) { // 3 is wood
                         // Turn wood to fire
                         world.setBlock(nx, ny, nz, (byte)6);
                         activeFires.add(new ActiveFire(nx, ny, nz));
