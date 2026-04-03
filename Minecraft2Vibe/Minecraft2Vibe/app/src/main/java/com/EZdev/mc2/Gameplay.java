@@ -21,12 +21,6 @@ public class Gameplay {
     public ArrayList<ActiveTNT> tickingTNTs = new ArrayList<>();
     public ArrayList<ActiveFire> activeFires = new ArrayList<>();
 
-    // Static arrays to avoid allocation in game loop
-    private static final int[][] FIRE_NEIGHBORS = {
-        {1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1},
-        {1,1,0}, {-1,-1,0}, {0,1,1}, {0,-1,-1}, {1,0,1}, {-1,0,-1}
-    };
-
     public class ActiveTNT {
         public float x, y, z;
         public float vx = 0f, vy = 0f, vz = 0f;
@@ -40,8 +34,8 @@ public class Gameplay {
         public float spreadTimer; // Time until next spread attempt
         public ActiveFire(int x, int y, int z) {
             this.x = x; this.y = y; this.z = z;
-            this.life = 4.0f + (float)Math.random() * 4.0f; // Burns for 4 to 8 seconds
-            this.spreadTimer = 1.0f + (float)Math.random() * 1.5f; // Attempts to spread every 1-2.5 seconds
+            this.life = 5.0f + (float)Math.random() * 5.0f; // Burns for 5 to 10 seconds
+            this.spreadTimer = 0.5f + (float)Math.random() * 1.5f; // Attempts to spread faster
         }
     }
 
@@ -101,30 +95,34 @@ public class Gameplay {
             fire.spreadTimer -= dt;
 
             if (fire.life <= 0) {
-                // Fire burns out, destroying the block (or just removing itself if the block was already air/fire)
                 world.setBlock(fire.x, fire.y, fire.z, (byte)0);
                 activeFires.remove(i);
                 continue;
             }
 
             if (fire.spreadTimer <= 0) {
-                // Reset spread timer for next attempt
-                fire.spreadTimer = 1.0f + (float)Math.random() * 1.5f;
+                fire.spreadTimer = 0.5f + (float)Math.random() * 1.0f; // Rapid attempts
 
-                // Attempt to spread to nearby wood or leaves
-                for(int[] n : FIRE_NEIGHBORS) {
-                    int nx = fire.x + n[0];
-                    int ny = fire.y + n[1];
-                    int nz = fire.z + n[2];
+                // Attempt to spread up to 3 times per timer tick
+                for (int attempts = 0; attempts < 3; attempts++) {
+                    // Minecraft fire spreads: 1 down, 1 horizontal, 4 UP
+                    int dx = (int)(Math.random() * 3) - 1; // -1, 0, 1
+                    int dy = (int)(Math.random() * 6) - 1; // -1, 0, 1, 2, 3, 4 (UPWARDS BIASED)
+                    int dz = (int)(Math.random() * 3) - 1; // -1, 0, 1
+
+                    int nx = fire.x + dx;
+                    int ny = fire.y + dy;
+                    int nz = fire.z + dz;
 
                     byte blockType = world.getBlock(nx, ny, nz);
                     // 3 is wood, 4 is leaves
                     if ((blockType == 3 || blockType == 4)) {
-                        // Leaves catch fire easily (50%), wood is harder (20%)
-                        float spreadChance = (blockType == 4) ? 0.5f : 0.2f;
+                        // Spread chance depends on distance. Closer = higher chance.
+                        float distancePenalty = (Math.abs(dx) + Math.abs(dy) + Math.abs(dz)) * 0.15f;
+                        float baseChance = (blockType == 4) ? 0.9f : 0.6f; // Leaves burn very fast, Wood fast
+                        float finalChance = baseChance - distancePenalty;
 
-                        if (Math.random() < spreadChance) {
-                            // Ignite the block. The original fire STAYS, allowing the fire to multiply!
+                        if (Math.random() < finalChance) {
                             world.setBlock(nx, ny, nz, (byte)6);
                             activeFires.add(new ActiveFire(nx, ny, nz));
                         }
@@ -157,7 +155,6 @@ public class Gameplay {
 
         float speed = 5.0f * dt;
 
-        // Cache trigonometric functions
         float yawRad = (float)Math.toRadians(yaw);
         float sinYaw = (float) Math.sin(yawRad);
         float cosYaw = (float) Math.cos(yawRad);
