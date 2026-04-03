@@ -104,7 +104,7 @@ public class Gameplay {
                     int ny = fire.y + n[1];
                     int nz = fire.z + n[2];
 
-                    if (Math.random() < 0.3f && world.getBlock(nx, ny, nz) == 3) { // 3 is wood
+                    if (Math.random() < 0.3f && world.getBlock(nx, ny, nz) == WorldLogic.BLOCK_WOOD) {
                         // Turn wood to fire
                         world.setBlock(nx, ny, nz, (byte)6);
                         activeFires.add(new ActiveFire(nx, ny, nz));
