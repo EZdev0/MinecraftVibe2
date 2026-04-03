@@ -25,5 +25,11 @@ jobs:
       working-directory: Minecraft2Vibe/Minecraft2Vibe
 
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew assembleDebug
       working-directory: Minecraft2Vibe/Minecraft2Vibe
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug
+        path: Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/app-debug.apk
