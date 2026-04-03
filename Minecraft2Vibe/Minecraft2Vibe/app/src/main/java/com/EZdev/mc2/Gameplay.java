@@ -21,19 +21,27 @@ public class Gameplay {
     public ArrayList<ActiveTNT> tickingTNTs = new ArrayList<>();
     public ArrayList<ActiveFire> activeFires = new ArrayList<>();
 
+    // Static arrays to avoid allocation in game loop
+    private static final int[][] FIRE_NEIGHBORS = {
+        {1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1},
+        {1,1,0}, {-1,-1,0}, {0,1,1}, {0,-1,-1}, {1,0,1}, {-1,0,-1}
+    };
+
     public class ActiveTNT {
         public float x, y, z;
-        public float vx = 0f, vy = 0f, vz = 0f; // New Velocity
+        public float vx = 0f, vy = 0f, vz = 0f;
         public float timer = 3.0f;
         public ActiveTNT(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
     }
 
     public class ActiveFire {
         public int x, y, z;
-        public float timer;
+        public float life; // Total time this fire block exists
+        public float spreadTimer; // Time until next spread attempt
         public ActiveFire(int x, int y, int z) {
             this.x = x; this.y = y; this.z = z;
-            this.timer = 1.0f + (float)Math.random() * 2.0f; // Fire lasts between 1 and 3 seconds
+            this.life = 4.0f + (float)Math.random() * 4.0f; // Burns for 4 to 8 seconds
+            this.spreadTimer = 1.0f + (float)Math.random() * 1.5f; // Attempts to spread every 1-2.5 seconds
         }
     }
 
@@ -55,8 +63,8 @@ public class Gameplay {
             if(!checkCollisionPoint(world, tnt.x, nextY, tnt.z)) {
                 tnt.y = nextY;
             } else {
-                tnt.vy = 0f; // Stop falling
-                tnt.vx *= 0.5f; // Friction
+                tnt.vy = 0f;
+                tnt.vx *= 0.5f;
                 tnt.vz *= 0.5f;
             }
 
@@ -89,33 +97,31 @@ public class Gameplay {
                 continue;
             }
 
-            fire.timer -= dt;
-            if (fire.timer <= 0) {
-                // Time to spread or destroy
-                int[][] neighbors = {
-                    {1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1},
-                    {1,1,0}, {-1,-1,0}, {0,1,1}, {0,-1,-1}, {1,0,1}, {-1,0,-1} // And some diagonals
-                };
+            fire.life -= dt;
+            fire.spreadTimer -= dt;
 
-                boolean spread = false;
-                for(int[] n : neighbors) {
+            if (fire.life <= 0) {
+                // Fire burns out, destroying the block (or just removing itself if the block was already air/fire)
+                world.setBlock(fire.x, fire.y, fire.z, (byte)0);
+                activeFires.remove(i);
+                continue;
+            }
+
+            if (fire.spreadTimer <= 0) {
+                // Reset spread timer for next attempt
+                fire.spreadTimer = 1.0f + (float)Math.random() * 1.5f;
+
+                // Attempt to spread to nearby wood
+                for(int[] n : FIRE_NEIGHBORS) {
                     int nx = fire.x + n[0];
                     int ny = fire.y + n[1];
                     int nz = fire.z + n[2];
 
-                    if (Math.random() < 0.3f && world.getBlock(nx, ny, nz) == 3) { // 3 is wood
-                        // Turn wood to fire
+                    if (Math.random() < 0.2f && world.getBlock(nx, ny, nz) == 3) { // 3 is wood, 20% chance per neighbor
+                        // Ignite the wood. The original fire STAYS, allowing the fire to multiply!
                         world.setBlock(nx, ny, nz, (byte)6);
                         activeFires.add(new ActiveFire(nx, ny, nz));
-                        spread = true;
                     }
-                }
-
-                // Destroy original wood block under/around it, or burn out
-                if (Math.random() < 0.5f || spread) {
-                    world.setBlock(fire.x, fire.y, fire.z, (byte)0); // Burn out
-                } else {
-                    fire.timer = 1.0f + (float)Math.random() * 2.0f; // Burn a bit longer
                 }
             }
         }
@@ -143,10 +149,16 @@ public class Gameplay {
         }
 
         float speed = 5.0f * dt;
-        float dirX = (float) Math.sin(Math.toRadians(yaw));
-        float dirZ = (float) -Math.cos(Math.toRadians(yaw));
-        float rightX = (float) Math.cos(Math.toRadians(yaw));
-        float rightZ = (float) Math.sin(Math.toRadians(yaw));
+
+        // Cache trigonometric functions
+        float yawRad = (float)Math.toRadians(yaw);
+        float sinYaw = (float) Math.sin(yawRad);
+        float cosYaw = (float) Math.cos(yawRad);
+
+        float dirX = sinYaw;
+        float dirZ = -cosYaw;
+        float rightX = cosYaw;
+        float rightZ = sinYaw;
 
         float moveX = (dirX * -joyMoveY + rightX * joyMoveX) * speed;
         float moveZ = (dirZ * -joyMoveY + rightZ * joyMoveX) * speed;
@@ -160,7 +172,6 @@ public class Gameplay {
     public void jump() { wantsToJump = true; }
 
     private boolean checkCollisionPoint(WorldLogic world, float x, float y, float z) {
-        // Simple point collision for TNT
         byte block = world.getBlock((int)Math.floor(x), (int)Math.floor(y), (int)Math.floor(z));
         return (block > 0 && block != 6);
     }
@@ -178,7 +189,6 @@ public class Gameplay {
             for (int by = minY; by <= maxY; by++) {
                 for (int bz = minZ; bz <= maxZ; bz++) {
                     byte block = world.getBlock(bx, by, bz);
-                    // Feuer (6) hat KEINE Kollision! Man kann durchlaufen!
                     if (block > 0 && block != 6) return true;
                 }
             }
