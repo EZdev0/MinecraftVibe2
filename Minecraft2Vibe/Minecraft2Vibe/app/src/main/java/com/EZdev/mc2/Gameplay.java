@@ -55,8 +55,9 @@ public class Gameplay {
             if(!checkCollisionPoint(world, tnt.x, nextY, tnt.z)) {
                 tnt.y = nextY;
             } else {
-                tnt.vy = 0f; // Stop falling
-                tnt.vx *= 0.5f; // Friction
+                tnt.vy = 0f;
+                tnt.y = (float) Math.floor(nextY) + 1.0f; // Snap to block surface
+                tnt.vx *= 0.5f;
                 tnt.vz *= 0.5f;
             }
 
