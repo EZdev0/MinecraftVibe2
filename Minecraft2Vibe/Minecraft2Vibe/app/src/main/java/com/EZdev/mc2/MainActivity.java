@@ -1,7 +1,6 @@
 package com.EZdev.mc2;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.widget.FrameLayout;
