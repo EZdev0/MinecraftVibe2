@@ -29,12 +29,6 @@ public class MainMenuActivity extends Activity {
 
         prefs = getSharedPreferences("McPrefs", Context.MODE_PRIVATE);
 
-        // Request Permissions for saving worlds on modern Android
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-            }
-        }
 
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
