@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/WorldLogic.java
 package com.EZdev.mc2;
 
 import android.opengl.GLES20;
@@ -392,11 +394,9 @@ public class WorldLogic {
                     // Flint and Steel usage on TNT
                     if (!g.isCreative && ui != null && ui.inventory[5] > 0) {
                         setBlock(bx, by, bz, (byte)0);
-                        if(g.activity != null && g.activity.soundManager != null) g.activity.soundManager.playSoundForBlock(hitBlock);
                         g.tickingTNTs.add(g.new ActiveTNT(bx + 0.5f, by, bz + 0.5f));
                     } else if (g.isCreative) {
                         setBlock(bx, by, bz, (byte)0);
-                        if(g.activity != null && g.activity.soundManager != null) g.activity.soundManager.playSoundForBlock(hitBlock);
                         g.tickingTNTs.add(g.new ActiveTNT(bx + 0.5f, by, bz + 0.5f));
                     }
                     return;
@@ -414,7 +414,6 @@ public class WorldLogic {
                     }
 
                     setBlock(lastX, lastY, lastZ, g.activeBlock);
-                    if(g.activity != null && g.activity.soundManager != null) g.activity.soundManager.playSoundForBlock(g.activeBlock);
                     if(g.activeBlock == 6) {
                         checkIgnition(lastX, lastY, lastZ, g);
                         g.activeFires.add(g.new ActiveFire(lastX, lastY, lastZ));
@@ -426,7 +425,6 @@ public class WorldLogic {
                     if (g.isCreative) {
                         g.addBlockParticles(bx, by, bz, hitBlock);
                         setBlock(bx, by, bz, (byte)0);
-                        if(g.activity != null && g.activity.soundManager != null) g.activity.soundManager.playSoundForBlock(hitBlock);
                     } else {
                         // Survival mode: mark as breaking, wait for break timer
                         g.isBreaking = true;
@@ -469,3 +467,4 @@ public class WorldLogic {
         return (pMinX < bx + 1 && pMaxX > bx && pMinY < by + 1 && pMaxY > by && pMinZ < bz + 1 && pMaxZ > bz);
     }
 }
+INNER_EOF

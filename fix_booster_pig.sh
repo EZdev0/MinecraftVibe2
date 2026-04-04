@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/Booster.java
 package com.EZdev.mc2;
 
 import android.opengl.GLES20;
@@ -48,3 +50,4 @@ public class Booster {
         tntColorBuffer = ByteBuffer.allocateDirect(c.length*4).order(ByteOrder.nativeOrder()).asFloatBuffer(); tntColorBuffer.put(c).position(0);
     }
 }
+INNER_EOF

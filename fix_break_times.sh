@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/Gameplay.java
 package com.EZdev.mc2;
 
 import java.util.ArrayList;
@@ -12,7 +14,6 @@ public class Gameplay {
     private boolean hasSpawned = false;
 
     public boolean wantsToJump = false;
-    public MainActivity activity;
     public boolean isSneaking = false;
     public boolean isSprinting = false;
 
@@ -323,7 +324,6 @@ public class Gameplay {
         if (isBreaking && !isCreative) {
             float eyeHeight = camY + playerHeight - 0.2f;
             int bx = (int) Math.floor(camX + dirX * 3.0f); // Simple forward trace
-            float dirY = (float) Math.sin(Math.toRadians(pitch));
             int by = (int) Math.floor(eyeHeight + dirY * 3.0f);
             int bz = (int) Math.floor(camZ + dirZ * 3.0f);
 
@@ -345,7 +345,6 @@ public class Gameplay {
                         world.setBlock(targetX, targetY, targetZ, (byte)0);
                         addBlockParticles(targetX, targetY, targetZ, hitType); // Final burst
                         world.spawnItemEntity(targetX, targetY, targetZ, hitType); // Drop item!
-                        if(activity != null && activity.soundManager != null) activity.soundManager.playSoundForBlock(hitType);
                         isBreaking = false;
                         targetX = -1;
                     }
@@ -433,3 +432,4 @@ public class Gameplay {
         }
     }
 }
+INNER_EOF

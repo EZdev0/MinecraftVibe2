@@ -1,6 +1,7 @@
+#!/bin/bash
+cat << 'INNER_EOF' > Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/MainMenuActivity.java
 package com.EZdev.mc2;
 
-import android.widget.FrameLayout;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
@@ -182,3 +183,4 @@ public class MainMenuActivity extends Activity {
         settingsPanel.setVisibility(View.GONE);
     }
 }
+INNER_EOF
