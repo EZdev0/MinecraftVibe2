@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/Chunk.java
 package com.EZdev.mc2;
 
 import java.nio.ByteBuffer;
@@ -15,18 +17,8 @@ public class Chunk {
 
     public Chunk(WorldLogic world, int cx, int cz) {
         this.world = world; this.chunkX = cx; this.chunkZ = cz;
-
-        boolean loaded = false;
-        if (world.saveManager != null) {
-            loaded = world.saveManager.loadChunk(this);
-        }
-
-        if (!loaded) {
-            generateTerrain();
-            addDecorations();
-            if(world.saveManager != null) world.saveManager.saveChunk(this);
-        }
-        buildMesh();
+        // Check if we have loaded data first (handled by SaveManager later)
+        generateTerrain(); addDecorations(); buildMesh();
     }
 
     private void generateTerrain() {
@@ -36,16 +28,22 @@ public class Chunk {
                 float noiseVal = Noise.simplex2(gx * 0.015f, gz * 0.015f);
                 int height = 55 + (int)(noiseVal * 25f);
                 for (int y = 0; y <= height; y++) {
-                    if (y == 0) { blocks[x][y][z] = 2; continue; }
+                    if (y == 0) { blocks[x][y][z] = 2; continue; } // Bedrock
 
+                    // Feature 4: Better Cave Generation using 3D Noise Carvers
+                    // Real Minecraft uses a mix of "cheese" noise (large open caves) and "spaghetti" noise (tunnels).
                     float worm1 = Noise.simplex3(gx * 0.04f, y * 0.04f, gz * 0.04f);
                     float worm2 = Noise.simplex3(gx * 0.05f + 100, y * 0.05f + 100, gz * 0.05f + 100);
-                    float thickness = 0.03f + ((128f - y) / 128f) * 0.05f;
+                    float thickness = 0.03f + ((128f - y) / 128f) * 0.05f; // Thicker deeper down
 
+                    // Spaghetti tunnels: intersection of two 3D noise planes
                     boolean isTunnel = Math.abs(worm1) < thickness && Math.abs(worm2) < thickness;
+
+                    // Cheese caves (large rooms): Single low-frequency noise threshold
                     float room = Noise.simplex3(gx * 0.015f, y * 0.02f, gz * 0.015f);
                     boolean isRoom = room > 0.6f;
 
+                    // Don't generate caves too close to the surface
                     if (! (y > height - 5) && (isTunnel || isRoom)) {
                         blocks[x][y][z] = 0;
                     } else {
@@ -200,3 +198,4 @@ public class Chunk {
             for(int i=0; i<6; i++) { c[vertexCount*4 + i*4] = 0f; c[vertexCount*4 + i*4+1] = 0f; c[vertexCount*4 + i*4+2] = 0f; c[vertexCount*4 + i*4+3] = 1.0f; } vertexCount += 6; }
     }
 }
+INNER_EOF

@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/MyGdxGame.java
 package com.EZdev.mc2;
 
 import android.opengl.GLES20;
@@ -103,3 +105,4 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
         world.render(vpMatrix, gameplay);
     }
 }
+INNER_EOF

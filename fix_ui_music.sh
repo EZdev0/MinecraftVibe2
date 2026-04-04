@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/UIManager.java
 package com.EZdev.mc2;
 
 import android.content.Context;
@@ -155,17 +157,11 @@ public class UIManager {
 
         flyBtn = createBtn("Fly", "#95a5a6");
         flyBtn.setOnClickListener(v -> {
-            if (engine.gameplay.isCreative) {
-                engine.gameplay.isFlying = !engine.gameplay.isFlying;
-                flyBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isFlying ? "#2ecc71" : "#95a5a6"));
-            }
+            engine.gameplay.isFlying = !engine.gameplay.isFlying;
+            flyBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isFlying ? "#2ecc71" : "#95a5a6"));
         });
 
-        if (engine.gameplay.isCreative) {
-            btnLayout.addView(flyBtn);
-        }
-        btnLayout.addView(sprintBtn);
-        btnLayout.addView(sneakBtn);
+        btnLayout.addView(flyBtn); btnLayout.addView(sprintBtn); btnLayout.addView(sneakBtn);
 
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.TOP | Gravity.START;
@@ -263,7 +259,6 @@ public class UIManager {
 
     public class TouchOverlay extends View {
         private Paint p = new Paint(); private Paint textPaint = new Paint(); private Paint fpsPaint = new Paint();
-        private Paint healthPaint = new Paint();
         private int joyId = -1, lookId = -1;
         private float joyBaseX, joyBaseY, joyKnobX, joyKnobY, lastLookX, lastLookY;
 
@@ -271,30 +266,17 @@ public class UIManager {
             super(c);
             textPaint.setColor(Color.WHITE); textPaint.setTextSize(36); textPaint.setFakeBoldText(true); textPaint.setShadowLayer(5, 2, 2, Color.BLACK);
             fpsPaint.setColor(Color.YELLOW); fpsPaint.setTextSize(36); fpsPaint.setFakeBoldText(true); fpsPaint.setShadowLayer(5, 2, 2, Color.BLACK);
-            healthPaint.setColor(Color.RED); healthPaint.setTextSize(40); healthPaint.setFakeBoldText(true); healthPaint.setShadowLayer(5, 2, 2, Color.BLACK);
         }
 
         @Override protected void onDraw(Canvas canvas) {
-            if (engine == null || engine.gameplay == null) return;
-
-            if (showDebug) {
+            if (showDebug && engine != null && engine.gameplay != null) {
                 String coords = "X: " + (int)engine.gameplay.camX + " Y: " + (int)engine.gameplay.camY + " Z: " + (int)engine.gameplay.camZ;
                 String fpsStr = "FPS: " + engine.currentFPS;
+
                 if(fastRender) fpsStr += " [VULKAN ENABLED]";
 
                 canvas.drawText(coords, 30, 60, textPaint);
                 canvas.drawText(fpsStr, 30, 110, fpsPaint);
-            }
-
-            if (!engine.gameplay.isCreative) {
-                String hp = "HP: " + (int)engine.gameplay.health + "/20";
-                canvas.drawText(hp, getWidth() / 2f - 60, 60, healthPaint);
-
-                // Fire Overlay effect if taking fire damage
-                if (engine.gameplay.fireDamageTimer > 0) {
-                    p.setColor(Color.argb(100, 255, 100, 0));
-                    canvas.drawRect(0, 0, getWidth(), getHeight(), p);
-                }
             }
 
             p.setColor(Color.WHITE); p.setStrokeWidth(5);
@@ -333,3 +315,4 @@ public class UIManager {
         }
     }
 }
+INNER_EOF

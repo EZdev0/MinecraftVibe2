@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/WorldLogic.java
 package com.EZdev.mc2;
 
 import android.opengl.GLES20;
@@ -5,7 +7,6 @@ import android.opengl.Matrix;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
-import java.util.ArrayList;
 
 public class WorldLogic {
     private HashMap<String, Chunk> chunks = new HashMap<>();
@@ -17,8 +18,6 @@ public class WorldLogic {
 
     private Gameplay gameplayRef;
     public SaveManager saveManager;
-
-    public ArrayList<Entity> entities = new ArrayList<>();
 
     public void updateChunks(float playerX, float playerZ) {
         int playerChunkX = (int) Math.floor(playerX / 16.0);
@@ -33,13 +32,6 @@ public class WorldLogic {
                     Chunk newChunk = new Chunk(this, playerChunkX + x, playerChunkZ + z);
                     chunks.put(key, newChunk);
                     updateNeighbors(playerChunkX + x, playerChunkZ + z);
-
-                    // Spawn animal logic (Pig) when chunk loads
-                    if(Math.random() < 0.2f) {
-                        float ey = 127;
-                        while(ey > 0 && getBlock((playerChunkX+x)*16 + 8, (int)ey, (playerChunkZ+z)*16 + 8) == 0) ey--;
-                        if(ey > 50) entities.add(new Entity((playerChunkX+x)*16 + 8, ey+1.1f, (playerChunkZ+z)*16 + 8));
-                    }
                 }
             }
         }
@@ -125,20 +117,6 @@ public class WorldLogic {
                     tnt.vz += (dz / dist) * force * 15.0f;
                 }
             }
-
-            // Push entities too!
-            for (Entity e : entities) {
-                float dx = e.x - ex;
-                float dy = e.y - ey;
-                float dz = e.z - ez;
-                float dist = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
-                if (dist > 0 && dist <= radius * 2.0f) {
-                    float force = (radius * 2.0f - dist) / (radius * 2.0f);
-                    e.targetX = e.x + (dx / dist) * force * 20.0f;
-                    e.targetZ = e.z + (dz / dist) * force * 20.0f;
-                    e.vy += force * 15.0f;
-                }
-            }
         }
 
         for (int x = minX; x <= maxX; x++) {
@@ -192,7 +170,6 @@ public class WorldLogic {
         GLES20.glUniform1i(Booster.fogEnabledHandle, fogEnabled ? 1 : 0);
         GLES20.glUniform1f(Booster.fogEndHandle, renderDistance * 16.0f);
         GLES20.glUniform1i(Booster.isFlashingHandle, 0);
-        GLES20.glUniform1i(Booster.pTypeHandle, 0);
 
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
@@ -213,7 +190,6 @@ public class WorldLogic {
             Matrix.translateM(modelMatrix, 0, c.chunkX * 16, 0, c.chunkZ * 16);
             Matrix.multiplyMM(finalMVP, 0, vpMatrix, 0, modelMatrix, 0);
             GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
-            GLES20.glUniform1i(Booster.pTypeHandle, 0);
             GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, c.vertexBuffer);
             GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, c.colorBuffer);
             GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, c.vertexCount);
@@ -222,22 +198,7 @@ public class WorldLogic {
         GLES20.glDisable(GLES20.GL_BLEND);
 
         if (Booster.tntVertexBuffer != null) {
-            // Render Entities (Pig = Pink cube)
-            GLES20.glUniform1i(Booster.pTypeHandle, 100); // 100 = pink tint
-            for(int i=0; i<entities.size(); i++) {
-                Entity e = entities.get(i);
-                Matrix.setIdentityM(modelMatrix, 0);
-                Matrix.translateM(modelMatrix, 0, e.x - 0.4f, e.y, e.z - 0.4f);
-                Matrix.scaleM(modelMatrix, 0, 0.8f, 0.8f, 0.8f);
-                Matrix.multiplyMM(finalMVP, 0, vpMatrix, 0, modelMatrix, 0);
-                GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
-                GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, Booster.tntVertexBuffer);
-                GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, Booster.tntColorBuffer);
-                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
-            }
-
             GLES20.glUniform1i(Booster.isFlashingHandle, 1);
-            GLES20.glUniform1i(Booster.pTypeHandle, 5);
             for (Gameplay.ActiveTNT tnt : gameplay.tickingTNTs) {
                 Matrix.setIdentityM(modelMatrix, 0);
                 Matrix.translateM(modelMatrix, 0, tnt.x, tnt.y, tnt.z);
@@ -253,16 +214,11 @@ public class WorldLogic {
 
             for(int i=0; i<gameplay.fireParticles.size(); i++) {
                 Gameplay.ActiveFireParticle p = gameplay.fireParticles.get(i);
-                if (p != null) {
-                    float size = p.type == 99 ? 0.3f : 0.15f;
-                    renderParticle(p, vpMatrix, size, p.type);
-                }
+                float size = p.type == 99 ? 0.3f : 0.15f;
+                renderParticle(p, vpMatrix, size, p.type);
             }
             for(int i=0; i<gameplay.blockParticles.size(); i++) {
-                Gameplay.ActiveFireParticle bp = gameplay.blockParticles.get(i);
-                if(bp != null) {
-                    renderParticle(bp, vpMatrix, 0.1f, bp.type);
-                }
+                renderParticle(gameplay.blockParticles.get(i), vpMatrix, 0.1f, gameplay.blockParticles.get(i).type);
             }
         }
         GLES20.glDisableVertexAttribArray(Booster.posHandle);
@@ -278,16 +234,18 @@ public class WorldLogic {
         GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
         GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, Booster.tntVertexBuffer);
 
-        GLES20.glUniform1i(Booster.pTypeHandle, type);
-        if (type == 99) GLES20.glUniform1i(Booster.isFlashingHandle, 2);
-
-        GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, Booster.tntColorBuffer);
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
-        GLES20.glUniform1i(Booster.isFlashingHandle, 0);
+        if (type == 99) {
+            GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, Booster.tntColorBuffer);
+            GLES20.glUniform1i(Booster.isFlashingHandle, 2);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
+            GLES20.glUniform1i(Booster.isFlashingHandle, 0);
+        } else {
+            GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, Booster.tntColorBuffer);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
+        }
     }
 
     public void interact(Gameplay g, boolean place, UIManager ui) {
-        if (g == null) return;
         float eyeHeight = g.camY + g.playerHeight - 0.2f;
         float dirX = (float) (Math.cos(Math.toRadians(g.pitch)) * Math.sin(Math.toRadians(g.yaw)));
         float dirY = (float) Math.sin(Math.toRadians(g.pitch));
@@ -298,18 +256,6 @@ public class WorldLogic {
             int bx = (int) Math.floor(g.camX + dirX * dist);
             int by = (int) Math.floor(eyeHeight + dirY * dist);
             int bz = (int) Math.floor(g.camZ + dirZ * dist);
-
-            // Hit Entity!
-            for(int i=entities.size()-1; i>=0; i--) {
-                Entity e = entities.get(i);
-                if(bx == (int)Math.floor(e.x) && by == (int)Math.floor(e.y) && bz == (int)Math.floor(e.z)) {
-                    if(!place) {
-                        entities.remove(i); // Kill pig
-                        return;
-                    }
-                }
-            }
-
             byte hitBlock = getBlock(bx, by, bz);
             if (hitBlock > 0 && hitBlock != 6 && hitBlock != 7) {
                 if (!place && hitBlock == 5 && g.activeBlock == 6) {
@@ -327,13 +273,8 @@ public class WorldLogic {
                         checkIgnitionIfTntPlaced(lastX, lastY, lastZ, g);
                     }
                 } else if (!place) {
-                    if (g.isCreative) {
-                        g.addBlockParticles(bx, by, bz, hitBlock);
-                        setBlock(bx, by, bz, (byte)0);
-                    } else {
-                        g.addBlockParticles(bx, by, bz, hitBlock);
-                        setBlock(bx, by, bz, (byte)0);
-                    }
+                    g.addBlockParticles(bx, by, bz, hitBlock);
+                    setBlock(bx, by, bz, (byte)0);
                 }
                 return;
             }
@@ -357,7 +298,6 @@ public class WorldLogic {
     }
 
     private boolean isPlayerInside(Gameplay g, int bx, int by, int bz) {
-        if (g == null) return false;
         float shrink = 0.05f;
         float pMinX = g.camX - g.playerWidth / 2f + shrink;
         float pMaxX = g.camX + g.playerWidth / 2f - shrink;
@@ -368,3 +308,4 @@ public class WorldLogic {
         return (pMinX < bx + 1 && pMaxX > bx && pMinY < by + 1 && pMaxY > by && pMinZ < bz + 1 && pMaxZ > bz);
     }
 }
+INNER_EOF
