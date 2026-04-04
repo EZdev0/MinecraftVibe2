@@ -238,11 +238,6 @@ public class WorldLogic {
     }
 
     public void render(float[] vpMatrix, Gameplay gameplay) {
-        if (gameplay != null && gameplay.activity != null && gameplay.activity.uiManager != null && gameplay.activity.uiManager.fastRender) {
-            renderDistance = 2;
-        } else {
-            renderDistance = 4;
-        }
 
         if (gameplay == null || vpMatrix == null) return;
         if (gameplay.tickingTNTs == null) gameplay.tickingTNTs = new ArrayList<>();
