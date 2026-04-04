@@ -20,15 +20,28 @@ public class WorldLogic {
 
     public ArrayList<Entity> entities = new ArrayList<>();
 
-    public class ItemEntity {
+        public class ItemEntity {
         public float x, y, z;
-        public float vy = 0f;
         public byte type;
+        public float life = 300.0f; // 5 minutes
         public float hoverOffset = 0f;
-        public float life = 300.0f; // 5 minutes despawn time
+        public float vy = 0f;
+        public int count = 1;
 
         public ItemEntity(float x, float y, float z, byte type) {
-            this.x = x; this.y = y; this.z = z; this.type = type;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.type = type;
+            this.count = 1;
+        }
+
+        public ItemEntity(float x, float y, float z, byte type, int count) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.type = type;
+            this.count = count;
         }
 
         public void update(float dt) {
@@ -48,7 +61,11 @@ public class WorldLogic {
     public ArrayList<ItemEntity> droppedItems = new ArrayList<>();
 
     public void spawnItemEntity(int x, int y, int z, byte type) {
-        droppedItems.add(new ItemEntity(x + 0.5f, y + 0.5f, z + 0.5f, type));
+        spawnItemEntity(x + 0.5f, y + 0.5f, z + 0.5f, type, 1);
+    }
+
+    public void spawnItemEntity(float x, float y, float z, byte type, int count) {
+        droppedItems.add(new ItemEntity(x, y, z, type, count));
     }
 
     public void updateChunks(float playerX, float playerZ) {
@@ -70,6 +87,7 @@ public class WorldLogic {
                         while(ey > 0 && getBlock((playerChunkX+x)*16 + 8, (int)ey, (playerChunkZ+z)*16 + 8) == 0) ey--;
                         if(ey > 50) entities.add(new Entity((playerChunkX+x)*16 + 8, ey+1.1f, (playerChunkZ+z)*16 + 8));
                     }
+                    return; // Only generate ONE chunk per frame to avoid severe lag spikes!
                 }
             }
         }
@@ -266,12 +284,34 @@ public class WorldLogic {
             Matrix.multiplyMM(finalMVP, 0, vpMatrix, 0, modelMatrix, 0);
             GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
             GLES20.glUniform1i(Booster.pTypeHandle, 0);
-            GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, c.vertexBuffer);
-            GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, c.colorBuffer);
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, c.vertexCount);
+            if (c.needsVboUpdate) {
+                if (!c.vbosReady) {
+                    GLES20.glGenBuffers(2, c.vbos, 0);
+                    c.vbosReady = true;
+                }
+                c.vertexBuffer.position(0);
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[0]);
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, c.vertexCount * 3 * 4, c.vertexBuffer, GLES20.GL_STATIC_DRAW);
+
+                c.colorBuffer.position(0);
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[1]);
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, c.vertexCount * 4 * 4, c.colorBuffer, GLES20.GL_STATIC_DRAW);
+                c.needsVboUpdate = false;
+            }
+
+            if (c.vbosReady) {
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[0]);
+                GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, 0);
+
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[1]);
+                GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, 0);
+
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, c.vertexCount);
+            }
         }
 
         GLES20.glDisable(GLES20.GL_BLEND);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         if (Booster.tntVertexBuffer != null) {
             GLES20.glUniform1i(Booster.pTypeHandle, 100);
@@ -298,12 +338,31 @@ public class WorldLogic {
                     continue;
                 }
 
+                // Item Stacking (O(n) per item, but small lists and max 64)
+                for(int j=0; j<droppedItems.size(); j++) {
+                    if (i != j) {
+                        ItemEntity other = droppedItems.get(j);
+                        if(other != null && other.type == item.type && item.count < 64 && other.count < 64) {
+                            float dxi = item.x - other.x;
+                            float dyi = item.y - other.y;
+                            float dzi = item.z - other.z;
+                            if(Math.sqrt(dxi*dxi + dyi*dyi + dzi*dzi) < 0.5f) {
+                                int space = 64 - item.count;
+                                int transfer = Math.min(space, other.count);
+                                item.count += transfer;
+                                other.count -= transfer;
+                                if(other.count <= 0) other.life = 0; // Mark for deletion
+                            }
+                        }
+                    }
+                }
+
                 float dx = item.x - gameplay.camX;
                 float dy = item.y - gameplay.camY;
                 float dz = item.z - gameplay.camZ;
                 if(Math.sqrt(dx*dx + dy*dy + dz*dz) < 1.5f && !gameplay.isCreative) {
                     if(gameplay.activity != null && gameplay.activity.uiManager != null) {
-                        gameplay.activity.uiManager.addToInventory(item.type, 1);
+                        gameplay.activity.uiManager.addToInventory(item.type, item.count);
                     }
                     int lastIdx = droppedItems.size() - 1; if (i < lastIdx) droppedItems.set(i, droppedItems.get(lastIdx)); droppedItems.remove(lastIdx);
                     continue;
