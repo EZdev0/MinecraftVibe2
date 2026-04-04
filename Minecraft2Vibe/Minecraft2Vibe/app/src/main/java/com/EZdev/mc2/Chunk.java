@@ -42,27 +42,30 @@ public class Chunk {
                     if (y == 0) { blocks[x][y][z] = 9; continue; } // Bedrock (ID 9) at y=0
                     if (y == 1 && Math.random() < 0.5) { blocks[x][y][z] = 9; continue; } // Bedrock layer 1 noise
 
-                    // Feature 4: Better Cave Generation using 3D Noise Carvers
-                    float worm1 = Noise.simplex3(gx * 0.04f, y * 0.04f, gz * 0.04f);
-                    float worm2 = Noise.simplex3(gx * 0.05f + 100, y * 0.05f + 100, gz * 0.05f + 100);
-                    float thickness = 0.03f + ((128f - y) / 128f) * 0.06f; // Tunnels get much wider deeper down
+                    // Feature 4: Minecraft-like 3D Cave Generation (Simplex Noise)
+                    // Base terrain filling
+                    if (y == height) blocks[x][y][z] = 1; // Grass
+                    else if (y > height - 4) blocks[x][y][z] = 1; // Dirt (should technically be dirt, but we use 1 for both)
+                    else blocks[x][y][z] = 2; // Stone
 
-                    // Spaghetti tunnels: intersection of two 3D noise planes
-                    boolean isTunnel = Math.abs(worm1) < thickness && Math.abs(worm2) < thickness;
+                    // Only dig caves if we are safely below the surface (e.g. 5 blocks deep)
+                    if (y < height - 5 && y > 1) {
+                        float caveNoise1 = Noise.simplex3(gx * 0.03f, y * 0.03f, gz * 0.03f);
+                        float caveNoise2 = Noise.simplex3(gx * 0.03f + 1000f, y * 0.03f + 1000f, gz * 0.03f + 1000f);
 
-                    // Cheese caves (large rooms): Single low-frequency noise threshold
-                    float room = Noise.simplex3(gx * 0.015f, y * 0.02f, gz * 0.015f);
-                    // Add small high frequency noise to room edges
-                    float roomDetail = Noise.simplex3(gx * 0.08f, y * 0.08f, gz * 0.08f) * 0.1f;
-                    boolean isRoom = (room + roomDetail) > 0.55f;
+                        // "Spaghetti" Tunnels (worms) - intersections of two noises around 0
+                        boolean isWorm = Math.abs(caveNoise1) < 0.06f && Math.abs(caveNoise2) < 0.06f;
 
-                    // Don't generate caves too close to the surface
-                    if (! (y > height - 5) && (isTunnel || isRoom)) {
-                        blocks[x][y][z] = 0;
-                    } else {
-                        if (y == height) blocks[x][y][z] = 1;
-                        else if (y > height - 4) blocks[x][y][z] = 1;
-                        else blocks[x][y][z] = 2;
+                        // "Cheese" Caves - large hollow areas based on a density threshold
+                        float cheeseNoise = Noise.simplex3(gx * 0.015f, y * 0.02f, gz * 0.015f);
+                        boolean isCheese = cheeseNoise > 0.5f;
+
+                        if (isWorm || isCheese) {
+                            blocks[x][y][z] = 0; // Dig out the cave (Air)
+
+                            // If digging near the bottom, fill with water (like underground lakes)
+                            if (y < 12) blocks[x][y][z] = 7;
+                        }
                     }
                 }
 
@@ -158,12 +161,14 @@ public class Chunk {
             colorBuffer = ByteBuffer.allocateDirect(bufferCapacity * 4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         }
 
-        vertexBuffer.clear();
-        vertexBuffer.put(vData, 0, vertexCount * 3).position(0);
+        synchronized(this) {
+            vertexBuffer.clear();
+            vertexBuffer.put(vData, 0, vertexCount * 3).position(0);
 
-        colorBuffer.clear();
-        colorBuffer.put(cData, 0, vertexCount * 4).position(0);
-        needsVboUpdate = true;
+            colorBuffer.clear();
+            colorBuffer.put(cData, 0, vertexCount * 4).position(0);
+            needsVboUpdate = true;
+        }
     }
 
     private void addFace(float[] v, float[] c, float x, float y, float z, int s, float r, float g, float b, float a) {

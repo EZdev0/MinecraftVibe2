@@ -70,7 +70,6 @@ public class UIManager {
                 inventory[i] += amount;
                 if(inventory[i] > 64 && inventory[i] != 999) inventory[i] = 64; // Max stack 64
 
-                updateHotbarUI();
 
                 // Achievements / Unlock System
                 if (type == 6 && !prefs.getBoolean("FIRE_UNLOCKED", false)) {
