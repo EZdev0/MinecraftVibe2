@@ -34,18 +34,26 @@ public class Chunk {
             for (int z = 0; z < 16; z++) {
                 int gx = (chunkX * 16) + x, gz = (chunkZ * 16) + z;
                 float noiseVal = Noise.simplex2(gx * 0.015f, gz * 0.015f);
-                int height = 55 + (int)(noiseVal * 25f);
+                int height = 65 + (int)(noiseVal * 20f); // Higher terrain to make room for deeper caves
                 for (int y = 0; y <= height; y++) {
-                    if (y == 0) { blocks[x][y][z] = 2; continue; }
+                    if (y == 0) { blocks[x][y][z] = 9; continue; } // Bedrock (ID 9) at y=0
+                    if (y == 1 && Math.random() < 0.5) { blocks[x][y][z] = 9; continue; } // Bedrock layer 1 noise
 
+                    // Feature 4: Better Cave Generation using 3D Noise Carvers
                     float worm1 = Noise.simplex3(gx * 0.04f, y * 0.04f, gz * 0.04f);
                     float worm2 = Noise.simplex3(gx * 0.05f + 100, y * 0.05f + 100, gz * 0.05f + 100);
-                    float thickness = 0.03f + ((128f - y) / 128f) * 0.05f;
+                    float thickness = 0.03f + ((128f - y) / 128f) * 0.06f; // Tunnels get much wider deeper down
 
+                    // Spaghetti tunnels: intersection of two 3D noise planes
                     boolean isTunnel = Math.abs(worm1) < thickness && Math.abs(worm2) < thickness;
-                    float room = Noise.simplex3(gx * 0.015f, y * 0.02f, gz * 0.015f);
-                    boolean isRoom = room > 0.6f;
 
+                    // Cheese caves (large rooms): Single low-frequency noise threshold
+                    float room = Noise.simplex3(gx * 0.015f, y * 0.02f, gz * 0.015f);
+                    // Add small high frequency noise to room edges
+                    float roomDetail = Noise.simplex3(gx * 0.08f, y * 0.08f, gz * 0.08f) * 0.1f;
+                    boolean isRoom = (room + roomDetail) > 0.55f;
+
+                    // Don't generate caves too close to the surface
                     if (! (y > height - 5) && (isTunnel || isRoom)) {
                         blocks[x][y][z] = 0;
                     } else {
@@ -116,6 +124,7 @@ public class Chunk {
                     else if (type == 4) { r = 0.1f; g = 0.5f; b = 0.1f; }
                     else if (type == 5) { r = 0.9f; g = 0.2f; b = 0.2f; }
                     else if (type == 7) { r = 0.2f; g = 0.4f; b = 0.9f; a = 0.7f; }
+                    else if (type == 9) { r = 0.1f; g = 0.1f; b = 0.1f; } // Bedrock (very dark grey)
 
                     if (type == 1 && y < 127 && blocks[x][y+1][z] != 0 && blocks[x][y+1][z] != 7) {
                         r = 0.4f; g = 0.25f; b = 0.1f;

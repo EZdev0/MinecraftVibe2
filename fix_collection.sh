@@ -27,6 +27,7 @@ public class WorldLogic {
         public float vy = 0f;
         public byte type;
         public float hoverOffset = 0f;
+        public float life = 300.0f; // 5 minutes despawn time
 
         public ItemEntity(float x, float y, float z, byte type) {
             this.x = x; this.y = y; this.z = z; this.type = type;
@@ -34,12 +35,14 @@ public class WorldLogic {
 
         public void update(float dt) {
             hoverOffset += dt;
+            life -= dt;
             vy -= 15f * dt;
             float nextY = y + vy * dt;
             if(getBlock((int)Math.floor(x), (int)Math.floor(nextY), (int)Math.floor(z)) == 0) {
                 y = nextY;
             } else {
                 vy = 0;
+                y = (float)Math.floor(nextY) + 1.0f; // Rest on ground precisely
             }
         }
     }
@@ -47,7 +50,6 @@ public class WorldLogic {
     public ArrayList<ItemEntity> droppedItems = new ArrayList<>();
 
     public void spawnItemEntity(int x, int y, int z, byte type) {
-        // Offset so it pops out a bit
         droppedItems.add(new ItemEntity(x + 0.5f, y + 0.5f, z + 0.5f, type));
     }
 
@@ -95,6 +97,9 @@ public class WorldLogic {
 
     public void setBlock(int x, int y, int z, byte type) {
         if (y < 0 || y >= 128) return;
+        // Feature 9: Bedrock cannot be modified
+        if (getBlock(x, y, z) == 9 && type == 0) return;
+
         int cx = (int) Math.floor(x / 16.0);
         int cz = (int) Math.floor(z / 16.0);
         String key = cx + "," + cz;
@@ -179,6 +184,8 @@ public class WorldLogic {
                     float dist = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
                     if (dist <= radius && y >= 1 && y < 128) {
                         byte block = getBlock(x, y, z);
+                        if (block == 9) continue; // Bedrock immune
+
                         if (block == 5 && gameplayRef != null) {
                             setBlock(x, y, z, (byte)0);
                             Gameplay.ActiveTNT newTNT = gameplayRef.new ActiveTNT(x + 0.5f, y + 0.5f, z + 0.5f);
@@ -190,6 +197,12 @@ public class WorldLogic {
                             gameplayRef.tickingTNTs.add(newTNT);
                         } else if (block != 0 && block != 7) {
                             if (gameplayRef != null && Math.random() < 0.2f) gameplayRef.addBlockParticles(x, y, z, block);
+
+                            // Explosion drops some blocks in survival
+                            if (gameplayRef != null && !gameplayRef.isCreative && Math.random() < 0.3f) {
+                                spawnItemEntity(x, y, z, block);
+                            }
+
                             int cx = (int) Math.floor(x / 16.0);
                             int cz = (int) Math.floor(z / 16.0);
                             Chunk c = chunks.get(cx + "," + cz);
@@ -211,7 +224,7 @@ public class WorldLogic {
     public void render(float[] vpMatrix, Gameplay gameplay) {
         this.gameplayRef = gameplay;
 
-        float dt = 0.016f; // approx 60fps
+        float dt = 0.016f;
 
         float dayCycle = (float)(Math.sin(gameplay.gameTime * 0.05f) * 0.5f + 0.5f);
         GLES20.glClearColor(0.1f + dayCycle*0.4f, 0.2f + dayCycle*0.6f, 0.4f + dayCycle*0.6f, 1.0f);
@@ -253,7 +266,6 @@ public class WorldLogic {
         GLES20.glDisable(GLES20.GL_BLEND);
 
         if (Booster.tntVertexBuffer != null) {
-            // Entities (Pink box)
             GLES20.glUniform1i(Booster.pTypeHandle, 100);
             for(int i=0; i<entities.size(); i++) {
                 Entity e = entities.get(i);
@@ -267,17 +279,19 @@ public class WorldLogic {
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
             }
 
-            // Item Drops
             for(int i=droppedItems.size()-1; i>=0; i--) {
                 ItemEntity item = droppedItems.get(i);
                 item.update(dt);
 
-                // Pickup check
+                if (item.life <= 0) {
+                    droppedItems.remove(i);
+                    continue;
+                }
+
                 float dx = item.x - gameplay.camX;
                 float dy = item.y - gameplay.camY;
                 float dz = item.z - gameplay.camZ;
-                if(Math.sqrt(dx*dx + dy*dy + dz*dz) < 1.5f && !gameplay.isCreative) { // Player picked it up
-                    // Add to inventory (simplification for now: we just know we picked it up, UIManager handles logic)
+                if(Math.sqrt(dx*dx + dy*dy + dz*dz) < 1.5f && !gameplay.isCreative) {
                     if(gameplay.activity != null && gameplay.activity.uiManager != null) {
                         gameplay.activity.uiManager.addToInventory(item.type, 1);
                     }
@@ -315,14 +329,14 @@ public class WorldLogic {
             for(int i=0; i<gameplay.fireParticles.size(); i++) {
                 Gameplay.ActiveFireParticle p = gameplay.fireParticles.get(i);
                 if (p != null) {
-                    float size = p.type == 99 ? 0.3f : 0.1f;
+                    float size = p.type == 99 ? 0.3f : 0.15f;
                     renderParticle(p, vpMatrix, size, p.type);
                 }
             }
             for(int i=0; i<gameplay.blockParticles.size(); i++) {
                 Gameplay.ActiveFireParticle bp = gameplay.blockParticles.get(i);
                 if(bp != null) {
-                    renderParticle(bp, vpMatrix, 0.08f, bp.type);
+                    renderParticle(bp, vpMatrix, 0.1f, bp.type);
                 }
             }
         }
@@ -390,24 +404,19 @@ public class WorldLogic {
 
             byte hitBlock = getBlock(bx, by, bz);
             if (hitBlock > 0 && hitBlock != 6 && hitBlock != 7) {
+                if (hitBlock == 9) return; // Cannot interact with Bedrock
+
                 if (!place && hitBlock == 5 && g.activeBlock == 6) {
-                    // Flint and Steel usage on TNT
-                    if (!g.isCreative && ui != null && ui.inventory[5] > 0) {
-                        setBlock(bx, by, bz, (byte)0);
-                        g.tickingTNTs.add(g.new ActiveTNT(bx + 0.5f, by, bz + 0.5f));
-                    } else if (g.isCreative) {
-                        setBlock(bx, by, bz, (byte)0);
-                        g.tickingTNTs.add(g.new ActiveTNT(bx + 0.5f, by, bz + 0.5f));
-                    }
+                    setBlock(bx, by, bz, (byte)0);
+                    g.tickingTNTs.add(g.new ActiveTNT(bx + 0.5f, by, bz + 0.5f));
                     return;
                 }
                 if (place && lastX != -1 && !isPlayerInside(g, lastX, lastY, lastZ)) {
-                    // Check inventory before placing in Survival
                     if (!g.isCreative && ui != null) {
                         int slot = -1;
                         for(int s=0; s<ui.blockIds.length; s++) if(ui.blockIds[s] == g.activeBlock) slot = s;
-                        if(slot != -1 && ui.inventory[slot] <= 0) return; // Out of blocks!
-                        if(slot != -1) {
+                        if(slot != -1 && ui.inventory[slot] <= 0) return;
+                        if(slot != -1 && ui.inventory[slot] != 999) {
                             ui.inventory[slot]--;
                             ui.updateHotbarUI();
                         }
@@ -426,7 +435,7 @@ public class WorldLogic {
                         g.addBlockParticles(bx, by, bz, hitBlock);
                         setBlock(bx, by, bz, (byte)0);
                     } else {
-                        // Survival mode: mark as breaking, wait for break timer
+                        // Mark as target
                         g.isBreaking = true;
                         g.targetX = bx; g.targetY = by; g.targetZ = bz;
                     }
