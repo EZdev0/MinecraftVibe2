@@ -163,6 +163,7 @@ public class Chunk {
 
         colorBuffer.clear();
         colorBuffer.put(cData, 0, vertexCount * 4).position(0);
+        needsVboUpdate = true;
     }
 
     private void addFace(float[] v, float[] c, float x, float y, float z, int s, float r, float g, float b, float a) {

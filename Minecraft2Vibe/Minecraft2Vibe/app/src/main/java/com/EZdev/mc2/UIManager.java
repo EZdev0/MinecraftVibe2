@@ -32,7 +32,14 @@ public class UIManager {
     private Button sneakBtn, sprintBtn, flyBtn;
 
     public boolean showDebug = true;
-    public boolean fastRender = false;
+        public boolean fastRender = false;
+    public boolean showGLWarnings = true;
+    public String currentGLError = null;
+
+    public void reportGLError(String errorMsg) {
+        if (!showGLWarnings) return;
+        currentGLError = errorMsg;
+    }
 
     private boolean tntUnlocked = false;
 
@@ -43,7 +50,8 @@ public class UIManager {
         engine.world.renderDistance = prefs.getInt("RENDER_DISTANCE", 2);
         engine.world.fogEnabled = prefs.getBoolean("FOG_ENABLED", true);
         showDebug = prefs.getBoolean("SHOW_DEBUG", true);
-        fastRender = prefs.getBoolean("FAST_RENDER", false);
+                fastRender = prefs.getBoolean("FAST_RENDER", false);
+        showGLWarnings = prefs.getBoolean("GL_WARN", true);
         tntUnlocked = prefs.getBoolean("TNT_UNLOCKED", false);
 
         if (engine.gameplay.isCreative) {
