@@ -96,6 +96,11 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
         GLES20.glUseProgram(Booster.shaderProgram);
         GLES20.glUniform1f(Booster.timeHandle, gameplay.gameTime);
 
-        world.render(vpMatrix, gameplay);
+                world.render(vpMatrix, gameplay);
+
+        int error = GLES20.glGetError();
+        if (error != GLES20.GL_NO_ERROR && activity != null && activity.uiManager != null) {
+            activity.uiManager.reportGLError("OpenGL Fehler Code: " + error);
+        }
     }
 }
