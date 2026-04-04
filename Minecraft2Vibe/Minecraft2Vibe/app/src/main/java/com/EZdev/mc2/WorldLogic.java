@@ -285,18 +285,20 @@ public class WorldLogic {
             GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
             GLES20.glUniform1i(Booster.pTypeHandle, 0);
             if (c.needsVboUpdate) {
-                if (!c.vbosReady) {
-                    GLES20.glGenBuffers(2, c.vbos, 0);
-                    c.vbosReady = true;
-                }
-                c.vertexBuffer.position(0);
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[0]);
-                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, c.vertexCount * 3 * 4, c.vertexBuffer, GLES20.GL_STATIC_DRAW);
+                synchronized(c) {
+                    if (!c.vbosReady) {
+                        GLES20.glGenBuffers(2, c.vbos, 0);
+                        c.vbosReady = true;
+                    }
+                    c.vertexBuffer.position(0);
+                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[0]);
+                    GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, c.vertexCount * 3 * 4, c.vertexBuffer, GLES20.GL_STATIC_DRAW);
 
-                c.colorBuffer.position(0);
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[1]);
-                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, c.vertexCount * 4 * 4, c.colorBuffer, GLES20.GL_STATIC_DRAW);
-                c.needsVboUpdate = false;
+                    c.colorBuffer.position(0);
+                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[1]);
+                    GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, c.vertexCount * 4 * 4, c.colorBuffer, GLES20.GL_STATIC_DRAW);
+                    c.needsVboUpdate = false;
+                }
             }
 
             if (c.vbosReady) {
