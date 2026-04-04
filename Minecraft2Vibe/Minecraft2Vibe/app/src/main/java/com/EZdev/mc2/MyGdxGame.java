@@ -33,7 +33,7 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         GLES20.glClearColor(0.5f, 0.8f, 1.0f, 1.0f);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        GLES20.glEnable(GLES20.GL_CULL_FACE);
+        GLES20.glDisable(GLES20.GL_CULL_FACE);
 
         Booster.initGeometry();
         lastTime = System.nanoTime();
@@ -60,11 +60,7 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
             lastFPSUpdate = System.currentTimeMillis();
         }
 
-        if (activity != null && activity.uiManager != null && activity.uiManager.fastRender) {
-            if(frames % 2 == 0) gameplay.update(dt*2f, world);
-        } else {
-            gameplay.update(dt, world);
-        }
+        gameplay.update(dt, world);
 
         world.updateChunks(gameplay.camX, gameplay.camZ);
 
