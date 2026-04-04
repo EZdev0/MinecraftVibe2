@@ -17,9 +17,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {
     // KOMPLETT LEER! KEINE .so DATEIEN! KEIN LIBGDX!
     // Pures Android & Java Power.
+    testImplementation 'junit:junit:4.13.2'
 }
