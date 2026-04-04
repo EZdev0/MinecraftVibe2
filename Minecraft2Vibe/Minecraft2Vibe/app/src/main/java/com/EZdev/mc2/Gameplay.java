@@ -35,6 +35,8 @@ public class Gameplay {
     public float health = 20.0f;
     public float fireDamageTimer = 0f;
 
+    private static final int[][] FIRE_NEIGHBORS = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+
     // Breaking logic
     public boolean isBreaking = false;
     public float breakTimer = 0f;
@@ -177,19 +179,27 @@ public class Gameplay {
         for (int i = activeFires.size() - 1; i >= 0; i--) {
             ActiveFire fire = activeFires.get(i);
 
-            if(world.getBlock(fire.x, fire.y, fire.z) != 6) {
-                activeFires.remove(i);
+            if (world != null && world.getBlock(fire.x, fire.y, fire.z) != 6) {
+                int lastIdx = activeFires.size() - 1;
+                if (i < lastIdx) {
+                    activeFires.set(i, activeFires.get(lastIdx));
+                }
+                activeFires.remove(lastIdx);
                 continue;
             }
 
             boolean hasSupport = false;
-            int[][] neighbors = {{1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1}};
-            for(int[] n : neighbors) {
-                if (world.getBlock(fire.x+n[0], fire.y+n[1], fire.z+n[2]) > 0) hasSupport = true;
+            for (int[] n : FIRE_NEIGHBORS) {
+                if (world != null && world.getBlock(fire.x + n[0], fire.y + n[1], fire.z + n[2]) > 0)
+                    hasSupport = true;
             }
-            if(!hasSupport) {
-                world.setBlock(fire.x, fire.y, fire.z, (byte)0);
-                activeFires.remove(i);
+            if (!hasSupport) {
+                if (world != null) world.setBlock(fire.x, fire.y, fire.z, (byte) 0);
+                int lastIdx = activeFires.size() - 1;
+                if (i < lastIdx) {
+                    activeFires.set(i, activeFires.get(lastIdx));
+                }
+                activeFires.remove(lastIdx);
                 continue;
             }
 
@@ -197,12 +207,16 @@ public class Gameplay {
             fire.spreadTimer -= dt;
 
             if (Math.random() < 0.01f) {
-                fireParticles.add(new ActiveFireParticle(fire.x + 0.5f, fire.y + 0.5f, fire.z + 0.5f, (byte)6));
+                fireParticles.add(new ActiveFireParticle(fire.x + 0.5f, fire.y + 0.5f, fire.z + 0.5f, (byte) 6));
             }
 
             if (fire.life <= 0) {
-                world.setBlock(fire.x, fire.y, fire.z, (byte)0);
-                activeFires.remove(i);
+                if (world != null) world.setBlock(fire.x, fire.y, fire.z, (byte) 0);
+                int lastIdx = activeFires.size() - 1;
+                if (i < lastIdx) {
+                    activeFires.set(i, activeFires.get(lastIdx));
+                }
+                activeFires.remove(lastIdx);
                 continue;
             }
 
