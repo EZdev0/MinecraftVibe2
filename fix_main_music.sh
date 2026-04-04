@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/MainActivity.java
 package com.EZdev.mc2;
 
 import android.app.Activity;
@@ -13,7 +15,6 @@ public class MainActivity extends Activity {
     public MyGdxGame engine;
     public UIManager uiManager;
     public MusicManager musicManager;
-    public SoundManager soundManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,10 +24,12 @@ public class MainActivity extends Activity {
         boolean isCreative = getIntent().getBooleanExtra("CREATIVE_MODE", false);
 
         if (!loadWorld) {
+            // Delete old save directory to "Create New World"
             File dir = new File(getFilesDir(), "world1");
-            if(dir.exists() && dir.listFiles() != null) {
-                for (File f : dir.listFiles()) {
-                    f.delete();
+            if(dir.exists()) {
+                String[] children = dir.list();
+                for (int i = 0; i < children.length; i++) {
+                    new File(dir, children[i]).delete();
                 }
             }
         }
@@ -36,8 +39,8 @@ public class MainActivity extends Activity {
         surfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
 
         engine = new MyGdxGame(this);
-        engine.gameplay.isCreative = isCreative;
-        if(isCreative) engine.gameplay.isFlying = true;
+        // Set Creative mode
+        engine.gameplay.isFlying = isCreative;
 
         surfaceView.setRenderer(engine);
 
@@ -51,11 +54,9 @@ public class MainActivity extends Activity {
 
         musicManager = new MusicManager(this);
         musicManager.startMusic();
-
-        soundManager = new SoundManager(this);
     }
 
     @Override protected void onPause() { super.onPause(); surfaceView.onPause(); if (musicManager != null) musicManager.stopMusic(); }
     @Override protected void onResume() { super.onResume(); surfaceView.onResume(); if (musicManager != null && musicManager.isEnabled()) musicManager.startMusic(); }
-    @Override protected void onDestroy() { super.onDestroy(); if (soundManager != null) soundManager.release(); }
 }
+INNER_EOF

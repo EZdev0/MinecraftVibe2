@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/Gameplay.java
 package com.EZdev.mc2;
 
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ public class Gameplay {
     public boolean wantsToJump = false;
 
     public boolean isSneaking = false;
+    public boolean isFlying = false;
     public boolean isSprinting = false;
 
     public float shakeIntensity = 0f;
@@ -29,11 +32,6 @@ public class Gameplay {
     public ArrayList<ActiveFire> activeFires = new ArrayList<>();
     public ArrayList<ActiveFireParticle> fireParticles = new ArrayList<>();
     public ArrayList<ActiveFireParticle> blockParticles = new ArrayList<>();
-
-    public boolean isCreative = false;
-    public boolean isFlying = false;
-    public float health = 20.0f;
-    public float fireDamageTimer = 0f;
 
     public class ActiveTNT {
         public float x, y, z;
@@ -72,7 +70,7 @@ public class Gameplay {
             this.vy = ((float)Math.random() - 0.5f) * intensity;
             this.vz = ((float)Math.random() - 0.5f) * intensity;
             this.life = 1.0f + (float)Math.random() * 3.0f;
-            this.type = 99;
+            this.type = 99; // 99 means Smoke (White/Grey)
         }
     }
 
@@ -83,7 +81,7 @@ public class Gameplay {
     }
 
     public void addExplosionParticles(float x, float y, float z) {
-        for(int i=0; i<25; i++) {
+        for(int i=0; i<25; i++) { // Reduced count a bit, but now it's smoke
             fireParticles.add(new ActiveFireParticle(x, y, z, 20f));
         }
     }
@@ -101,34 +99,7 @@ public class Gameplay {
             shakeIntensity = 0;
         }
 
-        // Entity Update
-        if(world.entities != null) {
-            for(Entity e : world.entities) {
-                e.update(dt, world);
-            }
-        }
-
-        if (!isCreative) {
-            isFlying = false;
-            int px = (int)Math.floor(camX);
-            int py = (int)Math.floor(camY);
-            int pz = (int)Math.floor(camZ);
-            byte headBlock = world.getBlock(px, (int)Math.floor(camY+1f), pz);
-            if (world.getBlock(px, py, pz) == 6 || headBlock == 6) {
-                fireDamageTimer -= dt;
-                if (fireDamageTimer <= 0) {
-                    health -= 2.0f;
-                    fireDamageTimer = 1.0f;
-                    if (health <= 0) {
-                        hasSpawned = false;
-                        health = 20.0f;
-                    }
-                }
-            } else {
-                fireDamageTimer = 0f;
-            }
-        }
-
+        // --- TNT UPDATE ---
         for (int i = tickingTNTs.size() - 1; i >= 0; i--) {
             ActiveTNT tnt = tickingTNTs.get(i);
             tnt.timer -= dt;
@@ -146,22 +117,15 @@ public class Gameplay {
 
             if (tnt.timer <= 0) {
                 world.explode(tnt.x, tnt.y, tnt.z, 4.0f);
-
-                if (!isCreative) {
-                    float dist = (float)Math.sqrt((camX-tnt.x)*(camX-tnt.x) + (camY-tnt.y)*(camY-tnt.y) + (camZ-tnt.z)*(camZ-tnt.z));
-                    if (dist < 5.0f) {
-                        health -= (5.0f - dist) * 4.0f;
-                        if (health <= 0) { hasSpawned = false; health = 20.0f; }
-                    }
-                }
-
                 tickingTNTs.remove(i);
             }
         }
 
+        // --- PARTICLES UPDATE ---
         updateParticles(fireParticles, dt, world, true);
         updateParticles(blockParticles, dt, world, false);
 
+        // --- FIRE LOGIC UPDATE ---
         for (int i = activeFires.size() - 1; i >= 0; i--) {
             ActiveFire fire = activeFires.get(i);
 
@@ -184,6 +148,7 @@ public class Gameplay {
             fire.life -= dt;
             fire.spreadTimer -= dt;
 
+            // Significantly reduced fire particle spawn rate (0.01 instead of 0.1) so it doesn't "snow"
             if (Math.random() < 0.01f) {
                 fireParticles.add(new ActiveFireParticle(fire.x + 0.5f, fire.y + 0.5f, fire.z + 0.5f, (byte)6));
             }
@@ -223,6 +188,7 @@ public class Gameplay {
             }
         }
 
+        // --- PLAYER MOVEMENT ---
         boolean inWater = false;
         byte blockAtFeet = world.getBlock((int)Math.floor(camX), (int)Math.floor(camY), (int)Math.floor(camZ));
         byte blockAtHead = world.getBlock((int)Math.floor(camX), (int)Math.floor(camY + 1.5f), (int)Math.floor(camZ));
@@ -233,7 +199,7 @@ public class Gameplay {
         if (checkCollision(world, camX, camY, camZ)) { camY += 2.5f * dt; }
 
         if (wantsToJump) {
-            if (isFlying && isCreative) {
+            if (isFlying) {
                 velocityY = 10.0f;
             } else if (inWater) {
                 velocityY = 4.0f;
@@ -241,12 +207,12 @@ public class Gameplay {
                 velocityY = 8.5f;
                 onGround = false;
             }
-        } else if (isFlying && isCreative) {
+        } else if (isFlying) {
             if(isSneaking) velocityY = -10.0f;
             else velocityY = 0f;
         }
 
-        if (!isFlying || !isCreative) {
+        if (!isFlying) {
             if (inWater) {
                 if(!wantsToJump) velocityY -= 5f * dt;
                 if (velocityY < -3f) velocityY = -3f;
@@ -274,7 +240,7 @@ public class Gameplay {
         if (inWater) speed = 2.5f * dt;
         else if (isSprinting) speed = 8.0f * dt;
         else if (isSneaking) speed = 2.0f * dt;
-        if (isFlying && isCreative) speed = 10.0f * dt;
+        if (isFlying) speed = 10.0f * dt;
 
         float yawRad = (float)Math.toRadians(yaw);
         float sinYaw = (float) Math.sin(yawRad);
@@ -317,7 +283,7 @@ public class Gameplay {
             if (p.life <= 0) { list.remove(i); continue; }
 
             if(checkCollisionPoint(world, p.x, p.y, p.z)) {
-                if (isFire && p.type == 6) {
+                if (isFire && p.type == 6) { // Only actual fire particles ignite, not smoke (99)
                     byte block = world.getBlock((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z));
                     if (block == 3 || block == 4) {
                         if (Math.random() < 0.3f) {
@@ -332,6 +298,8 @@ public class Gameplay {
                     if(Math.abs(p.vy) < 0.1f) { p.vx = 0; p.vz = 0; }
                 }
 
+                // Smoke (99) also gets removed when it hits ground, but it bounces a bit first if we want.
+                // Let's just remove it for simplicity.
                 if(isFire) list.remove(i);
             }
         }
@@ -380,3 +348,4 @@ public class Gameplay {
         }
     }
 }
+INNER_EOF
