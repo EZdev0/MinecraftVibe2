@@ -220,6 +220,10 @@ public class WorldLogic {
     }
 
     public void render(float[] vpMatrix, Gameplay gameplay) {
+        if (gameplay == null || vpMatrix == null) return;
+        if (gameplay.tickingTNTs == null) gameplay.tickingTNTs = new ArrayList<>();
+        if (gameplay.fireParticles == null) gameplay.fireParticles = new ArrayList<>();
+        if (gameplay.blockParticles == null) gameplay.blockParticles = new ArrayList<>();
         this.gameplayRef = gameplay;
 
         float dt = 0.016f;
@@ -267,6 +271,7 @@ public class WorldLogic {
             GLES20.glUniform1i(Booster.pTypeHandle, 100);
             for(int i=0; i<entities.size(); i++) {
                 Entity e = entities.get(i);
+                if (e == null) { int lastIdx = entities.size() - 1; if (i < lastIdx) entities.set(i, entities.get(lastIdx)); entities.remove(lastIdx); continue; }
                 Matrix.setIdentityM(modelMatrix, 0);
                 Matrix.translateM(modelMatrix, 0, e.x - 0.4f, e.y, e.z - 0.4f);
                 Matrix.scaleM(modelMatrix, 0, 0.8f, 0.8f, 0.8f);
@@ -279,10 +284,11 @@ public class WorldLogic {
 
             for(int i=droppedItems.size()-1; i>=0; i--) {
                 ItemEntity item = droppedItems.get(i);
+                if (item == null) { int lastIdx = droppedItems.size() - 1; if (i < lastIdx) droppedItems.set(i, droppedItems.get(lastIdx)); droppedItems.remove(lastIdx); continue; }
                 item.update(dt);
 
                 if (item.life <= 0) {
-                    droppedItems.remove(i);
+                    int lastIdx = droppedItems.size() - 1; if (i < lastIdx) droppedItems.set(i, droppedItems.get(lastIdx)); droppedItems.remove(lastIdx);
                     continue;
                 }
 
@@ -293,7 +299,7 @@ public class WorldLogic {
                     if(gameplay.activity != null && gameplay.activity.uiManager != null) {
                         gameplay.activity.uiManager.addToInventory(item.type, 1);
                     }
-                    droppedItems.remove(i);
+                    int lastIdx = droppedItems.size() - 1; if (i < lastIdx) droppedItems.set(i, droppedItems.get(lastIdx)); droppedItems.remove(lastIdx);
                     continue;
                 }
 
@@ -379,6 +385,8 @@ public class WorldLogic {
 
     public void interact(Gameplay g, boolean place, UIManager ui) {
         if (g == null) return;
+        if (entities == null) entities = new ArrayList<>();
+        if (g == null) return;
         float eyeHeight = g.camY + g.playerHeight - 0.2f;
         float dirX = (float) (Math.cos(Math.toRadians(g.pitch)) * Math.sin(Math.toRadians(g.yaw)));
         float dirY = (float) Math.sin(Math.toRadians(g.pitch));
@@ -392,9 +400,10 @@ public class WorldLogic {
 
             for(int i=entities.size()-1; i>=0; i--) {
                 Entity e = entities.get(i);
+                if (e == null) { int lastIdx = entities.size() - 1; if (i < lastIdx) entities.set(i, entities.get(lastIdx)); entities.remove(lastIdx); continue; }
                 if(bx == (int)Math.floor(e.x) && by == (int)Math.floor(e.y) && bz == (int)Math.floor(e.z)) {
                     if(!place) {
-                        entities.remove(i);
+                        int lastIdx = entities.size() - 1; if (i < lastIdx) entities.set(i, entities.get(lastIdx)); entities.remove(lastIdx);
                         return;
                     }
                 }

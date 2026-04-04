@@ -96,6 +96,7 @@ public class Gameplay {
     }
 
     public void update(float dt, WorldLogic world) {
+        if (world == null) return;
         if (!hasSpawned) { spawnOnHighestBlock(world); return; }
         if (dt > 0.05f) dt = 0.05f;
 
@@ -126,8 +127,8 @@ public class Gameplay {
             int px = (int)Math.floor(camX);
             int py = (int)Math.floor(camY);
             int pz = (int)Math.floor(camZ);
-            byte headBlock = world.getBlock(px, (int)Math.floor(camY+1f), pz);
-            if (world.getBlock(px, py, pz) == 6 || headBlock == 6) {
+            byte headBlock = (world != null) ? world.getBlock(px, (int)Math.floor(camY+1f), pz) : 0;
+            if ((world != null && world.getBlock(px, py, pz) == 6) || headBlock == 6) {
                 fireDamageTimer -= dt;
                 if (fireDamageTimer <= 0) {
                     health -= 2.0f;
@@ -145,6 +146,7 @@ public class Gameplay {
         // --- TNT UPDATE ---
         for (int i = tickingTNTs.size() - 1; i >= 0; i--) {
             ActiveTNT tnt = tickingTNTs.get(i);
+            if (tnt == null) { int lastIdx = tickingTNTs.size() - 1; if (i < lastIdx) tickingTNTs.set(i, tickingTNTs.get(lastIdx)); tickingTNTs.remove(lastIdx); continue; }
             tnt.timer -= dt;
             tnt.vy -= 10.0f * dt;
 
@@ -159,7 +161,7 @@ public class Gameplay {
             if(!checkCollisionPoint(world, tnt.x, tnt.y, nextZ)) { tnt.z = nextZ; } else { tnt.vz = 0f; }
 
             if (tnt.timer <= 0) {
-                world.explode(tnt.x, tnt.y, tnt.z, 4.0f);
+                if (world != null) world.explode(tnt.x, tnt.y, tnt.z, 4.0f);
                 if (!isCreative) {
                     float dist = (float)Math.sqrt((camX-tnt.x)*(camX-tnt.x) + (camY-tnt.y)*(camY-tnt.y) + (camZ-tnt.z)*(camZ-tnt.z));
                     if (dist < 5.0f) {
@@ -167,7 +169,9 @@ public class Gameplay {
                         if (health <= 0) { hasSpawned = false; health = 20.0f; }
                     }
                 }
-                tickingTNTs.remove(i);
+                int lastIdx = tickingTNTs.size() - 1;
+                if (i < lastIdx) tickingTNTs.set(i, tickingTNTs.get(lastIdx));
+                tickingTNTs.remove(lastIdx);
             }
         }
 
@@ -178,6 +182,7 @@ public class Gameplay {
         // --- FIRE LOGIC UPDATE ---
         for (int i = activeFires.size() - 1; i >= 0; i--) {
             ActiveFire fire = activeFires.get(i);
+            if (fire == null) { int lastIdx = activeFires.size() - 1; if (i < lastIdx) activeFires.set(i, activeFires.get(lastIdx)); activeFires.remove(lastIdx); continue; }
 
             if (world != null && world.getBlock(fire.x, fire.y, fire.z) != 6) {
                 int lastIdx = activeFires.size() - 1;
@@ -194,7 +199,7 @@ public class Gameplay {
                     hasSupport = true;
             }
             if (!hasSupport) {
-                if (world != null) world.setBlock(fire.x, fire.y, fire.z, (byte) 0);
+                if (world != null) if(world != null) world.setBlock(fire.x, fire.y, fire.z, (byte) 0);
                 int lastIdx = activeFires.size() - 1;
                 if (i < lastIdx) {
                     activeFires.set(i, activeFires.get(lastIdx));
@@ -211,7 +216,7 @@ public class Gameplay {
             }
 
             if (fire.life <= 0) {
-                if (world != null) world.setBlock(fire.x, fire.y, fire.z, (byte) 0);
+                if (world != null) if(world != null) world.setBlock(fire.x, fire.y, fire.z, (byte) 0);
                 int lastIdx = activeFires.size() - 1;
                 if (i < lastIdx) {
                     activeFires.set(i, activeFires.get(lastIdx));
@@ -232,7 +237,7 @@ public class Gameplay {
                         float distancePenalty = (Math.abs(dx) + Math.abs(dy) + Math.abs(dz)) * 0.15f;
                         float baseChance = (blockType == 4) ? 0.9f : 0.6f;
                         if (Math.random() < baseChance - distancePenalty) {
-                            world.setBlock(nx, ny, nz, (byte)6);
+                            if(world != null) world.setBlock(nx, ny, nz, (byte)6);
                             activeFires.add(new ActiveFire(nx, ny, nz));
                         }
                     }
@@ -242,17 +247,17 @@ public class Gameplay {
 
         if (Math.random() < 0.1f) {
             int px = (int)camX; int py = (int)camY-2; int pz = (int)camZ;
-            byte b = world.getBlock(px, py, pz);
-            if (b == 8 && world.getBlock(px, py-1, pz) == 0) {
-                world.setBlock(px, py, pz, (byte)0);
-                world.setBlock(px, py-1, pz, (byte)8);
+            byte b = (world != null) ? world.getBlock(px, py, pz) : 0;
+            if (world != null && b == 8 && world.getBlock(px, py-1, pz) == 0) {
+                if(world != null) world.setBlock(px, py, pz, (byte)0);
+                if(world != null) world.setBlock(px, py-1, pz, (byte)8);
             }
         }
 
         // --- PLAYER MOVEMENT ---
         boolean inWater = false;
-        byte blockAtFeet = world.getBlock((int)Math.floor(camX), (int)Math.floor(camY), (int)Math.floor(camZ));
-        byte blockAtHead = world.getBlock((int)Math.floor(camX), (int)Math.floor(camY + 1.5f), (int)Math.floor(camZ));
+        byte blockAtFeet = (world != null) ? world.getBlock((int)Math.floor(camX), (int)Math.floor(camY), (int)Math.floor(camZ)) : 0;
+        byte blockAtHead = (world != null) ? world.getBlock((int)Math.floor(camX), (int)Math.floor(camY + 1.5f), (int)Math.floor(camZ)) : 0;
         if (blockAtFeet == 7 || blockAtHead == 7) inWater = true;
 
         playerHeight = isSneaking ? 1.5f : 1.8f;
@@ -342,11 +347,11 @@ public class Gameplay {
             int bz = (int) Math.floor(camZ + dirZ * 3.0f);
 
             // To make it simple: we use world.interact for raycast to find target block
-            int[] hit = world.raycastBlock(this);
+            int[] hit = (world != null) ? world.raycastBlock(this) : null;
             if(hit != null) {
                 if(hit[0] == targetX && hit[1] == targetY && hit[2] == targetZ) {
                     breakTimer += dt;
-                    byte hitType = world.getBlock(targetX, targetY, targetZ);
+                    byte hitType = (world != null) ? world.getBlock(targetX, targetY, targetZ) : 0;
                     float requiredTime = 1.0f; // Default 1 sec
                     if(hitType == 1 || hitType == 4) requiredTime = 0.3f; // Dirt/Leaves fast
                     else if(hitType == 2) requiredTime = 2.0f; // Stone slow
@@ -356,9 +361,9 @@ public class Gameplay {
                     if(Math.random() < 0.1) addBlockParticles(targetX, targetY, targetZ, hitType);
 
                     if (breakTimer >= requiredTime) {
-                        world.setBlock(targetX, targetY, targetZ, (byte)0);
+                        if(world != null) world.setBlock(targetX, targetY, targetZ, (byte)0);
                         addBlockParticles(targetX, targetY, targetZ, hitType); // Final burst
-                        world.spawnItemEntity(targetX, targetY, targetZ, hitType); // Drop item!
+                        if(world != null) world.spawnItemEntity(targetX, targetY, targetZ, hitType); // Drop item!
                         if(activity != null && activity.soundManager != null) activity.soundManager.playSoundForBlock(hitType);
                         isBreaking = false;
                         targetX = -1;
@@ -377,18 +382,19 @@ public class Gameplay {
     private void updateParticles(ArrayList<ActiveFireParticle> list, float dt, WorldLogic world, boolean isFire) {
         for(int i = list.size() - 1; i >= 0; i--) {
             ActiveFireParticle p = list.get(i);
+            if (p == null) { int lastIdx = list.size() - 1; if (i < lastIdx) list.set(i, list.get(lastIdx)); list.remove(lastIdx); continue; }
             p.life -= dt;
             p.vy -= 15.0f * dt;
             p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
 
-            if (p.life <= 0) { list.remove(i); continue; }
+            if (p.life <= 0) { int lastIdx = list.size() - 1; if (i < lastIdx) list.set(i, list.get(lastIdx)); list.remove(lastIdx); continue; }
 
             if(checkCollisionPoint(world, p.x, p.y, p.z)) {
                 if (isFire && p.type == 6) {
                     byte block = world.getBlock((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z));
                     if (block == 3 || block == 4) {
                         if (Math.random() < 0.3f) {
-                            world.setBlock((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z), (byte)6);
+                            if(world != null) world.setBlock((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z), (byte)6);
                             activeFires.add(new ActiveFire((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z)));
                         }
                     }
@@ -399,7 +405,7 @@ public class Gameplay {
                     if(Math.abs(p.vy) < 0.1f) { p.vx = 0; p.vz = 0; }
                 }
 
-                if(isFire) list.remove(i);
+                if (isFire) { int lastIdx = list.size() - 1; if (i < lastIdx) list.set(i, list.get(lastIdx)); list.remove(lastIdx); }
             }
         }
     }
