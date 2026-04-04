@@ -59,21 +59,25 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
             lastFPSUpdate = System.currentTimeMillis();
         }
 
-        gameplay.update(dt, world);
+        // Apply Fast Render limit to update rate if toggle is active
+        if (activity != null && activity.uiManager != null && activity.uiManager.fastRender) {
+            if(frames % 2 == 0) gameplay.update(dt*2f, world); // Half the update frequency
+        } else {
+            gameplay.update(dt, world);
+        }
+
         world.updateChunks(gameplay.camX, gameplay.camZ);
 
         if (activity != null && activity.uiManager != null && activity.uiManager.touchOverlay != null) {
             activity.uiManager.touchOverlay.postInvalidate();
         }
 
-        // Apply Dynamic FOV
         float fov = 70f;
         if(gameplay.isSprinting || gameplay.isFlying) fov = 90f;
         Matrix.perspectiveM(projectionMatrix, 0, fov, screenRatio, 0.1f, 300f);
 
         float eyeHeight = gameplay.camY + gameplay.playerHeight - 0.2f;
 
-        // Feature 7: Apply Screen Shake
         float shakeX = 0, shakeY = 0, shakeZ = 0;
         if (gameplay.shakeIntensity > 0) {
             shakeX = ((float)Math.random() - 0.5f) * gameplay.shakeIntensity;

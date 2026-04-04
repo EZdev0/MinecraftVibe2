@@ -10,20 +10,17 @@ public class Gameplay {
     public float velocityY = 0f;
     public boolean onGround = false;
     private boolean hasSpawned = false;
-    private boolean wantsToJump = false;
 
-    // Feature 4: Crouching
+    // Changed to public so UIManager can control it continuously
+    public boolean wantsToJump = false;
+
     public boolean isSneaking = false;
-    // Feature 5: Flying Mode
     public boolean isFlying = false;
-    // Feature 6: Sprinting
     public boolean isSprinting = false;
 
-    // Feature 7: Screen Shake
     public float shakeIntensity = 0f;
     public float shakeTimer = 0f;
 
-    // Default 1.8. Sneaking reduces this.
     public float playerHeight = 1.8f;
     public float playerWidth = 0.6f;
 
@@ -33,8 +30,6 @@ public class Gameplay {
     public ArrayList<ActiveTNT> tickingTNTs = new ArrayList<>();
     public ArrayList<ActiveFire> activeFires = new ArrayList<>();
     public ArrayList<ActiveFireParticle> fireParticles = new ArrayList<>();
-
-    // Feature 1: Block breaking particles
     public ArrayList<ActiveFireParticle> blockParticles = new ArrayList<>();
 
     public class ActiveTNT {
@@ -59,20 +54,34 @@ public class Gameplay {
         public float x, y, z;
         public float vx, vy, vz;
         public float life;
-        public byte type; // 6 for fire, other for blocks
+        public byte type;
         public ActiveFireParticle(float x, float y, float z, byte type) {
             this.x = x; this.y = y; this.z = z;
-            this.vx = ((float)Math.random() - 0.5f) * 4f;
-            this.vy = ((float)Math.random()) * 5f + 2f;
-            this.vz = ((float)Math.random() - 0.5f) * 4f;
-            this.life = 0.5f + (float)Math.random() * 1.5f;
+            this.vx = ((float)Math.random() - 0.5f) * 6f;
+            this.vy = ((float)Math.random()) * 6f + 3f;
+            this.vz = ((float)Math.random() - 0.5f) * 6f;
+            this.life = 0.8f + (float)Math.random() * 2.0f;
             this.type = type;
+        }
+        public ActiveFireParticle(float x, float y, float z, float intensity) {
+            this.x = x; this.y = y; this.z = z;
+            this.vx = ((float)Math.random() - 0.5f) * intensity;
+            this.vy = ((float)Math.random() - 0.5f) * intensity;
+            this.vz = ((float)Math.random() - 0.5f) * intensity;
+            this.life = 1.0f + (float)Math.random() * 3.0f;
+            this.type = 6;
         }
     }
 
     public void addBlockParticles(float x, float y, float z, byte blockType) {
-        for(int i=0; i<8; i++) {
+        for(int i=0; i<15; i++) {
             blockParticles.add(new ActiveFireParticle(x+0.5f, y+0.5f, z+0.5f, blockType));
+        }
+    }
+
+    public void addExplosionParticles(float x, float y, float z) {
+        for(int i=0; i<40; i++) {
+            fireParticles.add(new ActiveFireParticle(x, y, z, 20f));
         }
     }
 
@@ -82,7 +91,6 @@ public class Gameplay {
 
         gameTime += dt;
 
-        // Shake logic
         if (shakeTimer > 0) {
             shakeTimer -= dt;
             if (shakeTimer <= 0) shakeIntensity = 0;
@@ -108,19 +116,11 @@ public class Gameplay {
 
             if (tnt.timer <= 0) {
                 world.explode(tnt.x, tnt.y, tnt.z, 4.0f);
-
-                // Screen shake based on distance
-                float dist = (float)Math.sqrt((camX-tnt.x)*(camX-tnt.x) + (camY-tnt.y)*(camY-tnt.y) + (camZ-tnt.z)*(camZ-tnt.z));
-                if(dist < 20f) {
-                    shakeIntensity = (20f - dist) / 20f;
-                    shakeTimer = 0.5f;
-                }
-
                 tickingTNTs.remove(i);
             }
         }
 
-        // --- PARTICLES UPDATE (Fire & Blocks) ---
+        // --- PARTICLES UPDATE ---
         updateParticles(fireParticles, dt, world, true);
         updateParticles(blockParticles, dt, world, false);
 
@@ -128,12 +128,17 @@ public class Gameplay {
         for (int i = activeFires.size() - 1; i >= 0; i--) {
             ActiveFire fire = activeFires.get(i);
 
+            if(world.getBlock(fire.x, fire.y, fire.z) != 6) {
+                activeFires.remove(i);
+                continue;
+            }
+
             boolean hasSupport = false;
             int[][] neighbors = {{1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1}};
             for(int[] n : neighbors) {
                 if (world.getBlock(fire.x+n[0], fire.y+n[1], fire.z+n[2]) > 0) hasSupport = true;
             }
-            if(!hasSupport || world.getBlock(fire.x, fire.y, fire.z) != 6) {
+            if(!hasSupport) {
                 world.setBlock(fire.x, fire.y, fire.z, (byte)0);
                 activeFires.remove(i);
                 continue;
@@ -142,7 +147,7 @@ public class Gameplay {
             fire.life -= dt;
             fire.spreadTimer -= dt;
 
-            if (Math.random() < 0.05f) {
+            if (Math.random() < 0.1f) {
                 fireParticles.add(new ActiveFireParticle(fire.x + 0.5f, fire.y + 0.5f, fire.z + 0.5f, (byte)6));
             }
 
@@ -172,20 +177,16 @@ public class Gameplay {
             }
         }
 
-        // Feature 8: Sand Gravity
         if (Math.random() < 0.1f) {
-            // Pick a random block in loaded chunks and check if it's sand (we'll use ID 8 for sand later)
-            // For now, let's just make dirt (1) fall sometimes if nothing is under it, to simulate gravity!
-            // Actually, let's check a random block under the player instead to save performance.
             int px = (int)camX; int py = (int)camY-2; int pz = (int)camZ;
             byte b = world.getBlock(px, py, pz);
-            if (b == 8 && world.getBlock(px, py-1, pz) == 0) { // Sand logic
+            if (b == 8 && world.getBlock(px, py-1, pz) == 0) {
                 world.setBlock(px, py, pz, (byte)0);
                 world.setBlock(px, py-1, pz, (byte)8);
             }
         }
 
-        // --- PLAYER MOVEMENT & SWIMMING ---
+        // --- PLAYER MOVEMENT ---
         boolean inWater = false;
         byte blockAtFeet = world.getBlock((int)Math.floor(camX), (int)Math.floor(camY), (int)Math.floor(camZ));
         byte blockAtHead = world.getBlock((int)Math.floor(camX), (int)Math.floor(camY + 1.5f), (int)Math.floor(camZ));
@@ -197,22 +198,21 @@ public class Gameplay {
 
         if (wantsToJump) {
             if (isFlying) {
-                velocityY = 10.0f; // Fly up continuously
+                velocityY = 10.0f; // Continuous upward thrust while held
             } else if (inWater) {
-                velocityY = 4.0f;
+                velocityY = 4.0f; // Continuous swimming thrust while held
             } else if (onGround) {
                 velocityY = 8.5f;
                 onGround = false;
             }
         } else if (isFlying) {
-            if(isSneaking) velocityY = -10.0f; // Fly down
-            else velocityY = 0f; // Hover
+            if(isSneaking) velocityY = -10.0f;
+            else velocityY = 0f;
         }
-        wantsToJump = false;
 
         if (!isFlying) {
             if (inWater) {
-                velocityY -= 5f * dt;
+                if(!wantsToJump) velocityY -= 5f * dt;
                 if (velocityY < -3f) velocityY = -3f;
             } else {
                 velocityY -= 25f * dt;
@@ -252,19 +252,15 @@ public class Gameplay {
         float moveX = (dirX * -joyMoveY + rightX * joyMoveX) * speed;
         float moveZ = (dirZ * -joyMoveY + rightZ * joyMoveX) * speed;
 
-        // Feature 3: Auto-Jump
         if (onGround && (joyMoveX != 0 || joyMoveY != 0)) {
             if (checkCollision(world, camX + moveX, camY, camZ) || checkCollision(world, camX, camY, camZ + moveZ)) {
-                // If blocked, check if 1 block higher is free
                 if (!checkCollision(world, camX + moveX, camY + 1.1f, camZ) && !checkCollision(world, camX, camY + 1.1f, camZ + moveZ)) {
-                    camY += 1.1f; // Step up
+                    camY += 1.1f;
                 }
             }
         }
 
-        // Feature 4 part 2: Sneak Edge Detection
         if (onGround && isSneaking && !inWater) {
-            // Prevent moving off ledges
             if (!checkCollision(world, camX + moveX, camY - 0.5f, camZ)) moveX = 0;
             if (!checkCollision(world, camX, camY - 0.5f, camZ + moveZ)) moveZ = 0;
         }
@@ -294,24 +290,26 @@ public class Gameplay {
                         }
                     }
                 } else {
-                    p.vy *= -0.3f; // bounce
+                    p.vy *= -0.3f;
                     p.vx *= 0.5f; p.vz *= 0.5f;
                     p.y += 0.1f;
-                    if(Math.abs(p.vy) < 0.1f) p.vx = 0; p.vz = 0; // stop moving
+                    if(Math.abs(p.vy) < 0.1f) { p.vx = 0; p.vz = 0; }
                 }
                 if(isFire) list.remove(i);
             }
         }
     }
 
-    public void jump() { wantsToJump = true; }
+    public void jump() { wantsToJump = true; } // Keep for backward compatibility if needed
 
     private boolean checkCollisionPoint(WorldLogic world, float x, float y, float z) {
+        if (world == null) return false;
         byte block = world.getBlock((int)Math.floor(x), (int)Math.floor(y), (int)Math.floor(z));
         return (block > 0 && block != 6 && block != 7);
     }
 
     private boolean checkCollision(WorldLogic world, float x, float y, float z) {
+        if (world == null) return false;
         float shrink = 0.01f;
         int minX = (int) Math.floor(x - playerWidth / 2f + shrink);
         int maxX = (int) Math.floor(x + playerWidth / 2f - shrink);
@@ -332,6 +330,7 @@ public class Gameplay {
     }
 
     private void spawnOnHighestBlock(WorldLogic world) {
+        if (world == null) return;
         int cx = (int) Math.floor(camX);
         int cz = (int) Math.floor(camZ);
         for (int y = 127; y > 0; y--) {
