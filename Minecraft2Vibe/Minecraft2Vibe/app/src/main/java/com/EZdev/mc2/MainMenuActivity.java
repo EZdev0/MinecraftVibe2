@@ -77,7 +77,6 @@ public class MainMenuActivity extends Activity {
 
         createSettingsMenu();
 
-        setContentView(root);
     }
 
     private void startGame(boolean isCreative, boolean loadWorld) {
