@@ -22,6 +22,8 @@ public class WorldLogic {
 
         for (int x = -renderDistance; x <= renderDistance; x++) {
             for (int z = -renderDistance; z <= renderDistance; z++) {
+                if (x*x + z*z > renderDistance*renderDistance) continue;
+
                 String key = (playerChunkX + x) + "," + (playerChunkZ + z);
                 if (!chunks.containsKey(key)) {
                     Chunk newChunk = new Chunk(this, playerChunkX + x, playerChunkZ + z);
@@ -69,12 +71,14 @@ public class WorldLogic {
         }
     }
 
+    // This method is called when FIRE is placed or spreads. It checks if there is TNT around the FIRE.
     public void checkIgnition(int x, int y, int z, Gameplay g) {
         int[][] neighbors = {{1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1}};
         for(int[] n : neighbors) {
             int nx = x + n[0];
             int ny = y + n[1];
             int nz = z + n[2];
+            // Only fire can ignite TNT
             if(getBlock(nx, ny, nz) == 5) {
                 setBlock(nx, ny, nz, (byte)0);
                 Gameplay.ActiveTNT newTNT = g.new ActiveTNT(nx + 0.5f, ny, nz + 0.5f);
@@ -90,6 +94,16 @@ public class WorldLogic {
         HashSet<Chunk> chunksToUpdate = new HashSet<>();
 
         if (gameplayRef != null) {
+            // Screen shake
+            float distToPlayer = (float)Math.sqrt((gameplayRef.camX-ex)*(gameplayRef.camX-ex) + (gameplayRef.camY-ey)*(gameplayRef.camY-ey) + (gameplayRef.camZ-ez)*(gameplayRef.camZ-ez));
+            if(distToPlayer < 25f) {
+                gameplayRef.shakeIntensity = (25f - distToPlayer) / 25f;
+                gameplayRef.shakeTimer = 0.6f;
+            }
+
+            // Explosion particles
+            gameplayRef.addExplosionParticles(ex, ey, ez);
+
             for (Gameplay.ActiveTNT tnt : gameplayRef.tickingTNTs) {
                 float dx = tnt.x - ex;
                 float dy = tnt.y - ey;
@@ -123,7 +137,7 @@ public class WorldLogic {
                             newTNT.timer = 0.5f + (float)Math.random() * 1.5f;
                             gameplayRef.tickingTNTs.add(newTNT);
                         } else if (block != 0 && block != 7) {
-                            if (gameplayRef != null) gameplayRef.addBlockParticles(x, y, z, block);
+                            if (gameplayRef != null && Math.random() < 0.2f) gameplayRef.addBlockParticles(x, y, z, block);
                             int cx = (int) Math.floor(x / 16.0);
                             int cz = (int) Math.floor(z / 16.0);
                             Chunk c = chunks.get(cx + "," + cz);
@@ -142,8 +156,7 @@ public class WorldLogic {
     public void render(float[] vpMatrix, Gameplay gameplay) {
         this.gameplayRef = gameplay;
 
-        // Feature 2: Day Night Cycle Clear Color modification based on gameTime
-        float dayCycle = (float)(Math.sin(gameplay.gameTime * 0.05f) * 0.5f + 0.5f); // 0 to 1
+        float dayCycle = (float)(Math.sin(gameplay.gameTime * 0.05f) * 0.5f + 0.5f);
         GLES20.glClearColor(0.1f + dayCycle*0.4f, 0.2f + dayCycle*0.6f, 0.4f + dayCycle*0.6f, 1.0f);
 
         GLES20.glUseProgram(Booster.shaderProgram);
@@ -157,9 +170,18 @@ public class WorldLogic {
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
+        float camChunkX = gameplay.camX / 16.0f;
+        float camChunkZ = gameplay.camZ / 16.0f;
+        float renderRadiusSq = (renderDistance + 1) * (renderDistance + 1);
+
         for (Map.Entry<String, Chunk> entry : chunks.entrySet()) {
             Chunk c = entry.getValue();
             if (c.vertexBuffer == null || c.vertexCount == 0) continue;
+
+            float dx = c.chunkX - camChunkX;
+            float dz = c.chunkZ - camChunkZ;
+            if (dx*dx + dz*dz > renderRadiusSq) continue;
+
             Matrix.setIdentityM(modelMatrix, 0);
             Matrix.translateM(modelMatrix, 0, c.chunkX * 16, 0, c.chunkZ * 16);
             Matrix.multiplyMM(finalMVP, 0, vpMatrix, 0, modelMatrix, 0);
@@ -186,22 +208,24 @@ public class WorldLogic {
             }
             GLES20.glUniform1i(Booster.isFlashingHandle, 0);
 
-            // Render all particles
-            for(int i=0; i<gameplay.fireParticles.size(); i++) renderParticle(gameplay.fireParticles.get(i), vpMatrix);
-            for(int i=0; i<gameplay.blockParticles.size(); i++) renderParticle(gameplay.blockParticles.get(i), vpMatrix);
+            for(int i=0; i<gameplay.fireParticles.size(); i++) renderParticle(gameplay.fireParticles.get(i), vpMatrix, 0.15f);
+            for(int i=0; i<gameplay.blockParticles.size(); i++) renderParticle(gameplay.blockParticles.get(i), vpMatrix, 0.1f);
         }
         GLES20.glDisableVertexAttribArray(Booster.posHandle);
         GLES20.glDisableVertexAttribArray(Booster.colorHandle);
     }
 
-    private void renderParticle(Gameplay.ActiveFireParticle p, float[] vpMatrix) {
+    private void renderParticle(Gameplay.ActiveFireParticle p, float[] vpMatrix, float size) {
         if(p == null) return;
         Matrix.setIdentityM(modelMatrix, 0);
         Matrix.translateM(modelMatrix, 0, p.x, p.y, p.z);
-        Matrix.scaleM(modelMatrix, 0, 0.15f, 0.15f, 0.15f);
+        Matrix.scaleM(modelMatrix, 0, size, size, size);
         Matrix.multiplyMM(finalMVP, 0, vpMatrix, 0, modelMatrix, 0);
         GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
         GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, Booster.tntVertexBuffer);
+
+        // Simple trick to color block particles differently depending on type
+        // if type == 6 (fire), it uses red tnt buffer, else we offset the color slightly
         GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, Booster.tntColorBuffer);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
     }
@@ -220,6 +244,7 @@ public class WorldLogic {
             byte hitBlock = getBlock(bx, by, bz);
             if (hitBlock > 0 && hitBlock != 6 && hitBlock != 7) {
                 if (!place && hitBlock == 5 && g.activeBlock == 6) {
+                    // Ignite TNT with Fire item
                     setBlock(bx, by, bz, (byte)0);
                     g.tickingTNTs.add(g.new ActiveTNT(bx + 0.5f, by, bz + 0.5f));
                     return;
@@ -227,13 +252,14 @@ public class WorldLogic {
                 if (place && lastX != -1 && !isPlayerInside(g, lastX, lastY, lastZ)) {
                     setBlock(lastX, lastY, lastZ, g.activeBlock);
                     if(g.activeBlock == 6) {
-                        checkIgnition(lastX, lastY, lastZ, g);
+                        // Placed Fire
+                        checkIgnition(lastX, lastY, lastZ, g); // Check if we placed it next to TNT
                         g.activeFires.add(g.new ActiveFire(lastX, lastY, lastZ));
                     }
                     if (g.activeBlock == 5) {
-                        g.activeBlock = 6;
-                        if (ui != null) ui.updateHotbarUI();
-                        checkIgnition(lastX, lastY, lastZ, g);
+                        // Placed TNT. REMOVED: Auto-switch to fire item!
+                        // checkIgnition is technically correct here to check if we placed TNT NEXT TO an existing fire block
+                        checkIgnitionIfTntPlaced(lastX, lastY, lastZ, g);
                     }
                 } else if (!place) {
                     g.addBlockParticles(bx, by, bz, hitBlock);
@@ -242,6 +268,21 @@ public class WorldLogic {
                 return;
             }
             lastX = bx; lastY = by; lastZ = bz;
+        }
+    }
+
+    private void checkIgnitionIfTntPlaced(int x, int y, int z, Gameplay g) {
+        int[][] neighbors = {{1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1}};
+        for(int[] n : neighbors) {
+            int nx = x + n[0];
+            int ny = y + n[1];
+            int nz = z + n[2];
+            if(getBlock(nx, ny, nz) == 6) { // If placed next to fire
+                setBlock(x, y, z, (byte)0);
+                Gameplay.ActiveTNT newTNT = g.new ActiveTNT(x + 0.5f, y, z + 0.5f);
+                g.tickingTNTs.add(newTNT);
+                return;
+            }
         }
     }
 

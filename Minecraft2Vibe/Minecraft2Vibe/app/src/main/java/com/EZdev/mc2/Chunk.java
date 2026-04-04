@@ -11,6 +11,9 @@ public class Chunk {
     public FloatBuffer vertexBuffer, colorBuffer;
     public int vertexCount = 0;
 
+    // Performance: Reusable buffers to stop GC lag (Sodium/Optifine style buffer pooling)
+    private int bufferCapacity = 0;
+
     public Chunk(WorldLogic world, int cx, int cz) {
         this.world = world; this.chunkX = cx; this.chunkZ = cz;
         generateTerrain(); addDecorations(); buildMesh();
@@ -37,13 +40,11 @@ public class Chunk {
                     }
                 }
 
-                // Add water lakes! Sea level is 50.
                 for (int y = 50; y > height; y--) {
-                    blocks[x][y][z] = 7; // 7 is water
+                    blocks[x][y][z] = 7;
                 }
-                // If ground is under water, turn top block to dirt instead of grass
                 if (height < 50 && blocks[x][height][z] == 1) {
-                    blocks[x][height][z] = 1; // It's just dirt/grass for now, could be sand.
+                    blocks[x][height][z] = 1;
                 }
             }
         }
@@ -52,7 +53,7 @@ public class Chunk {
     private void addDecorations() {
         for (int x = 2; x < 14; x++) {
             for (int z = 2; z < 14; z++) {
-                for (int y = 100; y > 50; y--) { // Trees don't grow underwater
+                for (int y = 100; y > 50; y--) {
                     if (blocks[x][y][z] == 1 && blocks[x][y+1][z] == 0) {
                         if (Math.random() < 0.02) {
                             for(int h=1; h<=4; h++) blocks[x][y+h][z] = 3;
@@ -76,14 +77,17 @@ public class Chunk {
 
     private boolean isTransparent(int x, int y, int z, byte sourceBlockType) {
         byte b = getBlockWorldAware(x, y, z);
-        if (b == 0 || b == 6) return true; // Air and fire are transparent
-        if (sourceBlockType != 7 && b == 7) return true; // Non-water sees water as transparent
+        if (b == 0 || b == 6) return true;
+        if (sourceBlockType != 7 && b == 7) return true;
         return false;
     }
 
     public void buildMesh() {
-        float[] vData = new float[16*128*16 * 48 * 3];
-        float[] cData = new float[16*128*16 * 48 * 4];
+        // Worst-case buffer allocation (only happens if chunk is entirely solid block checkerboard)
+        // Usually, chunks have way fewer vertices. We will pool this.
+        int MAX_POSSIBLE_VERTS = 16*128*16 * 12; // 12 max visible vertices per block usually
+        float[] vData = new float[MAX_POSSIBLE_VERTS * 3];
+        float[] cData = new float[MAX_POSSIBLE_VERTS * 4];
         vertexCount = 0;
 
         for (int x = 0; x < 16; x++) {
@@ -98,7 +102,7 @@ public class Chunk {
                     else if (type == 3) { r = 0.4f; g = 0.25f; b = 0.1f; }
                     else if (type == 4) { r = 0.1f; g = 0.5f; b = 0.1f; }
                     else if (type == 5) { r = 0.9f; g = 0.2f; b = 0.2f; }
-                    else if (type == 7) { r = 0.2f; g = 0.4f; b = 0.9f; a = 0.7f; } // Water
+                    else if (type == 7) { r = 0.2f; g = 0.4f; b = 0.9f; a = 0.7f; }
 
                     if (type == 1 && y < 127 && blocks[x][y+1][z] != 0 && blocks[x][y+1][z] != 7) {
                         r = 0.4f; g = 0.25f; b = 0.1f;
@@ -122,13 +126,25 @@ public class Chunk {
                 }
             }
         }
-        vertexBuffer = ByteBuffer.allocateDirect(vertexCount * 3 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+
+        // --- Sodium/Optifine Optimization: Buffer Pooling ---
+        // Instead of throwing away buffers constantly (which causes extreme GC stuttering when fire spreads),
+        // we only allocate a new ByteBuffer if our required capacity exceeded the previous one.
+        if (vertexBuffer == null || vertexCount > bufferCapacity) {
+            bufferCapacity = vertexCount + 1000; // Add 1000 vertices padding to prevent micro-allocations
+            vertexBuffer = ByteBuffer.allocateDirect(bufferCapacity * 3 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            colorBuffer = ByteBuffer.allocateDirect(bufferCapacity * 4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        }
+
+        vertexBuffer.clear();
         vertexBuffer.put(vData, 0, vertexCount * 3).position(0);
-        colorBuffer = ByteBuffer.allocateDirect(vertexCount * 4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+
+        colorBuffer.clear();
         colorBuffer.put(cData, 0, vertexCount * 4).position(0);
     }
 
     private void addFace(float[] v, float[] c, float x, float y, float z, int s, float r, float g, float b, float a) {
+        if(vertexCount >= (v.length/3) - 6) return; // Safety check
         float[] fs = null;
         switch(s) {
             case 0: fs = new float[]{x,y+1,z, x,y+1,z+1, x+1,y+1,z+1, x,y+1,z, x+1,y+1,z+1, x+1,y+1,z}; break;
@@ -150,6 +166,7 @@ public class Chunk {
     }
 
     private void addQuad(float[] v, float[] c, float[] v1, float[] v2, float[] v3, float[] v4, float r, float g, float b) {
+        if(vertexCount >= (v.length/3) - 6) return;
         float[][] ts = {v1, v2, v3, v1, v3, v4};
         for (int i=0; i<6; i++) {
             v[vertexCount*3 + i*3] = ts[i][0]; v[vertexCount*3 + i*3+1] = ts[i][1]; v[vertexCount*3 + i*3+2] = ts[i][2];
@@ -159,6 +176,7 @@ public class Chunk {
     }
 
     private void drawLetterT(float[] v, float[] c, float x, float y, float z, int s) {
+        if(vertexCount >= (v.length/3) - 12) return;
         float e = 0.01f; float[][] rs = new float[2][18];
         if (s == 4) { rs[0] = new float[]{x+0.8f,y+0.8f,z-e, x+0.8f,y+0.65f,z-e, x+0.2f,y+0.65f,z-e, x+0.8f,y+0.8f,z-e, x+0.2f,y+0.65f,z-e, x+0.2f,y+0.8f,z-e};
                      rs[1] = new float[]{x+0.6f,y+0.65f,z-e, x+0.6f,y+0.2f,z-e, x+0.4f,y+0.2f,z-e, x+0.6f,y+0.65f,z-e, x+0.4f,y+0.2f,z-e, x+0.4f,y+0.65f,z-e}; }

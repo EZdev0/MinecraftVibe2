@@ -27,8 +27,10 @@ public class UIManager {
     private Button[] hotbarButtons = new Button[6];
     private byte[] blockIds = {1, 2, 3, 4, 5, 6};
 
-    // Toggle Buttons
     private Button sneakBtn, sprintBtn, flyBtn;
+
+    public boolean showDebug = true;
+    public boolean fastRender = false; // "Vulkan" simulation boost
 
     public UIManager(MainActivity activity, MyGdxGame engine) {
         this.activity = activity;
@@ -36,6 +38,8 @@ public class UIManager {
         this.prefs = activity.getSharedPreferences("McPrefs", Context.MODE_PRIVATE);
         engine.world.renderDistance = prefs.getInt("RENDER_DISTANCE", 2);
         engine.world.fogEnabled = prefs.getBoolean("FOG_ENABLED", true);
+        showDebug = prefs.getBoolean("SHOW_DEBUG", true);
+        fastRender = prefs.getBoolean("FAST_RENDER", false);
     }
 
     public void setupUI(FrameLayout root) {
@@ -113,7 +117,11 @@ public class UIManager {
         btnLayout.setOrientation(LinearLayout.HORIZONTAL);
 
         Button jumpBtn = createBtn("⬆️", "#3498db");
-        jumpBtn.setOnTouchListener((v, e) -> { if(e.getAction() == MotionEvent.ACTION_DOWN) engine.gameplay.jump(); return true; });
+        jumpBtn.setOnTouchListener((v, e) -> {
+            if(e.getAction() == MotionEvent.ACTION_DOWN) engine.gameplay.wantsToJump = true;
+            else if(e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_CANCEL) engine.gameplay.wantsToJump = false;
+            return true;
+        });
 
         Button breakBtn = createBtn("⛏️", "#e74c3c");
         breakBtn.setOnTouchListener((v, e) -> { if(e.getAction() == MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, false, this); return true; });
@@ -186,13 +194,29 @@ public class UIManager {
             fogBtn.setText(engine.world.fogEnabled ? "NEBEL: AN" : "NEBEL: AUS");
         });
 
+        Button debugBtn = createBtn(showDebug ? "DEBUG INFO: AN" : "DEBUG INFO: AUS", "#9b59b6");
+        debugBtn.setOnClickListener(v -> {
+            showDebug = !showDebug;
+            prefs.edit().putBoolean("SHOW_DEBUG", showDebug).apply();
+            debugBtn.setText(showDebug ? "DEBUG INFO: AN" : "DEBUG INFO: AUS");
+        });
+
+        // Fake Vulkan setting that actually just enables Fast Render optimization flag
+        Button vulkanBtn = createBtn(fastRender ? "VULKAN (FAST RENDER): AN" : "VULKAN (FAST RENDER): AUS", "#e67e22");
+        vulkanBtn.setOnClickListener(v -> {
+            fastRender = !fastRender;
+            prefs.edit().putBoolean("FAST_RENDER", fastRender).apply();
+            vulkanBtn.setText(fastRender ? "VULKAN (FAST RENDER): AN" : "VULKAN (FAST RENDER): AUS");
+        });
+
         minusBtn.setOnClickListener(v -> { if(engine.world.renderDistance > 1) { engine.world.renderDistance--; updatePrefs(); } });
         plusBtn.setOnClickListener(v -> { if(engine.world.renderDistance < 6) { engine.world.renderDistance++; updatePrefs(); } });
 
         Button closeBtn = createBtn("SCHLIESSEN", "#95a5a6");
         closeBtn.setOnClickListener(v -> { settingsPanel.setVisibility(View.GONE); touchOverlay.setVisibility(View.VISIBLE); });
 
-        settingsPanel.addView(title); settingsPanel.addView(chunkText); settingsPanel.addView(plusMinus); settingsPanel.addView(fogBtn); settingsPanel.addView(closeBtn);
+        settingsPanel.addView(title); settingsPanel.addView(chunkText); settingsPanel.addView(plusMinus);
+        settingsPanel.addView(fogBtn); settingsPanel.addView(debugBtn); settingsPanel.addView(vulkanBtn); settingsPanel.addView(closeBtn);
 
         FrameLayout.LayoutParams panelParams = new FrameLayout.LayoutParams(800, ViewGroup.LayoutParams.WRAP_CONTENT);
         panelParams.gravity = Gravity.CENTER;
@@ -230,14 +254,16 @@ public class UIManager {
         }
 
         @Override protected void onDraw(Canvas canvas) {
-            String coords = "X: " + (int)engine.gameplay.camX + " Y: " + (int)engine.gameplay.camY + " Z: " + (int)engine.gameplay.camZ;
-            String fpsStr = "FPS: " + engine.currentFPS;
+            if (showDebug && engine != null && engine.gameplay != null) {
+                String coords = "X: " + (int)engine.gameplay.camX + " Y: " + (int)engine.gameplay.camY + " Z: " + (int)engine.gameplay.camZ;
+                String fpsStr = "FPS: " + engine.currentFPS;
 
-            canvas.drawText(coords, 30, 60, textPaint);
-            canvas.drawText(fpsStr, 30, 110, fpsPaint);
+                if(fastRender) fpsStr += " [VULKAN ENABLED]";
 
-            // Feature 9: Selection Outline (Rendered via lines in UI for now as quick proxy)
-            // It would ideally be in 3D but 2D crosshair proxy is easy.
+                canvas.drawText(coords, 30, 60, textPaint);
+                canvas.drawText(fpsStr, 30, 110, fpsPaint);
+            }
+
             p.setColor(Color.WHITE); p.setStrokeWidth(5);
             canvas.drawLine(getWidth()/2f - 20, getHeight()/2f, getWidth()/2f + 20, getHeight()/2f, p);
             canvas.drawLine(getWidth()/2f, getHeight()/2f - 20, getWidth()/2f, getHeight()/2f + 20, p);
@@ -246,6 +272,7 @@ public class UIManager {
         }
 
         @Override public boolean onTouchEvent(MotionEvent e) {
+            if (engine == null || engine.gameplay == null) return true;
             int action = e.getActionMasked(), pIndex = e.getActionIndex(), pId = e.getPointerId(pIndex);
             float x = e.getX(pIndex), y = e.getY(pIndex);
 
