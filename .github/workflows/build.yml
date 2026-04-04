@@ -8,11 +8,14 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
 
     steps:
     - uses: actions/checkout@v4
+
     - name: set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -34,13 +37,25 @@ jobs:
         name: app-debug
         path: Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/app-debug.apk
 
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: app-debug
+
     - name: Create Release
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
       uses: softprops/action-gh-release@v2
       with:
+        files: "*.apk"
         tag_name: latest
         name: Latest Build
-        body: Automatisch generiertes Release (Nightly) der aktuellen Version.
-        files: Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/app-debug.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        body: 'Automatisch generiertes Release (Nightly) der aktuellen Version.'
+        draft: false
+        prerelease: false
