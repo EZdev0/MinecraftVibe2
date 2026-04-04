@@ -33,3 +33,14 @@ jobs:
       with:
         name: app-debug
         path: Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Create Release
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: latest
+        name: Latest Build
+        body: Automatisch generiertes Release (Nightly) der aktuellen Version.
+        files: Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/app-debug.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
