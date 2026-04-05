@@ -279,36 +279,14 @@ public class WorldLogic {
             Matrix.multiplyMM(finalMVP, 0, vpMatrix, 0, modelMatrix, 0);
             GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
             GLES20.glUniform1i(Booster.pTypeHandle, 0);
-            if (c.needsVboUpdate) {
-                synchronized(c) {
-                    if (!c.vbosReady) {
-                        GLES20.glGenBuffers(2, c.vbos, 0);
-                        c.vbosReady = true;
-                    }
-                    c.vertexBuffer.position(0);
-                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[0]);
-                    GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, c.vertexCount * 3 * 4, c.vertexBuffer, GLES20.GL_STATIC_DRAW);
-
-                    c.colorBuffer.position(0);
-                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[1]);
-                    GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, c.vertexCount * 4 * 4, c.colorBuffer, GLES20.GL_STATIC_DRAW);
-                    c.needsVboUpdate = false;
-                }
-            }
-
-            if (c.vbosReady) {
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[0]);
-                GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, 0);
-
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, c.vbos[1]);
-                GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, 0);
-
-                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, c.vertexCount);
-            }
+            c.vertexBuffer.position(0);
+            GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, c.vertexBuffer);
+            c.colorBuffer.position(0);
+            GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, c.colorBuffer);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, c.vertexCount);
         }
 
         GLES20.glDisable(GLES20.GL_BLEND);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         if (Booster.tntVertexBuffer != null) {
             GLES20.glUniform1i(Booster.pTypeHandle, 100);

@@ -10,9 +10,7 @@ public class Chunk {
     private WorldLogic world;
     public FloatBuffer vertexBuffer, colorBuffer;
     public int vertexCount = 0;
-    public int[] vbos = new int[2];
-    public boolean vbosReady = false;
-    public boolean needsVboUpdate = false;
+
 
     private int bufferCapacity = 0;
 
@@ -167,7 +165,7 @@ public class Chunk {
 
             colorBuffer.clear();
             colorBuffer.put(cData, 0, vertexCount * 4).position(0);
-            needsVboUpdate = true;
+
         }
     }
 

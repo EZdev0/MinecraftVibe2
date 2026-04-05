@@ -326,7 +326,7 @@ public class UIManager {
     private Button createBtn(String text, String color) {
         Button b = new Button(activity); b.setText(text); b.setBackgroundColor(Color.parseColor(color)); b.setTextColor(Color.WHITE);
         b.setPadding(30, 30, 30, 30);
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, 0f);
         p.setMargins(10, 10, 10, 10); b.setLayoutParams(p); return b;
     }
 
