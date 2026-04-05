@@ -20,30 +20,19 @@ public class WorldLogic {
 
     public ArrayList<Entity> entities = new ArrayList<>();
 
-        public class ItemEntity {
+    public class ItemEntity {
         public float x, y, z;
         public byte type;
-        public float life = 300.0f; // 5 minutes
+        public float life = 300.0f;
         public float hoverOffset = 0f;
         public float vy = 0f;
         public int count = 1;
-
         public ItemEntity(float x, float y, float z, byte type) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.type = type;
-            this.count = 1;
+            this.x = x; this.y = y; this.z = z; this.type = type; this.count = 1;
         }
-
         public ItemEntity(float x, float y, float z, byte type, int count) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.type = type;
-            this.count = count;
+            this.x = x; this.y = y; this.z = z; this.type = type; this.count = count;
         }
-
         public void update(float dt) {
             hoverOffset += dt;
             life -= dt;
@@ -63,7 +52,6 @@ public class WorldLogic {
     public void spawnItemEntity(int x, int y, int z, byte type) {
         spawnItemEntity(x + 0.5f, y + 0.5f, z + 0.5f, type, 1);
     }
-
     public void spawnItemEntity(float x, float y, float z, byte type, int count) {
         droppedItems.add(new ItemEntity(x, y, z, type, count));
     }
@@ -335,12 +323,25 @@ public class WorldLogic {
                 float dx = item.x - gameplay.camX;
                 float dy = item.y - gameplay.camY;
                 float dz = item.z - gameplay.camZ;
+                for(int j=0; j<droppedItems.size(); j++) {
+                    if (i != j) {
+                        ItemEntity other = droppedItems.get(j);
+                        if(other != null && other.type == item.type && item.count < 64 && other.count < 64) {
+                            float dxi = item.x - other.x; float dyi = item.y - other.y; float dzi = item.z - other.z;
+                            if(Math.sqrt(dxi*dxi + dyi*dyi + dzi*dzi) < 0.5f) {
+                                int space = 64 - item.count; int transfer = Math.min(space, other.count);
+                                item.count += transfer; other.count -= transfer;
+                                if(other.count <= 0) other.life = 0;
+                            }
+                        }
+                    }
+                }
                 if(Math.sqrt(dx*dx + dy*dy + dz*dz) < 1.5f && !gameplay.isCreative) {
                     if(gameplay.activity != null && gameplay.activity.uiManager != null) {
-                        gameplay.activity.uiManager.addToInventory(item.type, item.count);
+                        int overflow = gameplay.activity.uiManager.addToInventory(item.type, item.count);
+                        if (overflow > 0) { item.count = overflow; }
+                        else { item.life = 0; int lastIdx = droppedItems.size() - 1; if (i < lastIdx) droppedItems.set(i, droppedItems.get(lastIdx)); droppedItems.remove(lastIdx); continue; }
                     }
-                    int lastIdx = droppedItems.size() - 1; if (i < lastIdx) droppedItems.set(i, droppedItems.get(lastIdx)); droppedItems.remove(lastIdx);
-                    continue;
                 }
 
                 Matrix.setIdentityM(modelMatrix, 0);
