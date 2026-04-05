@@ -95,12 +95,19 @@ public class Gameplay {
         }
     }
 
-    public void update(float dt, WorldLogic world) {
+        public void update(float dt, WorldLogic world) {
         if (world == null) return;
         if (!hasSpawned) { spawnOnHighestBlock(world); return; }
         if (dt > 0.05f) dt = 0.05f;
 
+        // Anti-Stuck Mechanism
+        if (world.getBlock((int)Math.floor(camX), (int)Math.floor(camY), (int)Math.floor(camZ)) != 0 ||
+            world.getBlock((int)Math.floor(camX), (int)Math.floor(camY + playerHeight - 0.5f), (int)Math.floor(camZ)) != 0) {
+            camY += 5.0f * dt; // Push up smoothly
+        }
+
         gameTime += dt;
+
 
         if (shakeTimer > 0) {
             shakeTimer -= dt;

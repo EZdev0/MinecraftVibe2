@@ -344,9 +344,11 @@ public class UIManager {
 
         scroll.addView(settingsPanel);
 
-        FrameLayout.LayoutParams panelParams = new FrameLayout.LayoutParams(800, ViewGroup.LayoutParams.WRAP_CONTENT);
+                FrameLayout.LayoutParams panelParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        panelParams.setMargins(50, 50, 50, 50);
         panelParams.gravity = Gravity.CENTER;
         root.addView(scroll, panelParams);
+
 
         Button gearBtn = createBtn("⚙️", "#34495e");
         gearBtn.setOnClickListener(v -> { scroll.setVisibility(View.VISIBLE); touchOverlay.setVisibility(View.GONE); });

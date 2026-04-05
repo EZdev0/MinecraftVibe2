@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import java.io.File;
 
@@ -155,23 +156,29 @@ public class MainMenuActivity extends Activity {
         closeBtn.setOnClickListener(v -> hideSettings());
 
         settingsPanel.addView(title); settingsPanel.addView(chunkText); settingsPanel.addView(plusMinus);
-        settingsPanel.addView(fogBtn); settingsPanel.addView(vulkanBtn); settingsPanel.addView(musicBtn); settingsPanel.addView(closeBtn);
 
-        LinearLayout.LayoutParams panelParams = new LinearLayout.LayoutParams(800, ViewGroup.LayoutParams.WRAP_CONTENT);
-        panelParams.gravity = Gravity.CENTER;
+        settingsPanel.addView(fogBtn); settingsPanel.addView(vulkanBtn); settingsPanel.addView(musicBtn); settingsPanel.addView(closeBtn);
 
         // Add to root but hide
         FrameLayout overlay = new FrameLayout(this);
         overlay.addView(root);
-        overlay.addView(settingsPanel, new FrameLayout.LayoutParams(800, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(settingsPanel);
+
+        FrameLayout.LayoutParams scrollParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        scrollParams.setMargins(50, 50, 50, 50);
+        scrollParams.gravity = Gravity.CENTER;
+
+        overlay.addView(scroll, scrollParams);
 
         setContentView(overlay);
     }
 
     private void showSettings() {
-        settingsPanel.setVisibility(View.VISIBLE);
+        ((View)settingsPanel.getParent()).setVisibility(View.VISIBLE);
     }
     private void hideSettings() {
-        settingsPanel.setVisibility(View.GONE);
+        ((View)settingsPanel.getParent()).setVisibility(View.GONE);
     }
 }
