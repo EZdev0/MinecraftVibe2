@@ -301,28 +301,8 @@ public class WorldLogic {
                     continue;
                 }
 
-                // Item Stacking (O(n) per item, but small lists and max 64)
-                for(int j=0; j<droppedItems.size(); j++) {
-                    if (i != j) {
-                        ItemEntity other = droppedItems.get(j);
-                        if(other != null && other.type == item.type && item.count < 64 && other.count < 64) {
-                            float dxi = item.x - other.x;
-                            float dyi = item.y - other.y;
-                            float dzi = item.z - other.z;
-                            if(Math.sqrt(dxi*dxi + dyi*dyi + dzi*dzi) < 0.5f) {
-                                int space = 64 - item.count;
-                                int transfer = Math.min(space, other.count);
-                                item.count += transfer;
-                                other.count -= transfer;
-                                if(other.count <= 0) other.life = 0; // Mark for deletion
-                            }
-                        }
-                    }
-                }
 
-                float dx = item.x - gameplay.camX;
-                float dy = item.y - gameplay.camY;
-                float dz = item.z - gameplay.camZ;
+                // Item Stacking (O(n) per item, but small lists and max 64)
                 for(int j=0; j<droppedItems.size(); j++) {
                     if (i != j) {
                         ItemEntity other = droppedItems.get(j);
@@ -336,13 +316,37 @@ public class WorldLogic {
                         }
                     }
                 }
+
+
+                float dx = item.x - gameplay.camX;
+                float dy = item.y - gameplay.camY;
+                float dz = item.z - gameplay.camZ;
+
                 if(Math.sqrt(dx*dx + dy*dy + dz*dz) < 1.5f && !gameplay.isCreative) {
                     if(gameplay.activity != null && gameplay.activity.uiManager != null) {
+                        android.util.Log.d("Minecraft2Vibe", "Versuche Item aufzusammeln: Typ=" + item.type + ", Menge=" + item.count);
                         int overflow = gameplay.activity.uiManager.addToInventory(item.type, item.count);
-                        if (overflow > 0) { item.count = overflow; }
-                        else { item.life = 0; int lastIdx = droppedItems.size() - 1; if (i < lastIdx) droppedItems.set(i, droppedItems.get(lastIdx)); droppedItems.remove(lastIdx); continue; }
+                        android.util.Log.d("Minecraft2Vibe", "Aufgesammelt! Overflow: " + overflow);
+
+                        if (overflow > 0) {
+                            item.count = overflow;
+                        } else {
+                            item.life = 0;
+                            int lastIdx = droppedItems.size() - 1;
+                            if (i < lastIdx) {
+                                droppedItems.set(i, droppedItems.get(lastIdx));
+                                droppedItems.remove(lastIdx);
+                                i--; // Check the swapped item again!
+                            } else {
+                                droppedItems.remove(lastIdx);
+                            }
+                            continue;
+                        }
                     }
                 }
+
+
+
 
                 Matrix.setIdentityM(modelMatrix, 0);
                 Matrix.translateM(modelMatrix, 0, item.x - 0.15f, item.y + (float)Math.sin(item.hoverOffset*3f)*0.1f, item.z - 0.15f);
