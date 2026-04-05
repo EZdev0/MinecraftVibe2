@@ -22,13 +22,15 @@ public class CrashHandlerActivity extends Activity {
         String errorLog = getIntent().getStringExtra("error");
         if (errorLog == null) errorLog = "Unbekannter Fehler!";
 
+        boolean canContinue = getIntent().getBooleanExtra("canContinue", false);
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.parseColor("#c0392b"));
         root.setPadding(40, 40, 40, 40);
 
         TextView title = new TextView(this);
-        title.setText("MINECRAFT 2 VIBE IST ABGESTÜRZT :(");
+        title.setText(canContinue ? "FEHLER ERKANNT" : "MINECRAFT 2 VIBE IST ABGESTÜRZT :(");
         title.setTextColor(Color.WHITE);
         title.setTextSize(24);
         title.setGravity(Gravity.CENTER);
@@ -62,6 +64,17 @@ public class CrashHandlerActivity extends Activity {
         });
         root.addView(copyBtn);
 
+        if (canContinue) {
+            Button continueBtn = new Button(this);
+            continueBtn.setText("FORTFAHREN");
+            continueBtn.setBackgroundColor(Color.parseColor("#2ecc71"));
+            continueBtn.setTextColor(Color.WHITE);
+            continueBtn.setOnClickListener(v -> {
+                finish();
+            });
+            root.addView(continueBtn);
+        }
+
         Button restartBtn = new Button(this);
         restartBtn.setText("NEUSTART (HAUPTMENÜ)");
         restartBtn.setBackgroundColor(Color.WHITE);
@@ -71,6 +84,10 @@ public class CrashHandlerActivity extends Activity {
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(i);
             finish();
+            if (!canContinue) {
+                android.os.Process.killProcess(android.os.Process.myPid());
+                System.exit(1);
+            }
         });
         root.addView(restartBtn);
 
