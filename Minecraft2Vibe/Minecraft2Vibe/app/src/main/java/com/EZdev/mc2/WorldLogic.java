@@ -20,13 +20,15 @@ public class WorldLogic {
 
     public ArrayList<Entity> entities = new ArrayList<>();
 
-    public class ItemEntity {
+        public class ItemEntity {
         public float x, y, z;
         public byte type;
         public float life = 300.0f;
         public float hoverOffset = 0f;
         public float vy = 0f;
         public int count = 1;
+        public float pickupDelay = 0.5f;
+
         public ItemEntity(float x, float y, float z, byte type) {
             this.x = x; this.y = y; this.z = z; this.type = type; this.count = 1;
         }
@@ -36,6 +38,7 @@ public class WorldLogic {
         public void update(float dt) {
             hoverOffset += dt;
             life -= dt;
+            if(pickupDelay > 0) pickupDelay -= dt;
             vy -= 15f * dt;
             float nextY = y + vy * dt;
             if(getBlock((int)Math.floor(x), (int)Math.floor(nextY), (int)Math.floor(z)) == 0) {
@@ -44,7 +47,8 @@ public class WorldLogic {
                 vy = 0;
                 y = (float)Math.floor(nextY) + 1.0f; // Rest on ground precisely
             }
-        }
+
+    }
     }
 
     public ArrayList<ItemEntity> droppedItems = new ArrayList<>();
@@ -318,29 +322,39 @@ public class WorldLogic {
                 }
 
 
+
+                float playerCenterY = gameplay.camY - (gameplay.playerHeight / 2.0f);
                 float dx = item.x - gameplay.camX;
-                float dy = item.y - gameplay.camY;
+                float dy = item.y - playerCenterY;
                 float dz = item.z - gameplay.camZ;
+                float distanceSq = dx*dx + dy*dy + dz*dz;
 
-                if(Math.sqrt(dx*dx + dy*dy + dz*dz) < 1.5f && !gameplay.isCreative) {
-                    if(gameplay.activity != null && gameplay.activity.uiManager != null) {
-                        android.util.Log.d("Minecraft2Vibe", "Versuche Item aufzusammeln: Typ=" + item.type + ", Menge=" + item.count);
-                        int overflow = gameplay.activity.uiManager.addToInventory(item.type, item.count);
-                        android.util.Log.d("Minecraft2Vibe", "Aufgesammelt! Overflow: " + overflow);
+                if (item.pickupDelay <= 0 && !gameplay.isCreative) {
+                    if (distanceSq < 4.0f) { // 2.0 blocks distance magnet
+                        float dist = (float)Math.sqrt(distanceSq);
+                        // Fly towards player
+                        item.x -= (dx / dist) * 8.0f * dt;
+                        item.y -= (dy / dist) * 8.0f * dt;
+                        item.z -= (dz / dist) * 8.0f * dt;
 
-                        if (overflow > 0) {
-                            item.count = overflow;
-                        } else {
-                            item.life = 0;
-                            int lastIdx = droppedItems.size() - 1;
-                            if (i < lastIdx) {
-                                droppedItems.set(i, droppedItems.get(lastIdx));
-                                droppedItems.remove(lastIdx);
-                                i--; // Check the swapped item again!
-                            } else {
-                                droppedItems.remove(lastIdx);
+                        if(distanceSq < 1.0f) { // Very close = pickup
+                            if(gameplay.activity != null && gameplay.activity.uiManager != null) {
+                                int overflow = gameplay.activity.uiManager.addToInventory(item.type, item.count);
+                                if (overflow > 0) {
+                                    item.count = overflow;
+                                } else {
+                                    item.life = 0;
+                                    int lastIdx = droppedItems.size() - 1;
+                                    if (i < lastIdx) {
+                                        droppedItems.set(i, droppedItems.get(lastIdx));
+                                        droppedItems.remove(lastIdx);
+                                        i--;
+                                    } else {
+                                        droppedItems.remove(lastIdx);
+                                    }
+                                    continue;
+                                }
                             }
-                            continue;
                         }
                     }
                 }
