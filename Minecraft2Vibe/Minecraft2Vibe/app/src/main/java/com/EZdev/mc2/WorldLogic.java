@@ -323,6 +323,7 @@ public class WorldLogic {
 
 
 
+
                 float playerCenterY = gameplay.camY - (gameplay.playerHeight / 2.0f);
                 float dx = item.x - gameplay.camX;
                 float dy = item.y - playerCenterY;
@@ -330,34 +331,50 @@ public class WorldLogic {
                 float distanceSq = dx*dx + dy*dy + dz*dz;
 
                 if (item.pickupDelay <= 0 && !gameplay.isCreative) {
-                    if (distanceSq < 4.0f) { // 2.0 blocks distance magnet
+                    if (distanceSq < 6.0f) { // ~2.5 blocks magnet
                         float dist = (float)Math.sqrt(distanceSq);
-                        // Fly towards player
-                        item.x -= (dx / dist) * 8.0f * dt;
-                        item.y -= (dy / dist) * 8.0f * dt;
-                        item.z -= (dz / dist) * 8.0f * dt;
 
-                        if(distanceSq < 1.0f) { // Very close = pickup
+                        // Disable gravity while magnetized
+                        item.vy = 0;
+
+                        // Fly towards player
+                        item.x -= (dx / dist) * 10.0f * dt;
+                        item.y -= (dy / dist) * 10.0f * dt;
+                        item.z -= (dz / dist) * 10.0f * dt;
+
+                        // True Hitbox AABB check for pickup
+                        float pMinX = gameplay.camX - (gameplay.playerWidth / 2f);
+                        float pMaxX = gameplay.camX + (gameplay.playerWidth / 2f);
+                        float pMinY = gameplay.camY - gameplay.playerHeight;
+                        float pMaxY = gameplay.camY + 0.2f; // Little tolerance above head
+                        float pMinZ = gameplay.camZ - (gameplay.playerWidth / 2f);
+                        float pMaxZ = gameplay.camZ + (gameplay.playerWidth / 2f);
+
+                        // Item size ~0.3
+                        float iMinX = item.x - 0.15f; float iMaxX = item.x + 0.15f;
+                        float iMinY = item.y - 0.15f; float iMaxY = item.y + 0.15f;
+                        float iMinZ = item.z - 0.15f; float iMaxZ = item.z + 0.15f;
+
+                        boolean intersect = (pMinX <= iMaxX && pMaxX >= iMinX) &&
+                                            (pMinY <= iMaxY && pMaxY >= iMinY) &&
+                                            (pMinZ <= iMaxZ && pMaxZ >= iMinZ);
+
+                        if(intersect) {
                             if(gameplay.activity != null && gameplay.activity.uiManager != null) {
                                 int overflow = gameplay.activity.uiManager.addToInventory(item.type, item.count);
                                 if (overflow > 0) {
                                     item.count = overflow;
                                 } else {
                                     item.life = 0;
-                                    int lastIdx = droppedItems.size() - 1;
-                                    if (i < lastIdx) {
-                                        droppedItems.set(i, droppedItems.get(lastIdx));
-                                        droppedItems.remove(lastIdx);
-                                        i--;
-                                    } else {
-                                        droppedItems.remove(lastIdx);
-                                    }
+                                    droppedItems.remove(i);
                                     continue;
                                 }
                             }
                         }
                     }
                 }
+
+
 
 
 
