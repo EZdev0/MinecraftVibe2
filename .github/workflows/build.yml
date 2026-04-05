@@ -27,6 +27,17 @@ jobs:
       run: chmod +x gradlew
       working-directory: Minecraft2Vibe/Minecraft2Vibe
 
+    - name: Run Android Lint (Static Analysis)
+      run: ./gradlew lintDebug
+      working-directory: Minecraft2Vibe/Minecraft2Vibe
+
+    - name: Upload Lint Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: lint-report
+        path: Minecraft2Vibe/Minecraft2Vibe/app/build/reports/lint-results-debug.html
+
     - name: Build with Gradle
       run: ./gradlew assembleDebug
       working-directory: Minecraft2Vibe/Minecraft2Vibe

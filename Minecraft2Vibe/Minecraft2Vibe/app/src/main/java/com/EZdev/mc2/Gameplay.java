@@ -101,8 +101,8 @@ public class Gameplay {
         if (dt > 0.05f) dt = 0.05f;
 
         // Anti-Stuck Mechanism
-        if (world.getBlock((int)Math.floor(camX), (int)Math.floor(camY), (int)Math.floor(camZ)) != 0 ||
-            world.getBlock((int)Math.floor(camX), (int)Math.floor(camY + playerHeight - 0.5f), (int)Math.floor(camZ)) != 0) {
+        if (!isFlying && (world.getBlock((int)Math.floor(camX), (int)Math.floor(camY), (int)Math.floor(camZ)) != 0 ||
+            world.getBlock((int)Math.floor(camX), (int)Math.floor(camY + playerHeight - 0.5f), (int)Math.floor(camZ)) != 0)) {
             camY += 5.0f * dt; // Push up smoothly
         }
 
