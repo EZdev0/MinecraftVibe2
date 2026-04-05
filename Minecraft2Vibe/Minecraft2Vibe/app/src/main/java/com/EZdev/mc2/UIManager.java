@@ -1,6 +1,8 @@
 package com.EZdev.mc2;
 
 import android.content.Context;
+import android.widget.ScrollView;
+import android.graphics.Typeface;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -64,31 +66,33 @@ public class UIManager {
         }
     }
 
-    public void addToInventory(byte type, int amount) {
+    public int addToInventory(byte type, int amount) {
         for(int i=0; i<blockIds.length; i++) {
             if(blockIds[i] == type) {
                 inventory[i] += amount;
-                if(inventory[i] > 64 && inventory[i] != 999) inventory[i] = 64; // Max stack 64
+                int rest = 0;
+                if(inventory[i] > 64 && inventory[i] != 999) {
+                    rest = inventory[i] - 64;
+                    inventory[i] = 64;
+                }
 
-
-                // Achievements / Unlock System
                 if (type == 6 && !prefs.getBoolean("FIRE_UNLOCKED", false)) {
                     prefs.edit().putBoolean("FIRE_UNLOCKED", true).apply();
                     inventory[5] = 999;
-                    Toast.makeText(activity, "ACHIEVEMENT: FEUERZEUG FREIGESCHALTET!", Toast.LENGTH_LONG).show();
+                    activity.runOnUiThread(() -> android.widget.Toast.makeText(activity, "ACHIEVEMENT: FEUERZEUG FREIGESCHALTET!", android.widget.Toast.LENGTH_LONG).show());
                 }
                 if (type == 5 && !tntUnlocked) {
                     tntUnlocked = true;
                     prefs.edit().putBoolean("TNT_UNLOCKED", true).apply();
-                    Toast.makeText(activity, "ACHIEVEMENT: TNT GEFUNDEN!", Toast.LENGTH_LONG).show();
+                    activity.runOnUiThread(() -> android.widget.Toast.makeText(activity, "ACHIEVEMENT: TNT GEFUNDEN!", android.widget.Toast.LENGTH_LONG).show());
                 }
 
                 activity.runOnUiThread(this::updateHotbarUI);
-                return;
+                return rest;
             }
         }
+        return amount;
     }
-
     public void setupUI(FrameLayout root) {
         touchOverlay = new TouchOverlay(activity);
         root.addView(touchOverlay);
@@ -242,25 +246,44 @@ public class UIManager {
         root.addView(btnLayout, params);
     }
 
+    private android.widget.TextView createHeading(String text) {
+        android.widget.TextView h = new android.widget.TextView(activity);
+        h.setText(text); h.setTextColor(Color.CYAN); h.setTextSize(18); h.setTypeface(null, Typeface.BOLD);
+        h.setPadding(0, 40, 0, 10); h.setGravity(Gravity.CENTER);
+        return h;
+    }
+
     private void createSettingsMenu(FrameLayout root) {
+        ScrollView scroll = new ScrollView(activity);
+        scroll.setVisibility(View.GONE);
+
         settingsPanel = new LinearLayout(activity);
         settingsPanel.setOrientation(LinearLayout.VERTICAL);
         settingsPanel.setBackgroundColor(Color.parseColor("#E62c3e50"));
         settingsPanel.setPadding(60, 60, 60, 60);
-        settingsPanel.setVisibility(View.GONE);
         settingsPanel.setClickable(true);
 
-        TextView title = new TextView(activity);
+        android.widget.TextView title = new android.widget.TextView(activity);
         title.setText("EINSTELLUNGEN"); title.setTextColor(Color.WHITE); title.setTextSize(26); title.setGravity(Gravity.CENTER);
+        settingsPanel.addView(title);
 
-        chunkText = new TextView(activity);
+        settingsPanel.addView(createHeading("--- GRAFIK ---"));
+
+        chunkText = new android.widget.TextView(activity);
         chunkText.setText("Sichtweite (Chunks): " + engine.world.renderDistance);
-        chunkText.setTextColor(Color.YELLOW); chunkText.setTextSize(20); chunkText.setPadding(0, 50, 0, 50); chunkText.setGravity(Gravity.CENTER);
+        chunkText.setTextColor(Color.YELLOW); chunkText.setTextSize(20); chunkText.setPadding(0, 20, 0, 20); chunkText.setGravity(Gravity.CENTER);
+        settingsPanel.addView(chunkText);
 
         LinearLayout plusMinus = new LinearLayout(activity);
         plusMinus.setOrientation(LinearLayout.HORIZONTAL);
-        Button minusBtn = createBtn("- WENIGER", "#e74c3c"); Button plusBtn = createBtn("+ MEHR", "#2ecc71");
+        Button minusBtn = createBtn("- WENIGER", "#e74c3c");
+        minusBtn.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        Button plusBtn = createBtn("+ MEHR", "#2ecc71");
+        plusBtn.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         plusMinus.addView(minusBtn); plusMinus.addView(plusBtn);
+        minusBtn.setOnClickListener(v -> { if(engine.world.renderDistance > 1) { engine.world.renderDistance--; updatePrefs(); } });
+        plusBtn.setOnClickListener(v -> { if(engine.world.renderDistance < 6) { engine.world.renderDistance++; updatePrefs(); } });
+        settingsPanel.addView(plusMinus);
 
         Button fogBtn = createBtn(engine.world.fogEnabled ? "NEBEL: AN" : "NEBEL: AUS", "#9b59b6");
         fogBtn.setOnClickListener(v -> {
@@ -268,13 +291,7 @@ public class UIManager {
             prefs.edit().putBoolean("FOG_ENABLED", engine.world.fogEnabled).apply();
             fogBtn.setText(engine.world.fogEnabled ? "NEBEL: AN" : "NEBEL: AUS");
         });
-
-        Button debugBtn = createBtn(showDebug ? "DEBUG INFO: AN" : "DEBUG INFO: AUS", "#9b59b6");
-        debugBtn.setOnClickListener(v -> {
-            showDebug = !showDebug;
-            prefs.edit().putBoolean("SHOW_DEBUG", showDebug).apply();
-            debugBtn.setText(showDebug ? "DEBUG INFO: AN" : "DEBUG INFO: AUS");
-        });
+        settingsPanel.addView(fogBtn);
 
         Button vulkanBtn = createBtn(fastRender ? "VULKAN (FAST RENDER): AN" : "VULKAN (FAST RENDER): AUS", "#e67e22");
         vulkanBtn.setOnClickListener(v -> {
@@ -282,6 +299,9 @@ public class UIManager {
             prefs.edit().putBoolean("FAST_RENDER", fastRender).apply();
             vulkanBtn.setText(fastRender ? "VULKAN (FAST RENDER): AN" : "VULKAN (FAST RENDER): AUS");
         });
+        settingsPanel.addView(vulkanBtn);
+
+        settingsPanel.addView(createHeading("--- AUDIO ---"));
 
         Button musicBtn = createBtn(prefs.getBoolean("MUSIC_ENABLED", true) ? "MUSIK: AN" : "MUSIK: AUS", "#1abc9c");
         musicBtn.setOnClickListener(v -> {
@@ -290,34 +310,51 @@ public class UIManager {
                 musicBtn.setText(activity.musicManager.isEnabled() ? "MUSIK: AN" : "MUSIK: AUS");
             }
         });
+        settingsPanel.addView(musicBtn);
 
-        minusBtn.setOnClickListener(v -> { if(engine.world.renderDistance > 1) { engine.world.renderDistance--; updatePrefs(); } });
-        plusBtn.setOnClickListener(v -> { if(engine.world.renderDistance < 6) { engine.world.renderDistance++; updatePrefs(); } });
+        settingsPanel.addView(createHeading("--- SYSTEM ---"));
+
+        Button debugBtn = createBtn(showDebug ? "DEBUG INFO: AN" : "DEBUG INFO: AUS", "#9b59b6");
+        debugBtn.setOnClickListener(v -> {
+            showDebug = !showDebug;
+            prefs.edit().putBoolean("SHOW_DEBUG", showDebug).apply();
+            debugBtn.setText(showDebug ? "DEBUG INFO: AN" : "DEBUG INFO: AUS");
+        });
+        settingsPanel.addView(debugBtn);
+
+        Button glWarnBtn = createBtn(showGLWarnings ? "GL-WARNUNGEN: AN" : "GL-WARNUNGEN: AUS", "#8e44ad");
+        glWarnBtn.setOnClickListener(v -> {
+            showGLWarnings = !showGLWarnings;
+            prefs.edit().putBoolean("GL_WARN", showGLWarnings).apply();
+            glWarnBtn.setText(showGLWarnings ? "GL-WARNUNGEN: AN" : "GL-WARNUNGEN: AUS");
+            if (!showGLWarnings) currentGLError = null;
+        });
+        settingsPanel.addView(glWarnBtn);
 
         Button closeBtn = createBtn("SCHLIESSEN", "#95a5a6");
-        closeBtn.setOnClickListener(v -> { settingsPanel.setVisibility(View.GONE); touchOverlay.setVisibility(View.VISIBLE); });
+        closeBtn.setOnClickListener(v -> { scroll.setVisibility(View.GONE); touchOverlay.setVisibility(View.VISIBLE); });
+        settingsPanel.addView(closeBtn);
 
         Button menuBtn = createBtn("HAUPTMENUE", "#c0392b");
         menuBtn.setOnClickListener(v -> {
             if (activity.musicManager != null) activity.musicManager.stopMusic();
             activity.finish();
         });
+        settingsPanel.addView(menuBtn);
 
-        settingsPanel.addView(title); settingsPanel.addView(chunkText); settingsPanel.addView(plusMinus);
-        settingsPanel.addView(fogBtn); settingsPanel.addView(debugBtn); settingsPanel.addView(vulkanBtn); settingsPanel.addView(musicBtn); settingsPanel.addView(menuBtn); settingsPanel.addView(closeBtn);
+        scroll.addView(settingsPanel);
 
         FrameLayout.LayoutParams panelParams = new FrameLayout.LayoutParams(800, ViewGroup.LayoutParams.WRAP_CONTENT);
         panelParams.gravity = Gravity.CENTER;
-        root.addView(settingsPanel, panelParams);
+        root.addView(scroll, panelParams);
 
         Button gearBtn = createBtn("⚙️", "#34495e");
-        gearBtn.setOnClickListener(v -> { settingsPanel.setVisibility(View.VISIBLE); touchOverlay.setVisibility(View.GONE); });
+        gearBtn.setOnClickListener(v -> { scroll.setVisibility(View.VISIBLE); touchOverlay.setVisibility(View.GONE); });
 
         FrameLayout.LayoutParams gearParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         gearParams.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL; gearParams.setMargins(0, 20, 0, 0);
         root.addView(gearBtn, gearParams);
     }
-
     private void updatePrefs() {
         prefs.edit().putInt("RENDER_DISTANCE", engine.world.renderDistance).apply();
         chunkText.setText("Sichtweite (Chunks): " + engine.world.renderDistance);
