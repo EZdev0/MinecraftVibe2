@@ -98,7 +98,7 @@ public class MainMenuActivity extends Activity {
         settingsPanel.setOrientation(LinearLayout.VERTICAL);
         settingsPanel.setBackgroundColor(Color.parseColor("#E62c3e50"));
         settingsPanel.setPadding(60, 60, 60, 60);
-        settingsPanel.setVisibility(View.GONE);
+
         settingsPanel.setClickable(true);
 
         TextView title = new TextView(this);
@@ -170,6 +170,8 @@ public class MainMenuActivity extends Activity {
         scrollParams.setMargins(50, 50, 50, 50);
         scrollParams.gravity = Gravity.CENTER;
 
+        scroll.setVisibility(View.GONE);
+
         overlay.addView(scroll, scrollParams);
 
         setContentView(overlay);
@@ -179,6 +181,6 @@ public class MainMenuActivity extends Activity {
         ((View)settingsPanel.getParent()).setVisibility(View.VISIBLE);
     }
     private void hideSettings() {
-        ((View)settingsPanel.getParent()).setVisibility(View.GONE);
+
     }
 }
