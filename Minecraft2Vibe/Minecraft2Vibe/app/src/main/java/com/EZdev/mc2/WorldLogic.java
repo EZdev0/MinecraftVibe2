@@ -345,8 +345,8 @@ public class WorldLogic {
                         // True Hitbox AABB check for pickup
                         float pMinX = gameplay.camX - (gameplay.playerWidth / 2f);
                         float pMaxX = gameplay.camX + (gameplay.playerWidth / 2f);
-                        float pMinY = gameplay.camY - gameplay.playerHeight;
-                        float pMaxY = gameplay.camY + 0.2f; // Little tolerance above head
+                        float pMinY = gameplay.camY;
+                        float pMaxY = gameplay.camY + gameplay.playerHeight + 0.2f; // Little tolerance above head
                         float pMinZ = gameplay.camZ - (gameplay.playerWidth / 2f);
                         float pMaxZ = gameplay.camZ + (gameplay.playerWidth / 2f);
 
@@ -366,7 +366,9 @@ public class WorldLogic {
                                     item.count = overflow;
                                 } else {
                                     item.life = 0;
-                                    droppedItems.remove(i);
+                                    int lastIdx = droppedItems.size() - 1;
+                                    if (i < lastIdx) droppedItems.set(i, droppedItems.get(lastIdx));
+                                    droppedItems.remove(lastIdx);
                                     continue;
                                 }
                             }

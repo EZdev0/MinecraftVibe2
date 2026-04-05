@@ -171,48 +171,128 @@ public class Chunk {
 
     private void addFace(float[] v, float[] c, float x, float y, float z, int s, float r, float g, float b, float a) {
         if(vertexCount >= (v.length/3) - 6) return;
-        float[] fs = null;
+        int vc = vertexCount * 3;
         switch(s) {
-            case 0: fs = new float[]{x,y+1,z, x,y+1,z+1, x+1,y+1,z+1, x,y+1,z, x+1,y+1,z+1, x+1,y+1,z}; break;
-            case 1: fs = new float[]{x,y,z+1, x,y,z, x+1,y,z, x,y,z+1, x+1,y,z, x+1,y,z+1}; break;
-            case 2: fs = new float[]{x,y+1,z, x,y,z, x,y,z+1, x,y+1,z, x,y,z+1, x,y+1,z+1}; break;
-            case 3: fs = new float[]{x+1,y+1,z+1, x+1,y,z+1, x+1,y,z, x+1,y+1,z+1, x+1,y,z, x+1,y+1,z}; break;
-            case 4: fs = new float[]{x+1,y+1,z, x+1,y,z, x,y,z, x+1,y+1,z, x,y,z, x,y+1,z}; break;
-            case 5: fs = new float[]{x,y+1,z+1, x,y,z+1, x+1,y,z+1, x,y+1,z+1, x+1,y,z+1, x+1,y+1,z+1}; break;
+            case 0:
+                v[vc]=x; v[vc+1]=y+1; v[vc+2]=z;
+                v[vc+3]=x; v[vc+4]=y+1; v[vc+5]=z+1;
+                v[vc+6]=x+1; v[vc+7]=y+1; v[vc+8]=z+1;
+                v[vc+9]=x; v[vc+10]=y+1; v[vc+11]=z;
+                v[vc+12]=x+1; v[vc+13]=y+1; v[vc+14]=z+1;
+                v[vc+15]=x+1; v[vc+16]=y+1; v[vc+17]=z;
+                break;
+            case 1:
+                v[vc]=x; v[vc+1]=y; v[vc+2]=z+1;
+                v[vc+3]=x; v[vc+4]=y; v[vc+5]=z;
+                v[vc+6]=x+1; v[vc+7]=y; v[vc+8]=z;
+                v[vc+9]=x; v[vc+10]=y; v[vc+11]=z+1;
+                v[vc+12]=x+1; v[vc+13]=y; v[vc+14]=z;
+                v[vc+15]=x+1; v[vc+16]=y; v[vc+17]=z+1;
+                break;
+            case 2:
+                v[vc]=x; v[vc+1]=y+1; v[vc+2]=z;
+                v[vc+3]=x; v[vc+4]=y; v[vc+5]=z;
+                v[vc+6]=x; v[vc+7]=y; v[vc+8]=z+1;
+                v[vc+9]=x; v[vc+10]=y+1; v[vc+11]=z;
+                v[vc+12]=x; v[vc+13]=y; v[vc+14]=z+1;
+                v[vc+15]=x; v[vc+16]=y+1; v[vc+17]=z+1;
+                break;
+            case 3:
+                v[vc]=x+1; v[vc+1]=y+1; v[vc+2]=z+1;
+                v[vc+3]=x+1; v[vc+4]=y; v[vc+5]=z+1;
+                v[vc+6]=x+1; v[vc+7]=y; v[vc+8]=z;
+                v[vc+9]=x+1; v[vc+10]=y+1; v[vc+11]=z+1;
+                v[vc+12]=x+1; v[vc+13]=y; v[vc+14]=z;
+                v[vc+15]=x+1; v[vc+16]=y+1; v[vc+17]=z;
+                break;
+            case 4:
+                v[vc]=x+1; v[vc+1]=y+1; v[vc+2]=z;
+                v[vc+3]=x+1; v[vc+4]=y; v[vc+5]=z;
+                v[vc+6]=x; v[vc+7]=y; v[vc+8]=z;
+                v[vc+9]=x+1; v[vc+10]=y+1; v[vc+11]=z;
+                v[vc+12]=x; v[vc+13]=y; v[vc+14]=z;
+                v[vc+15]=x; v[vc+16]=y+1; v[vc+17]=z;
+                break;
+            case 5:
+                v[vc]=x; v[vc+1]=y+1; v[vc+2]=z+1;
+                v[vc+3]=x; v[vc+4]=y; v[vc+5]=z+1;
+                v[vc+6]=x+1; v[vc+7]=y; v[vc+8]=z+1;
+                v[vc+9]=x; v[vc+10]=y+1; v[vc+11]=z+1;
+                v[vc+12]=x+1; v[vc+13]=y; v[vc+14]=z+1;
+                v[vc+15]=x+1; v[vc+16]=y+1; v[vc+17]=z+1;
+                break;
         }
-        for(int i=0; i<18; i++) v[vertexCount*3 + i] = fs[i];
-        for(int i=0; i<6; i++) { c[vertexCount*4 + i*4] = r; c[vertexCount*4 + i*4+1] = g; c[vertexCount*4 + i*4+2] = b; c[vertexCount*4 + i*4+3] = a; }
+        int cc = vertexCount * 4;
+        for(int i=0; i<6; i++) { c[cc + i*4] = r; c[cc + i*4+1] = g; c[cc + i*4+2] = b; c[cc + i*4+3] = a; }
         vertexCount += 6;
     }
 
     private void addFireCross(float[] v, float[] c, float x, float y, float z, float r, float g, float b) {
-        float[][] ps = {{x,y,z,1f}, {x+1,y,z+1,1f}, {x+1,y+1,z+1,0f}, {x,y+1,z,0f}, {x+1,y,z,1f}, {x,y,z+1,1f}, {x,y+1,z+1,0f}, {x+1,y+1,z,0f}};
-        addQuad(v, c, ps[0], ps[1], ps[2], ps[3], r, g, b); addQuad(v, c, ps[1], ps[0], ps[3], ps[2], r, g, b);
-        addQuad(v, c, ps[4], ps[5], ps[6], ps[7], r, g, b); addQuad(v, c, ps[5], ps[4], ps[7], ps[6], r, g, b);
+        // ps[0] = x,y,z,1f  | ps[1] = x+1,y,z+1,1f | ps[2] = x+1,y+1,z+1,0f | ps[3] = x,y+1,z,0f
+        addQuad(v, c, x,y,z,1f, x+1,y,z+1,1f, x+1,y+1,z+1,0f, x,y+1,z,0f, r, g, b);
+        addQuad(v, c, x+1,y,z+1,1f, x,y,z,1f, x,y+1,z,0f, x+1,y+1,z+1,0f, r, g, b);
+        // ps[4] = x+1,y,z,1f | ps[5] = x,y,z+1,1f | ps[6] = x,y+1,z+1,0f | ps[7] = x+1,y+1,z,0f
+        addQuad(v, c, x+1,y,z,1f, x,y,z+1,1f, x,y+1,z+1,0f, x+1,y+1,z,0f, r, g, b);
+        addQuad(v, c, x,y,z+1,1f, x+1,y,z,1f, x+1,y+1,z,0f, x,y+1,z+1,0f, r, g, b);
     }
 
-    private void addQuad(float[] v, float[] c, float[] v1, float[] v2, float[] v3, float[] v4, float r, float g, float b) {
+    private void addQuad(float[] v, float[] c, float x1, float y1, float z1, float a1,
+                         float x2, float y2, float z2, float a2,
+                         float x3, float y3, float z3, float a3,
+                         float x4, float y4, float z4, float a4, float r, float g, float b) {
         if(vertexCount >= (v.length/3) - 6) return;
-        float[][] ts = {v1, v2, v3, v1, v3, v4};
-        for (int i=0; i<6; i++) {
-            v[vertexCount*3 + i*3] = ts[i][0]; v[vertexCount*3 + i*3+1] = ts[i][1]; v[vertexCount*3 + i*3+2] = ts[i][2];
-            c[vertexCount*4 + i*4] = r; c[vertexCount*4 + i*4+1] = g; c[vertexCount*4 + i*4+2] = b; c[vertexCount*4 + i*4+3] = ts[i][3];
-        }
+        int vc = vertexCount * 3;
+        v[vc]=x1; v[vc+1]=y1; v[vc+2]=z1;
+        v[vc+3]=x2; v[vc+4]=y2; v[vc+5]=z2;
+        v[vc+6]=x3; v[vc+7]=y3; v[vc+8]=z3;
+        v[vc+9]=x1; v[vc+10]=y1; v[vc+11]=z1;
+        v[vc+12]=x3; v[vc+13]=y3; v[vc+14]=z3;
+        v[vc+15]=x4; v[vc+16]=y4; v[vc+17]=z4;
+
+        int cc = vertexCount * 4;
+        c[cc]=r; c[cc+1]=g; c[cc+2]=b; c[cc+3]=a1;
+        c[cc+4]=r; c[cc+5]=g; c[cc+6]=b; c[cc+7]=a2;
+        c[cc+8]=r; c[cc+9]=g; c[cc+10]=b; c[cc+11]=a3;
+        c[cc+12]=r; c[cc+13]=g; c[cc+14]=b; c[cc+15]=a1;
+        c[cc+16]=r; c[cc+17]=g; c[cc+18]=b; c[cc+19]=a3;
+        c[cc+20]=r; c[cc+21]=g; c[cc+22]=b; c[cc+23]=a4;
         vertexCount += 6;
     }
 
+    private void addDirect(float[] v, float[] c, float[] values) {
+        if(vertexCount >= (v.length/3) - 6) return;
+        int vc = vertexCount * 3;
+        for(int i=0; i<18; i++) v[vc + i] = values[i];
+        int cc = vertexCount * 4;
+        for(int i=0; i<6; i++) { c[cc + i*4] = 0f; c[cc + i*4+1] = 0f; c[cc + i*4+2] = 0f; c[cc + i*4+3] = 1.0f; }
+        vertexCount += 6;
+    }
+
+    // Memory-friendly T draw using simple local assignment instead of new float[]
     private void drawLetterT(float[] v, float[] c, float x, float y, float z, int s) {
         if(vertexCount >= (v.length/3) - 12) return;
-        float e = 0.01f; float[][] rs = new float[2][18];
-        if (s == 4) { rs[0] = new float[]{x+0.8f,y+0.8f,z-e, x+0.8f,y+0.65f,z-e, x+0.2f,y+0.65f,z-e, x+0.8f,y+0.8f,z-e, x+0.2f,y+0.65f,z-e, x+0.2f,y+0.8f,z-e};
-                     rs[1] = new float[]{x+0.6f,y+0.65f,z-e, x+0.6f,y+0.2f,z-e, x+0.4f,y+0.2f,z-e, x+0.6f,y+0.65f,z-e, x+0.4f,y+0.2f,z-e, x+0.4f,y+0.65f,z-e}; }
-        else if (s == 5) { rs[0] = new float[]{x+0.2f,y+0.8f,z+1+e, x+0.2f,y+0.65f,z+1+e, x+0.8f,y+0.65f,z+1+e, x+0.2f,y+0.8f,z+1+e, x+0.8f,y+0.65f,z+1+e, x+0.8f,y+0.8f,z+1+e};
-                         rs[1] = new float[]{x+0.4f,y+0.65f,z+1+e, x+0.4f,y+0.2f,z+1+e, x+0.6f,y+0.2f,z+1+e, x+0.4f,y+0.65f,z+1+e, x+0.6f,y+0.2f,z+1+e, x+0.6f,y+0.65f,z+1+e}; }
-        else if (s == 2) { rs[0] = new float[]{x-e,y+0.8f,z+0.2f, x-e,y+0.65f,z+0.2f, x-e,y+0.65f,z+0.8f, x-e,y+0.8f,z+0.2f, x-e,y+0.65f,z+0.8f, x-e,y+0.8f,z+0.8f};
-                         rs[1] = new float[]{x-e,y+0.65f,z+0.4f, x-e,y+0.2f,z+0.4f, x-e,y+0.2f,z+0.6f, x-e,y+0.65f,z+0.4f, x-e,y+0.2f,z+0.6f, x-e,y+0.65f,z+0.6f}; }
-        else if (s == 3) { rs[0] = new float[]{x+1+e,y+0.8f,z+0.8f, x+1+e,y+0.65f,z+0.8f, x+1+e,y+0.65f,z+0.2f, x+1+e,y+0.8f,z+0.8f, x+1+e,y+0.65f,z+0.2f, x+1+e,y+0.8f,z+0.2f};
-                         rs[1] = new float[]{x+1+e,y+0.65f,z+0.6f, x+1+e,y+0.2f,z+0.6f, x+1+e,y+0.2f,z+0.4f, x+1+e,y+0.65f,z+0.6f, x+1+e,y+0.2f,z+0.4f, x+1+e,y+0.65f,z+0.4f}; }
-        for (int r = 0; r < 2; r++) { if (rs[r] == null) continue; for(int i=0; i<18; i++) v[vertexCount*3 + i] = rs[r][i];
-            for(int i=0; i<6; i++) { c[vertexCount*4 + i*4] = 0f; c[vertexCount*4 + i*4+1] = 0f; c[vertexCount*4 + i*4+2] = 0f; c[vertexCount*4 + i*4+3] = 1.0f; } vertexCount += 6; }
+        float e = 0.01f;
+        int vc = vertexCount * 3;
+        if (s == 4) {
+            v[vc]=x+0.8f; v[vc+1]=y+0.8f; v[vc+2]=z-e; v[vc+3]=x+0.8f; v[vc+4]=y+0.65f; v[vc+5]=z-e; v[vc+6]=x+0.2f; v[vc+7]=y+0.65f; v[vc+8]=z-e; v[vc+9]=x+0.8f; v[vc+10]=y+0.8f; v[vc+11]=z-e; v[vc+12]=x+0.2f; v[vc+13]=y+0.65f; v[vc+14]=z-e; v[vc+15]=x+0.2f; v[vc+16]=y+0.8f; v[vc+17]=z-e;
+            int cc = vertexCount * 4; for(int i=0; i<6; i++) { c[cc + i*4] = 0f; c[cc + i*4+1] = 0f; c[cc + i*4+2] = 0f; c[cc + i*4+3] = 1.0f; } vertexCount += 6; vc = vertexCount * 3;
+            v[vc]=x+0.6f; v[vc+1]=y+0.65f; v[vc+2]=z-e; v[vc+3]=x+0.6f; v[vc+4]=y+0.2f; v[vc+5]=z-e; v[vc+6]=x+0.4f; v[vc+7]=y+0.2f; v[vc+8]=z-e; v[vc+9]=x+0.6f; v[vc+10]=y+0.65f; v[vc+11]=z-e; v[vc+12]=x+0.4f; v[vc+13]=y+0.2f; v[vc+14]=z-e; v[vc+15]=x+0.4f; v[vc+16]=y+0.65f; v[vc+17]=z-e;
+            cc = vertexCount * 4; for(int i=0; i<6; i++) { c[cc + i*4] = 0f; c[cc + i*4+1] = 0f; c[cc + i*4+2] = 0f; c[cc + i*4+3] = 1.0f; } vertexCount += 6;
+        } else if (s == 5) {
+            v[vc]=x+0.2f; v[vc+1]=y+0.8f; v[vc+2]=z+1+e; v[vc+3]=x+0.2f; v[vc+4]=y+0.65f; v[vc+5]=z+1+e; v[vc+6]=x+0.8f; v[vc+7]=y+0.65f; v[vc+8]=z+1+e; v[vc+9]=x+0.2f; v[vc+10]=y+0.8f; v[vc+11]=z+1+e; v[vc+12]=x+0.8f; v[vc+13]=y+0.65f; v[vc+14]=z+1+e; v[vc+15]=x+0.8f; v[vc+16]=y+0.8f; v[vc+17]=z+1+e;
+            int cc = vertexCount * 4; for(int i=0; i<6; i++) { c[cc + i*4] = 0f; c[cc + i*4+1] = 0f; c[cc + i*4+2] = 0f; c[cc + i*4+3] = 1.0f; } vertexCount += 6; vc = vertexCount * 3;
+            v[vc]=x+0.4f; v[vc+1]=y+0.65f; v[vc+2]=z+1+e; v[vc+3]=x+0.4f; v[vc+4]=y+0.2f; v[vc+5]=z+1+e; v[vc+6]=x+0.6f; v[vc+7]=y+0.2f; v[vc+8]=z+1+e; v[vc+9]=x+0.4f; v[vc+10]=y+0.65f; v[vc+11]=z+1+e; v[vc+12]=x+0.6f; v[vc+13]=y+0.2f; v[vc+14]=z+1+e; v[vc+15]=x+0.6f; v[vc+16]=y+0.65f; v[vc+17]=z+1+e;
+            cc = vertexCount * 4; for(int i=0; i<6; i++) { c[cc + i*4] = 0f; c[cc + i*4+1] = 0f; c[cc + i*4+2] = 0f; c[cc + i*4+3] = 1.0f; } vertexCount += 6;
+        } else if (s == 2) {
+            v[vc]=x-e; v[vc+1]=y+0.8f; v[vc+2]=z+0.2f; v[vc+3]=x-e; v[vc+4]=y+0.65f; v[vc+5]=z+0.2f; v[vc+6]=x-e; v[vc+7]=y+0.65f; v[vc+8]=z+0.8f; v[vc+9]=x-e; v[vc+10]=y+0.8f; v[vc+11]=z+0.2f; v[vc+12]=x-e; v[vc+13]=y+0.65f; v[vc+14]=z+0.8f; v[vc+15]=x-e; v[vc+16]=y+0.8f; v[vc+17]=z+0.8f;
+            int cc = vertexCount * 4; for(int i=0; i<6; i++) { c[cc + i*4] = 0f; c[cc + i*4+1] = 0f; c[cc + i*4+2] = 0f; c[cc + i*4+3] = 1.0f; } vertexCount += 6; vc = vertexCount * 3;
+            v[vc]=x-e; v[vc+1]=y+0.65f; v[vc+2]=z+0.4f; v[vc+3]=x-e; v[vc+4]=y+0.2f; v[vc+5]=z+0.4f; v[vc+6]=x-e; v[vc+7]=y+0.2f; v[vc+8]=z+0.6f; v[vc+9]=x-e; v[vc+10]=y+0.65f; v[vc+11]=z+0.4f; v[vc+12]=x-e; v[vc+13]=y+0.2f; v[vc+14]=z+0.6f; v[vc+15]=x-e; v[vc+16]=y+0.65f; v[vc+17]=z+0.6f;
+            cc = vertexCount * 4; for(int i=0; i<6; i++) { c[cc + i*4] = 0f; c[cc + i*4+1] = 0f; c[cc + i*4+2] = 0f; c[cc + i*4+3] = 1.0f; } vertexCount += 6;
+        } else if (s == 3) {
+            v[vc]=x+1+e; v[vc+1]=y+0.8f; v[vc+2]=z+0.8f; v[vc+3]=x+1+e; v[vc+4]=y+0.65f; v[vc+5]=z+0.8f; v[vc+6]=x+1+e; v[vc+7]=y+0.65f; v[vc+8]=z+0.2f; v[vc+9]=x+1+e; v[vc+10]=y+0.8f; v[vc+11]=z+0.8f; v[vc+12]=x+1+e; v[vc+13]=y+0.65f; v[vc+14]=z+0.2f; v[vc+15]=x+1+e; v[vc+16]=y+0.8f; v[vc+17]=z+0.2f;
+            int cc = vertexCount * 4; for(int i=0; i<6; i++) { c[cc + i*4] = 0f; c[cc + i*4+1] = 0f; c[cc + i*4+2] = 0f; c[cc + i*4+3] = 1.0f; } vertexCount += 6; vc = vertexCount * 3;
+            v[vc]=x+1+e; v[vc+1]=y+0.65f; v[vc+2]=z+0.6f; v[vc+3]=x+1+e; v[vc+4]=y+0.2f; v[vc+5]=z+0.6f; v[vc+6]=x+1+e; v[vc+7]=y+0.2f; v[vc+8]=z+0.4f; v[vc+9]=x+1+e; v[vc+10]=y+0.65f; v[vc+11]=z+0.6f; v[vc+12]=x+1+e; v[vc+13]=y+0.2f; v[vc+14]=z+0.4f; v[vc+15]=x+1+e; v[vc+16]=y+0.65f; v[vc+17]=z+0.4f;
+            cc = vertexCount * 4; for(int i=0; i<6; i++) { c[cc + i*4] = 0f; c[cc + i*4+1] = 0f; c[cc + i*4+2] = 0f; c[cc + i*4+3] = 1.0f; } vertexCount += 6;
+        }
     }
 }
