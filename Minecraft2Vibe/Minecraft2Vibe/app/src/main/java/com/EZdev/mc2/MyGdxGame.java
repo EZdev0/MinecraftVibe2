@@ -6,6 +6,9 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.content.SharedPreferences;
+
 
 public class MyGdxGame implements GLSurfaceView.Renderer {
     private final Random random = new Random();
@@ -37,6 +40,18 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
         GLES20.glClearColor(0.5f, 0.8f, 1.0f, 1.0f);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         GLES20.glDisable(GLES20.GL_CULL_FACE);
+
+        if (activity != null) {
+            SharedPreferences prefs = activity.getSharedPreferences("McPrefs", Context.MODE_PRIVATE);
+            if (prefs.getBoolean("FAST_RENDER", false)) {
+                // Disable VSync using EGL14 to boost FPS
+                try {
+                    android.opengl.EGL14.eglSwapInterval(android.opengl.EGL14.eglGetCurrentDisplay(), 0);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
         Booster.initGeometry();
         lastTime = System.nanoTime();
