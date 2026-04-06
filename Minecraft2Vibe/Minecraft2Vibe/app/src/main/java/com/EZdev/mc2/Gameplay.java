@@ -1,8 +1,10 @@
 package com.EZdev.mc2;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class Gameplay {
+    private final Random random = new Random();
     public float camX = 8f, camY = 100f, camZ = 8f;
     public float yaw = 0f, pitch = 0f;
     public float joyMoveX = 0f, joyMoveY = 0f;
@@ -55,8 +57,8 @@ public class Gameplay {
         public float spreadTimer;
         public ActiveFire(int x, int y, int z) {
             this.x = x; this.y = y; this.z = z;
-            this.life = 5.0f + (float)Math.random() * 5.0f;
-            this.spreadTimer = 0.5f + (float)Math.random() * 1.5f;
+            this.life = 5.0f + random.nextFloat() * 5.0f;
+            this.spreadTimer = 0.5f + random.nextFloat() * 1.5f;
         }
     }
 
@@ -67,18 +69,18 @@ public class Gameplay {
         public byte type;
         public ActiveFireParticle(float x, float y, float z, byte type) {
             this.x = x; this.y = y; this.z = z;
-            this.vx = ((float)Math.random() - 0.5f) * 6f;
-            this.vy = ((float)Math.random()) * 6f + 3f;
-            this.vz = ((float)Math.random() - 0.5f) * 6f;
-            this.life = 0.8f + (float)Math.random() * 2.0f;
+            this.vx = (random.nextFloat() - 0.5f) * 6f;
+            this.vy = (random.nextFloat()) * 6f + 3f;
+            this.vz = (random.nextFloat() - 0.5f) * 6f;
+            this.life = 0.8f + random.nextFloat() * 2.0f;
             this.type = type;
         }
         public ActiveFireParticle(float x, float y, float z, float intensity) {
             this.x = x; this.y = y; this.z = z;
-            this.vx = ((float)Math.random() - 0.5f) * intensity;
-            this.vy = ((float)Math.random() - 0.5f) * intensity;
-            this.vz = ((float)Math.random() - 0.5f) * intensity;
-            this.life = 1.0f + (float)Math.random() * 3.0f;
+            this.vx = (random.nextFloat() - 0.5f) * intensity;
+            this.vy = (random.nextFloat() - 0.5f) * intensity;
+            this.vz = (random.nextFloat() - 0.5f) * intensity;
+            this.life = 1.0f + random.nextFloat() * 3.0f;
             this.type = 99;
         }
     }
@@ -218,7 +220,7 @@ public class Gameplay {
             fire.life -= dt;
             fire.spreadTimer -= dt;
 
-            if (Math.random() < 0.01f) {
+            if (random.nextFloat() < 0.01f) {
                 fireParticles.add(new ActiveFireParticle(fire.x + 0.5f, fire.y + 0.5f, fire.z + 0.5f, (byte) 6));
             }
 
@@ -233,17 +235,17 @@ public class Gameplay {
             }
 
             if (fire.spreadTimer <= 0) {
-                fire.spreadTimer = 0.5f + (float)Math.random() * 1.0f;
+                fire.spreadTimer = 0.5f + random.nextFloat() * 1.0f;
                 for (int attempts = 0; attempts < 3; attempts++) {
-                    int dx = (int)(Math.random() * 3) - 1;
-                    int dy = (int)(Math.random() * 6) - 1;
-                    int dz = (int)(Math.random() * 3) - 1;
+                    int dx = random.nextInt(3) - 1;
+                    int dy = random.nextInt(6) - 1;
+                    int dz = random.nextInt(3) - 1;
                     int nx = fire.x + dx; int ny = fire.y + dy; int nz = fire.z + dz;
                     byte blockType = world.getBlock(nx, ny, nz);
                     if ((blockType == 3 || blockType == 4)) {
                         float distancePenalty = (Math.abs(dx) + Math.abs(dy) + Math.abs(dz)) * 0.15f;
                         float baseChance = (blockType == 4) ? 0.9f : 0.6f;
-                        if (Math.random() < baseChance - distancePenalty) {
+                        if (random.nextFloat() < baseChance - distancePenalty) {
                             if(world != null) world.setBlock(nx, ny, nz, (byte)6);
                             activeFires.add(new ActiveFire(nx, ny, nz));
                         }
@@ -252,7 +254,7 @@ public class Gameplay {
             }
         }
 
-        if (Math.random() < 0.1f) {
+        if (random.nextFloat() < 0.1f) {
             int px = (int)camX; int py = (int)camY-2; int pz = (int)camZ;
             byte b = (world != null) ? world.getBlock(px, py, pz) : 0;
             if (world != null && b == 8 && world.getBlock(px, py-1, pz) == 0) {
@@ -365,7 +367,7 @@ public class Gameplay {
                     else if(hitType == 3) requiredTime = 1.5f; // Wood medium
 
                     // Add some breaking particles while hitting
-                    if(Math.random() < 0.1) addBlockParticles(targetX, targetY, targetZ, hitType);
+                    if(random.nextFloat() < 0.1f) addBlockParticles(targetX, targetY, targetZ, hitType);
 
                     if (breakTimer >= requiredTime) {
                         if(world != null) world.setBlock(targetX, targetY, targetZ, (byte)0);
@@ -400,7 +402,7 @@ public class Gameplay {
                 if (isFire && p.type == 6) {
                     byte block = world.getBlock((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z));
                     if (block == 3 || block == 4) {
-                        if (Math.random() < 0.3f) {
+                        if (random.nextFloat() < 0.3f) {
                             if(world != null) world.setBlock((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z), (byte)6);
                             activeFires.add(new ActiveFire((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z)));
                         }

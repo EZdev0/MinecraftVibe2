@@ -1,10 +1,12 @@
 package com.EZdev.mc2;
 
+import java.util.Random;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 public class Chunk {
+    private final Random random = new Random();
     public int chunkX, chunkZ;
     public byte[][][] blocks = new byte[16][128][16];
     private WorldLogic world;
@@ -38,7 +40,7 @@ public class Chunk {
                 int height = 65 + (int)(noiseVal * 20f); // Higher terrain to make room for deeper caves
                 for (int y = 0; y <= height; y++) {
                     if (y == 0) { blocks[x][y][z] = 9; continue; } // Bedrock (ID 9) at y=0
-                    if (y == 1 && Math.random() < 0.5) { blocks[x][y][z] = 9; continue; } // Bedrock layer 1 noise
+                    if (y == 1 && random.nextDouble() < 0.5) { blocks[x][y][z] = 9; continue; } // Bedrock layer 1 noise
 
                     // Feature 4: Minecraft-like 3D Cave Generation (Simplex Noise)
                     // Base terrain filling
@@ -82,10 +84,10 @@ public class Chunk {
             for (int z = 2; z < 14; z++) {
                 for (int y = 100; y > 50; y--) {
                     if (blocks[x][y][z] == 1 && blocks[x][y+1][z] == 0) {
-                        if (Math.random() < 0.02) {
+                        if (random.nextDouble() < 0.02) {
                             for(int h=1; h<=4; h++) blocks[x][y+h][z] = 3;
                             for(int lx=x-2; lx<=x+2; lx++) for(int ly=y+3; ly<=y+5; ly++) for(int lz=z-2; lz<=z+2; lz++)
-                                if (blocks[lx][ly][lz] == 0 && Math.random() < 0.8) blocks[lx][ly][lz] = 4;
+                                if (blocks[lx][ly][lz] == 0 && random.nextDouble() < 0.8) blocks[lx][ly][lz] = 4;
                         }
                         break;
                     }
@@ -93,7 +95,7 @@ public class Chunk {
             }
         }
         for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = 5; y < 40; y++)
-            if (blocks[x][y][z] == 0 && blocks[x][y+1][z] == 2 && Math.random() < 0.05) blocks[x][y][z] = 2;
+            if (blocks[x][y][z] == 0 && blocks[x][y+1][z] == 2 && random.nextDouble() < 0.05) blocks[x][y][z] = 2;
     }
 
     private byte getBlockWorldAware(int lx, int ly, int lz) {
