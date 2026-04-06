@@ -1,12 +1,14 @@
 package com.EZdev.mc2;
 
 import android.content.Context;
+import android.util.Log;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 public class SaveManager {
 
+    private static final String TAG = "SaveManager";
     private Context context;
     private String worldName = "world1";
 
@@ -29,7 +31,7 @@ public class SaveManager {
             }
             fos.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error saving chunk", e);
         }
     }
 
@@ -49,7 +51,7 @@ public class SaveManager {
             fis.close();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error loading chunk", e);
             return false;
         }
     }

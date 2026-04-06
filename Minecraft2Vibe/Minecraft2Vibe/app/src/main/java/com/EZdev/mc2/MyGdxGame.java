@@ -8,9 +8,11 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 
 public class MyGdxGame implements GLSurfaceView.Renderer {
+    private static final String TAG = "MyGdxGame";
     private final Random random = new Random();
 
     public Gameplay gameplay = new Gameplay();
@@ -48,7 +50,7 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
                 try {
                     android.opengl.EGL14.eglSwapInterval(android.opengl.EGL14.eglGetCurrentDisplay(), 0);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Failed to disable VSync", e);
                 }
             }
         }
