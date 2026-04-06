@@ -158,13 +158,17 @@ public class WorldLogic {
 
             gameplayRef.addExplosionParticles(ex, ey, ez);
 
+            float r2 = radius * 2.0f;
+            float r2sq = r2 * r2;
+
             for (Gameplay.ActiveTNT tnt : gameplayRef.tickingTNTs) {
                 float dx = tnt.x - ex;
                 float dy = tnt.y - ey;
                 float dz = tnt.z - ez;
-                float dist = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
-                if (dist > 0 && dist <= radius * 2.0f) {
-                    float force = (radius * 2.0f - dist) / (radius * 2.0f);
+                float distSq = dx*dx + dy*dy + dz*dz;
+                if (distSq > 0 && distSq <= r2sq) {
+                    float dist = (float) Math.sqrt(distSq);
+                    float force = (r2 - dist) / r2;
                     tnt.vx += (dx / dist) * force * 15.0f;
                     tnt.vy += (dy / dist) * force * 15.0f + force * 5.0f;
                     tnt.vz += (dz / dist) * force * 15.0f;
@@ -175,9 +179,10 @@ public class WorldLogic {
                 float dx = e.x - ex;
                 float dy = e.y - ey;
                 float dz = e.z - ez;
-                float dist = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
-                if (dist > 0 && dist <= radius * 2.0f) {
-                    float force = (radius * 2.0f - dist) / (radius * 2.0f);
+                float distSq = dx*dx + dy*dy + dz*dz;
+                if (distSq > 0 && distSq <= r2sq) {
+                    float dist = (float) Math.sqrt(distSq);
+                    float force = (r2 - dist) / r2;
                     e.targetX = e.x + (dx / dist) * force * 20.0f;
                     e.targetZ = e.z + (dz / dist) * force * 20.0f;
                     e.vy += force * 15.0f;
@@ -185,20 +190,22 @@ public class WorldLogic {
             }
         }
 
+        float radiusSq = radius * radius;
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     float dx = x + 0.5f - ex;
                     float dy = y + 0.5f - ey;
                     float dz = z + 0.5f - ez;
-                    float dist = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
-                    if (dist <= radius && y >= 1 && y < 128) {
+                    float distSq = dx*dx + dy*dy + dz*dz;
+                    if (distSq <= radiusSq && y >= 1 && y < 128) {
                         byte block = getBlock(x, y, z);
                         if (block == 9) continue; // Bedrock immune
 
                         if (block == 5 && gameplayRef != null) {
                             setBlock(x, y, z, (byte)0);
                             Gameplay.ActiveTNT newTNT = gameplayRef.new ActiveTNT(x + 0.5f, y + 0.5f, z + 0.5f);
+                            float dist = (float) Math.sqrt(distSq);
                             float force = (radius - dist) / radius;
                             newTNT.vx = (dx / dist) * force * 15.0f;
                             newTNT.vy = (dy / dist) * force * 15.0f + 5.0f;
