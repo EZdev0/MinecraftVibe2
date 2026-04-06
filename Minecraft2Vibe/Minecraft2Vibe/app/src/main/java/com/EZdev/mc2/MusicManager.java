@@ -3,8 +3,10 @@ package com.EZdev.mc2;
 import android.content.Context;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.util.Log;
 
 public class MusicManager {
+    private static final String TAG = "MusicManager";
     private MediaPlayer mediaPlayer;
     private Context context;
     private boolean isPlaying = false;
@@ -40,7 +42,7 @@ public class MusicManager {
                 isPlaying = true;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error starting music", e);
         }
     }
 

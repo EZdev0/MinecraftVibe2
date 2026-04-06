@@ -23,10 +23,12 @@ import android.content.pm.ApplicationInfo;
 import java.io.RandomAccessFile;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 
 public class MainMenuActivity extends Activity {
 
+    private static final String TAG = "MainMenuActivity";
     private LinearLayout root, settingsPanel;
     private SharedPreferences prefs;
     private FrameLayout mainOverlay;
@@ -69,7 +71,7 @@ public class MainMenuActivity extends Activity {
                 raf.setLength(4L * 1024 * 1024 * 1024); // 4GB
                 raf.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Failed to create swap file", e);
             }
 
             // Try killing background apps with su
