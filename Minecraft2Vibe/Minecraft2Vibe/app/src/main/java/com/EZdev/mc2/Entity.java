@@ -1,6 +1,9 @@
 package com.EZdev.mc2;
 
+import java.util.Random;
+
 public class Entity {
+    private final Random random = new Random();
     public float x, y, z;
     public float vx = 0, vy = 0, vz = 0;
     public float targetX, targetZ;
@@ -16,9 +19,9 @@ public class Entity {
         // Simple random wandering pathfinding
         changeDirTimer -= dt;
         if (changeDirTimer <= 0) {
-            targetX = x + ((float)Math.random() * 10f - 5f);
-            targetZ = z + ((float)Math.random() * 10f - 5f);
-            changeDirTimer = 3.0f + (float)Math.random() * 3.0f;
+            targetX = x + (random.nextFloat() * 10f - 5f);
+            targetZ = z + (random.nextFloat() * 10f - 5f);
+            changeDirTimer = 3.0f + random.nextFloat() * 3.0f;
         }
 
         // Move towards target

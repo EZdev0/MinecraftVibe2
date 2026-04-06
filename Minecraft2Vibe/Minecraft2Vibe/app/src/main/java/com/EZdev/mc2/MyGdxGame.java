@@ -1,5 +1,6 @@
 package com.EZdev.mc2;
 
+import java.util.Random;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -7,6 +8,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class MyGdxGame implements GLSurfaceView.Renderer {
+    private final Random random = new Random();
 
     public Gameplay gameplay = new Gameplay();
     public WorldLogic world = new WorldLogic();
@@ -77,9 +79,9 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
 
         float shakeX = 0, shakeY = 0, shakeZ = 0;
         if (gameplay.shakeIntensity > 0) {
-            shakeX = ((float)Math.random() - 0.5f) * gameplay.shakeIntensity;
-            shakeY = ((float)Math.random() - 0.5f) * gameplay.shakeIntensity;
-            shakeZ = ((float)Math.random() - 0.5f) * gameplay.shakeIntensity;
+            shakeX = (random.nextFloat() - 0.5f) * gameplay.shakeIntensity;
+            shakeY = (random.nextFloat() - 0.5f) * gameplay.shakeIntensity;
+            shakeZ = (random.nextFloat() - 0.5f) * gameplay.shakeIntensity;
         }
 
         float dirX = (float) (Math.cos(Math.toRadians(gameplay.pitch)) * Math.sin(Math.toRadians(gameplay.yaw)));

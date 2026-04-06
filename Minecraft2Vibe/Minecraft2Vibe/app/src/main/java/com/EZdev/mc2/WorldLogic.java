@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class WorldLogic {
+    private final Random random = new Random();
     private HashMap<String, Chunk> chunks = new HashMap<>();
     private float[] finalMVP = new float[16];
     private float[] modelMatrix = new float[16];
@@ -74,7 +76,7 @@ public class WorldLogic {
                     chunks.put(key, newChunk);
                     updateNeighbors(playerChunkX + x, playerChunkZ + z);
 
-                    if(Math.random() < 0.2f) {
+                    if(random.nextFloat() < 0.2f) {
                         float ey = 127;
                         while(ey > 0 && getBlock((playerChunkX+x)*16 + 8, (int)ey, (playerChunkZ+z)*16 + 8) == 0) ey--;
                         if(ey > 50) entities.add(new Entity((playerChunkX+x)*16 + 8, ey+1.1f, (playerChunkZ+z)*16 + 8));
@@ -201,13 +203,13 @@ public class WorldLogic {
                             newTNT.vx = (dx / dist) * force * 15.0f;
                             newTNT.vy = (dy / dist) * force * 15.0f + 5.0f;
                             newTNT.vz = (dz / dist) * force * 15.0f;
-                            newTNT.timer = 0.5f + (float)Math.random() * 1.5f;
+                            newTNT.timer = 0.5f + random.nextFloat() * 1.5f;
                             gameplayRef.tickingTNTs.add(newTNT);
                         } else if (block != 0 && block != 7) {
-                            if (gameplayRef != null && Math.random() < 0.2f) gameplayRef.addBlockParticles(x, y, z, block);
+                            if (gameplayRef != null && random.nextFloat() < 0.2f) gameplayRef.addBlockParticles(x, y, z, block);
 
                             // Explosion drops some blocks in survival
-                            if (gameplayRef != null && !gameplayRef.isCreative && Math.random() < 0.3f) {
+                            if (gameplayRef != null && !gameplayRef.isCreative && random.nextFloat() < 0.3f) {
                                 spawnItemEntity(x, y, z, block);
                             }
 
