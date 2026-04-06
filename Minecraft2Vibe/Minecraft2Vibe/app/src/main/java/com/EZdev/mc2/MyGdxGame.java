@@ -26,6 +26,7 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
 
     public MyGdxGame(MainActivity act) {
         this.activity = act;
+        this.gameplay.activity = act;
         world.saveManager = new SaveManager(act);
     }
 
