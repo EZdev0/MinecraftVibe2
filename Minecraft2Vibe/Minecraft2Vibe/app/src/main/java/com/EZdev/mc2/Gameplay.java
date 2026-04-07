@@ -98,6 +98,11 @@ public class Gameplay {
     }
 
         public void update(float dt, WorldLogic world) {
+        // Update Reverb in Caves
+        if (activity != null && activity.soundManager != null) {
+            boolean inCave = camY < 40;
+            activity.soundManager.updateReverb(inCave);
+        }
         if (world == null) return;
         if (!hasSpawned) { spawnOnHighestBlock(world); return; }
         if (dt > 0.05f) dt = 0.05f;
