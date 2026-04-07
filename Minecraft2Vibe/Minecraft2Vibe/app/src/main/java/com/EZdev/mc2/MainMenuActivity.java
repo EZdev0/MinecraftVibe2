@@ -47,7 +47,7 @@ public class MainMenuActivity extends Activity {
 
     private void showLoadingScreenAndOptimize() {
         // Request Permissions immediately
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             if (checkSelfPermission("moe.shizuku.manager.permission.API_V23") != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{
                         "moe.shizuku.manager.permission.API_V23"
