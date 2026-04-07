@@ -38,11 +38,11 @@ public class SoundManager {
             .build();
 
         // Load sounds from raw resources
-        grassSoundId = soundPool.load(context, R.raw.grass, 1);
-        stoneSoundId = soundPool.load(context, R.raw.stone, 1);
-        woodSoundId = soundPool.load(context, R.raw.wood, 1);
-        tntSoundId = soundPool.load(context, R.raw.tnt, 1);
-        waterSoundId = soundPool.load(context, R.raw.water, 1);
+        // grassSoundId = soundPool.load(context, R.raw.grass, 1);
+        // stoneSoundId = soundPool.load(context, R.raw.stone, 1);
+        // woodSoundId = soundPool.load(context, R.raw.wood, 1);
+        // tntSoundId = soundPool.load(context, R.raw.tnt, 1);
+        // waterSoundId = soundPool.load(context, R.raw.water, 1);
 
         // Setup Reverb (Schallsystem für Höhlen)
         try {
