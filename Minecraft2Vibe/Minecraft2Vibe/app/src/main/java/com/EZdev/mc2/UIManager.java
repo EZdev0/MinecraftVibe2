@@ -318,6 +318,15 @@ public class UIManager {
         });
         settingsPanel.addView(musicBtn);
 
+        Button sfxBtn = createBtn(prefs.getBoolean("SFX_ENABLED", true) ? "EFFEKTE: AN" : "EFFEKTE: AUS", "#3498db");
+        sfxBtn.setOnClickListener(v -> {
+            if (activity.soundManager != null) {
+                activity.soundManager.toggleSFX();
+                sfxBtn.setText(activity.soundManager.isEnabled() ? "EFFEKTE: AN" : "EFFEKTE: AUS");
+            }
+        });
+        settingsPanel.addView(sfxBtn);
+
         settingsPanel.addView(createHeading("--- SYSTEM ---"));
 
         Button debugBtn = createBtn(showDebug ? "DEBUG INFO: AN" : "DEBUG INFO: AUS", "#9b59b6");

@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > ./Minecraft2Vibe/Minecraft2Vibe/app/src/main/java/com/EZdev/mc2/SoundManager.java
 package com.EZdev.mc2;
 
 import android.content.Context;
@@ -111,3 +112,4 @@ public class SoundManager {
         }
     }
 }
+INNER_EOF
