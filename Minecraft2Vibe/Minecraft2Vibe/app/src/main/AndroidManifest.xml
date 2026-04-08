@@ -8,7 +8,7 @@
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 
     <application android:name=".McApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="McVibe2"
         android:roundIcon="@mipmap/ic_launcher_round"
