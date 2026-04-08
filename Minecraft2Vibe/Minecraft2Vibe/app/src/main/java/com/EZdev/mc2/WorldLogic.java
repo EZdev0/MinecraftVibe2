@@ -321,7 +321,7 @@ public class WorldLogic {
                         ItemEntity other = droppedItems.get(j);
                         if(other != null && other.type == item.type && item.count < 64 && other.count < 64) {
                             float dxi = item.x - other.x; float dyi = item.y - other.y; float dzi = item.z - other.z;
-                            if(Math.sqrt(dxi*dxi + dyi*dyi + dzi*dzi) < 0.5f) {
+                            if(dxi*dxi + dyi*dyi + dzi*dzi < 0.25f) {
                                 int space = 64 - item.count; int transfer = Math.min(space, other.count);
                                 item.count += transfer; other.count -= transfer;
                                 if(other.count <= 0) other.life = 0;
