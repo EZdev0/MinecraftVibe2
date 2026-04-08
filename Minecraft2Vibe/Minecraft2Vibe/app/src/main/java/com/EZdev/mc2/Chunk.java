@@ -32,54 +32,74 @@ public class Chunk {
         buildMesh();
     }
 
+
     private void generateTerrain() {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int gx = (chunkX * 16) + x, gz = (chunkZ * 16) + z;
-                float noiseVal = Noise.simplex2(gx * 0.015f, gz * 0.015f);
-                int height = 65 + (int)(noiseVal * 20f); // Higher terrain to make room for deeper caves
-                for (int y = 0; y <= height; y++) {
-                    if (y == 0) { blocks[x][y][z] = 9; continue; } // Bedrock (ID 9) at y=0
-                    if (y == 1 && random.nextDouble() < 0.5) { blocks[x][y][z] = 9; continue; } // Bedrock layer 1 noise
+                // Base terrain height with FBM for smoother hills
+                float noiseVal = Noise.fbm2(gx * 0.005f, gz * 0.005f, 4);
+                // Normalized FBM is between -1 and 1, adjust to height
+                int height = 70 + (int)(noiseVal * 30f);
 
-                    // Feature 4: Minecraft-like 3D Cave Generation (Simplex Noise)
-                    // Base terrain filling
+                for (int y = 0; y <= height; y++) {
+                    if (y == 0) { blocks[x][y][z] = 9; continue; } // Bedrock
+                    if (y <= 2 && random.nextDouble() < 0.5) { blocks[x][y][z] = 9; continue; } // Bedrock noise
+
+                    // Base block types
                     if (y == height) blocks[x][y][z] = 1; // Grass
-                    else if (y > height - 4) blocks[x][y][z] = 1; // Dirt (should technically be dirt, but we use 1 for both)
+                    else if (y > height - 4) blocks[x][y][z] = 1; // Dirt
                     else blocks[x][y][z] = 2; // Stone
 
-                    // Only dig caves if we are safely below the surface (e.g. 5 blocks deep)
-                    if (y < height - 5 && y > 1) {
-                        float caveNoise1 = Noise.simplex3(gx * 0.03f, y * 0.03f, gz * 0.03f);
-                        float caveNoise2 = Noise.simplex3(gx * 0.03f + 1000f, y * 0.03f + 1000f, gz * 0.03f + 1000f);
+                    // Cave generation (only dig below surface)
+                    if (y < height - 5 && y > 2) {
+                        float caveX = gx * 0.015f;
+                        float caveY = y * 0.015f;
+                        float caveZ = gz * 0.015f;
 
-                        // "Spaghetti" Tunnels (worms) - intersections of two noises around 0
-                        boolean isWorm = Math.abs(caveNoise1) < 0.06f && Math.abs(caveNoise2) < 0.06f;
+                        // 1. Cheese Caves (Large hollow areas)
+                        float cheeseNoise = Noise.fbm3(caveX, caveY, caveZ, 2);
+                        boolean isCheese = cheeseNoise > 0.45f;
 
-                        // "Cheese" Caves - large hollow areas based on a density threshold
-                        float cheeseNoise = Noise.simplex3(gx * 0.015f, y * 0.02f, gz * 0.015f);
-                        boolean isCheese = cheeseNoise > 0.5f;
+                        // 2. Spaghetti Caves (Long, winding tunnels)
+                        // Use intersection of two FBMs
+                        float spaghetti1 = Noise.fbm3(caveX * 1.5f, caveY * 1.5f, caveZ * 1.5f, 2);
+                        float spaghetti2 = Noise.fbm3(caveX * 1.5f + 100f, caveY * 1.5f + 100f, caveZ * 1.5f + 100f, 2);
+                        boolean isSpaghetti = Math.abs(spaghetti1) < 0.06f && Math.abs(spaghetti2) < 0.06f;
 
-                        if (isWorm || isCheese) {
-                            blocks[x][y][z] = 0; // Dig out the cave (Air)
+                        // 3. Noodle Caves (Smaller, more frequent tunnels)
+                        float noodle1 = Noise.fbm3(caveX * 3.0f, caveY * 3.0f, caveZ * 3.0f, 1);
+                        float noodle2 = Noise.fbm3(caveX * 3.0f + 50f, caveY * 3.0f + 50f, caveZ * 3.0f + 50f, 1);
+                        boolean isNoodle = Math.abs(noodle1) < 0.04f && Math.abs(noodle2) < 0.04f;
 
-                            // If digging near the bottom, fill with water (like underground lakes)
-                            if (y < 12) blocks[x][y][z] = 7;
+                        // 4. Ravines (Tall, narrow vertical cuts)
+                        // Squash Y axis heavily so the noise stretches vertically
+                        float ravineNoise = Noise.fbm3(gx * 0.01f, y * 0.002f, gz * 0.01f, 2);
+                        // Mask the ravine so it doesn't appear everywhere
+                        float ravineMask = Noise.simplex2(gx * 0.005f + 1000f, gz * 0.005f + 1000f);
+                        boolean isRavine = Math.abs(ravineNoise) < 0.05f && ravineMask > 0.3f;
+
+                        if (isCheese || isSpaghetti || isNoodle || isRavine) {
+                            blocks[x][y][z] = 0; // Dig air
+
+                            // Fill bottom of caves with water/lava
+                            if (y < 12) blocks[x][y][z] = 7; // Water
                         }
                     }
                 }
 
-                for (int y = 50; y > height; y--) {
+                // Water fill for oceans/lakes
+                for (int y = 60; y > height; y--) {
                     blocks[x][y][z] = 7;
                 }
-                if (height < 50 && blocks[x][height][z] == 1) {
-                    blocks[x][height][z] = 1;
+                // Convert grass under water to dirt
+                if (height < 60 && blocks[x][height][z] == 1) {
+                    blocks[x][height][z] = 1; // It's already 1, but this logic was in original
                 }
             }
         }
     }
-
-    private void addDecorations() {
+private void addDecorations() {
         for (int x = 2; x < 14; x++) {
             for (int z = 2; z < 14; z++) {
                 for (int y = 100; y > 50; y--) {

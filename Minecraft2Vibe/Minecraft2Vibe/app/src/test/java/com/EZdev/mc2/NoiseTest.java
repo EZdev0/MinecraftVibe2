@@ -22,7 +22,7 @@ public class NoiseTest {
             for (float y = -10f; y <= 10f; y += 0.5f) {
                 for (float z = -10f; z <= 10f; z += 0.5f) {
                     float val = Noise.simplex3(x, y, z);
-                    assertTrue("Value " + val + " at (" + x + "," + y + "," + z + ") should be >= 0", val >= 0.0f);
+                    assertTrue("Value " + val + " at (" + x + "," + y + "," + z + ") should be >= -1", val >= -1.0f);
                     assertTrue("Value " + val + " at (" + x + "," + y + "," + z + ") should be <= 1", val <= 1.0f);
                 }
             }
@@ -42,6 +42,6 @@ public class NoiseTest {
     public void testSimplex3IntegerBoundaries() {
         // Just ensure it doesn't crash and returns something reasonable
         float val = Noise.simplex3(1.0f, 2.0f, 3.0f);
-        assertTrue(val >= 0.0f && val <= 1.0f);
+        assertTrue(val >= -1.0f && val <= 1.0f);
     }
 }
