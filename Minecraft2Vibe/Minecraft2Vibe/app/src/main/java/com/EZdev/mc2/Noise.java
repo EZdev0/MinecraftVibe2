@@ -5,7 +5,8 @@ import java.util.Random;
 public class Noise {
     private static final int[] p = new int[512];
     static {
-        Random random = new Random();
+        // FIXED SEED prevents terrain tearing between app restarts
+        Random random = new Random(1337L);
         for(int i=0; i<256; i++) p[i] = random.nextInt(256);
         for(int i=0; i<256; i++) p[256+i] = p[i];
     }
@@ -26,10 +27,40 @@ public class Noise {
         return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z), grad(p[BA], x-1, y, z)),
                 lerp(u, grad(p[AB], x, y-1, z), grad(p[BB], x-1, y-1, z))),
                 lerp(v, lerp(u, grad(p[AA+1], x, y, z-1), grad(p[BA+1], x-1, y, z-1)),
-                lerp(u, grad(p[AB+1], x, y-1, z-1), grad(p[BB+1], x-1, y-1, z-1)))) * 0.5f + 0.5f;
+                lerp(u, grad(p[AB+1], x, y-1, z-1), grad(p[BB+1], x-1, y-1, z-1)))); // Removed the * 0.5f + 0.5f mapping to keep it [-1, 1] for FBM
     }
 
     public static float simplex2(float x, float y) {
         return simplex3(x, y, 0);
+    }
+
+    // Fractal Brownian Motion for 2D
+    public static float fbm2(float x, float y, int octaves) {
+        float total = 0.0f;
+        float frequency = 1.0f;
+        float amplitude = 1.0f;
+        float maxValue = 0.0f;  // Used for normalizing result to -1.0 to 1.0
+        for(int i=0;i<octaves;i++) {
+            total += simplex2(x * frequency, y * frequency) * amplitude;
+            maxValue += amplitude;
+            amplitude *= 0.5f;
+            frequency *= 2.0f;
+        }
+        return total / maxValue;
+    }
+
+    // Fractal Brownian Motion for 3D
+    public static float fbm3(float x, float y, float z, int octaves) {
+        float total = 0.0f;
+        float frequency = 1.0f;
+        float amplitude = 1.0f;
+        float maxValue = 0.0f;
+        for(int i=0;i<octaves;i++) {
+            total += simplex3(x * frequency, y * frequency, z * frequency) * amplitude;
+            maxValue += amplitude;
+            amplitude *= 0.5f;
+            frequency *= 2.0f;
+        }
+        return total / maxValue;
     }
 }
