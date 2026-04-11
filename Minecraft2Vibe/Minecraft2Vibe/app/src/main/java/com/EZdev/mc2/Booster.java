@@ -11,12 +11,12 @@ public class Booster {
     public static FloatBuffer tntVertexBuffer, tntColorBuffer;
 
     public static void initGeometry() {
-        String v = "uniform mat4 uMVPMatrix; uniform float uTime; uniform int pType; attribute vec4 vPosition; attribute vec4 vColor; varying vec4 fColor; varying float vDist; " +
+        String v = "precision mediump float; precision mediump int; uniform mat4 uMVPMatrix; uniform float uTime; uniform int pType; attribute vec4 vPosition; attribute vec4 vColor; varying vec4 fColor; varying float vDist; " +
                    "void main() { vec4 pos = vPosition; if (vColor.r > 0.8 && vColor.g > 0.4 && vColor.b < 0.2 && pType != 99 && pType != 100) { float w = 1.0 - vColor.a; " +
                    "pos.x += sin(uTime * 15.0 + pos.y * 10.0) * 0.15 * w; pos.z += cos(uTime * 15.0 + pos.x * 10.0) * 0.15 * w; } " +
                    "gl_Position = uMVPMatrix * pos; fColor = vec4(vColor.rgb, 1.0); vDist = gl_Position.w; }";
 
-        String f = "precision mediump float; varying vec4 fColor; varying float vDist; uniform int uFogEnabled; uniform float uFogEnd; uniform float uTime; uniform int uIsFlashing; uniform int pType; " +
+        String f = "precision mediump float; precision mediump int; varying vec4 fColor; varying float vDist; uniform int uFogEnabled; uniform float uFogEnd; uniform float uTime; uniform int uIsFlashing; uniform int pType; " +
                    "void main() { vec4 fc = fColor; " +
                    "if (uIsFlashing == 1) { float p = (sin(uTime * 15.0) + 1.0) * 0.5; fc = mix(fColor, vec4(1.0), p); } " +
                    "else if (uIsFlashing == 2 && pType == 99) { fc = vec4(0.8, 0.8, 0.8, 0.7); } " + // Smoke
