@@ -36,6 +36,10 @@ public class Gameplay {
     public boolean isFlying = false;
     public float health = 20.0f;
     public float fireDamageTimer = 0f;
+    public boolean isRaining = false;
+    public boolean isThundering = false;
+    public float weatherTimer = 300f;
+
 
     private static final int[][] FIRE_NEIGHBORS = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
 
@@ -114,6 +118,43 @@ public class Gameplay {
         }
 
         gameTime += dt;
+        weatherTimer -= dt;
+        if (weatherTimer <= 0) {
+            weatherTimer = 60f + random.nextFloat() * 200f;
+            if (!isRaining) {
+                isRaining = true;
+                isThundering = random.nextFloat() < 0.3f;
+            } else {
+                isRaining = false;
+                isThundering = false;
+            }
+        }
+        if (isRaining) {
+            if (random.nextFloat() < 0.5f) {
+                float rx = camX + (random.nextFloat() * 40f - 20f);
+                float rz = camZ + (random.nextFloat() * 40f - 20f);
+                float ry = camY + 20f + random.nextFloat() * 10f;
+                ActiveFireParticle p = new ActiveFireParticle(rx, ry, rz, (byte)7);
+                p.vy = -10f - random.nextFloat() * 5f;
+                blockParticles.add(p);
+            }
+        }
+        if (isThundering && random.nextFloat() < 0.01f) {
+            float tx = camX + (random.nextFloat() * 50f - 25f);
+            float tz = camZ + (random.nextFloat() * 50f - 25f);
+            for (int y = 127; y > 0; y--) {
+                if (world != null && world.getBlock((int)tx, y, (int)tz) > 0) {
+                    world.setBlock((int)tx, y + 1, (int)tz, (byte)6);
+                    activeFires.add(new ActiveFire((int)tx, y + 1, (int)tz));
+                    if (activity != null) activity.runOnUiThread(() -> {
+                        activity.getWindow().getDecorView().setBackgroundColor(android.graphics.Color.WHITE);
+                        new android.os.Handler().postDelayed(() -> activity.getWindow().getDecorView().setBackgroundColor(android.graphics.Color.BLACK), 50);
+                    });
+                    break;
+                }
+            }
+        }
+
 
 
         if (shakeTimer > 0) {
@@ -148,6 +189,14 @@ public class Gameplay {
                     health -= 2.0f;
                     fireDamageTimer = 1.0f;
                     if (health <= 0) {
+                        if(activity != null && !activity.getSharedPreferences("McPrefs", android.content.Context.MODE_PRIVATE).getBoolean("FIRE_UNLOCKED", false)) {
+                            activity.getSharedPreferences("McPrefs", android.content.Context.MODE_PRIVATE).edit().putBoolean("FIRE_UNLOCKED", true).apply();
+                            activity.runOnUiThread(() -> android.widget.Toast.makeText(activity, "FEUERZEUG FREIGESCHALTET!", android.widget.Toast.LENGTH_LONG).show());
+                            if(activity.uiManager != null) {
+                                activity.uiManager.inventory[5] = 999;
+                                activity.uiManager.updateHotbarUI();
+                            }
+                        }
                         hasSpawned = false;
                         health = 20.0f;
                     }
@@ -181,6 +230,14 @@ public class Gameplay {
                     if (dist < 5.0f) {
                         health -= (5.0f - dist) * 4.0f;
                         if (health <= 0) { hasSpawned = false; health = 20.0f; }
+                        if(activity != null && !activity.getSharedPreferences("McPrefs", android.content.Context.MODE_PRIVATE).getBoolean("FIRE_UNLOCKED", false)) {
+                            activity.getSharedPreferences("McPrefs", android.content.Context.MODE_PRIVATE).edit().putBoolean("FIRE_UNLOCKED", true).apply();
+                            activity.runOnUiThread(() -> android.widget.Toast.makeText(activity, "FEUERZEUG FREIGESCHALTET!", android.widget.Toast.LENGTH_LONG).show());
+                            if(activity.uiManager != null) {
+                                activity.uiManager.inventory[5] = 999;
+                                activity.uiManager.updateHotbarUI();
+                            }
+                        }
                     }
                 }
                 int lastIdx = tickingTNTs.size() - 1;

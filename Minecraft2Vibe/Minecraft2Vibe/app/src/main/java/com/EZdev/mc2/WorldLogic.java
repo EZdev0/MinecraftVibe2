@@ -249,7 +249,11 @@ public class WorldLogic {
         float dt = 0.016f;
 
         float dayCycle = (float)(Math.sin(gameplay.gameTime * 0.05f) * 0.5f + 0.5f);
-        GLES20.glClearColor(0.1f + dayCycle*0.4f, 0.2f + dayCycle*0.6f, 0.4f + dayCycle*0.6f, 1.0f);
+        float rCol = 0.1f + dayCycle*0.4f, gCol = 0.2f + dayCycle*0.6f, bCol = 0.4f + dayCycle*0.6f;
+        if (gameplay.isRaining) {
+            rCol *= 0.5f; gCol *= 0.6f; bCol *= 0.7f;
+        }
+        GLES20.glClearColor(rCol, gCol, bCol, 1.0f);
 
         GLES20.glUseProgram(Booster.shaderProgram);
         GLES20.glEnableVertexAttribArray(Booster.posHandle);
@@ -340,6 +344,14 @@ public class WorldLogic {
                 float distanceSq = dx*dx + dy*dy + dz*dz;
 
                 if (item.pickupDelay <= 0 && !gameplay.isCreative) {
+                    if (distanceSq < 1.5f && gameplay.activity != null && gameplay.activity.uiManager != null) {
+                        int overflow = gameplay.activity.uiManager.addToInventory(item.type, item.count);
+                        if (overflow == 0) {
+                            item.life = 0;
+                        } else {
+                            item.count = overflow;
+                        }
+                    }
                     if (distanceSq < 6.0f) { // ~2.5 blocks magnet
                         float dist = (float)Math.sqrt(distanceSq);
 
@@ -501,6 +513,13 @@ public class WorldLogic {
                 if (hitBlock == 9) return; // Cannot interact with Bedrock
 
                 if (!place && hitBlock == 5 && g.activeBlock == 6) {
+                    if(ui != null && !ui.tntUnlocked) {
+                        ui.tntUnlocked = true;
+                        if(g.activity != null) {
+                            g.activity.getSharedPreferences("McPrefs", android.content.Context.MODE_PRIVATE).edit().putBoolean("TNT_UNLOCKED", true).apply();
+                            g.activity.runOnUiThread(() -> android.widget.Toast.makeText(g.activity, "TNT FREIGESCHALTET!", android.widget.Toast.LENGTH_LONG).show());
+                        }
+                    }
                     setBlock(bx, by, bz, (byte)0);
                     g.tickingTNTs.add(g.new ActiveTNT(bx + 0.5f, by, bz + 0.5f));
                     return;

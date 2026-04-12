@@ -308,6 +308,36 @@ public class MainMenuActivity extends Activity {
         settingsPanel.addView(fogBtn);
         settingsPanel.addView(vulkanBtn);
         settingsPanel.addView(musicBtn);
+
+        boolean isSfx = prefs.getBoolean("SFX_ENABLED", true);
+        Button sfxBtn = createMenuBtn(isSfx ? "EFFEKTE: AN" : "EFFEKTE: AUS");
+        sfxBtn.setBackgroundColor(Color.parseColor("#3498db"));
+        sfxBtn.setOnClickListener(v -> {
+            boolean s = !prefs.getBoolean("SFX_ENABLED", true);
+            prefs.edit().putBoolean("SFX_ENABLED", s).apply();
+            sfxBtn.setText(s ? "EFFEKTE: AN" : "EFFEKTE: AUS");
+        });
+        settingsPanel.addView(sfxBtn);
+
+        boolean isDebug = prefs.getBoolean("SHOW_DEBUG", false);
+        Button debugBtn = createMenuBtn(isDebug ? "DEBUG INFO: AN" : "DEBUG INFO: AUS");
+        debugBtn.setBackgroundColor(Color.parseColor("#9b59b6"));
+        debugBtn.setOnClickListener(v -> {
+            boolean d = !prefs.getBoolean("SHOW_DEBUG", false);
+            prefs.edit().putBoolean("SHOW_DEBUG", d).apply();
+            debugBtn.setText(d ? "DEBUG INFO: AN" : "DEBUG INFO: AUS");
+        });
+        settingsPanel.addView(debugBtn);
+
+        boolean isGLWarn = prefs.getBoolean("GL_WARN", false);
+        Button glWarnBtn = createMenuBtn(isGLWarn ? "GL-WARNUNGEN: AN" : "GL-WARNUNGEN: AUS");
+        glWarnBtn.setBackgroundColor(Color.parseColor("#8e44ad"));
+        glWarnBtn.setOnClickListener(v -> {
+            boolean g = !prefs.getBoolean("GL_WARN", false);
+            prefs.edit().putBoolean("GL_WARN", g).apply();
+            glWarnBtn.setText(g ? "GL-WARNUNGEN: AN" : "GL-WARNUNGEN: AUS");
+        });
+        settingsPanel.addView(glWarnBtn);
     }
 
     private void showSettings() {

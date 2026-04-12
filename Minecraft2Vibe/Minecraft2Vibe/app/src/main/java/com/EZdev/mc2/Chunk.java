@@ -50,6 +50,7 @@ public class Chunk {
                     if (y == height) blocks[x][y][z] = 1; // Grass
                     else if (y > height - 4) blocks[x][y][z] = 1; // Dirt
                     else blocks[x][y][z] = 2; // Stone
+                    if (y < 20 && random.nextFloat() < 0.005f) blocks[x][y][z] = 5; // TNT
 
                     // Cave generation (only dig below surface)
                     if (y < height - 5 && y > 2) {
