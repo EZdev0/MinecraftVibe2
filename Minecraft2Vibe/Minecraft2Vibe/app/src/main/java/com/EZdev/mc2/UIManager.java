@@ -35,6 +35,7 @@ public class UIManager {
 
     public boolean showDebug = true;
         public boolean fastRender = false;
+    public boolean uiEditorMode = false;
     public boolean showGLWarnings = true;
     public String currentGLError = null;
 
@@ -49,7 +50,7 @@ public class UIManager {
         });
     }
 
-    private boolean tntUnlocked = false;
+    public boolean tntUnlocked = false;
 
     public UIManager(MainActivity activity, MyGdxGame engine) {
         this.activity = activity;
@@ -187,14 +188,20 @@ public class UIManager {
         btnLayout.setOrientation(LinearLayout.HORIZONTAL);
 
         Button jumpBtn = createBtn("⬆️", "#3498db");
+        float jX = prefs.getFloat("jumpBtn_X", -1); float jY = prefs.getFloat("jumpBtn_Y", -1);
+        if(jX != -1) { jumpBtn.setX(jX); jumpBtn.setY(jY); }
         jumpBtn.setOnTouchListener((v, e) -> {
+            if(handleTouch(v, e, "jumpBtn")) return true;
             if(e.getAction() == MotionEvent.ACTION_DOWN) engine.gameplay.wantsToJump = true;
             else if(e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_CANCEL) engine.gameplay.wantsToJump = false;
             return true;
         });
 
         Button breakBtn = createBtn("⛏️", "#e74c3c");
+        float bX = prefs.getFloat("breakBtn_X", -1); float bY = prefs.getFloat("breakBtn_Y", -1);
+        if(bX != -1) { breakBtn.setX(bX); breakBtn.setY(bY); }
         breakBtn.setOnTouchListener((v, e) -> {
+            if(handleTouch(v, e, "breakBtn")) return true;
             if(e.getAction() == MotionEvent.ACTION_DOWN) {
                 if (engine.gameplay.isCreative) engine.world.interact(engine.gameplay, false, this);
                 else engine.gameplay.isBreaking = true;
@@ -206,9 +213,24 @@ public class UIManager {
         });
 
         Button placeBtn = createBtn("🧱", "#2ecc71");
-        placeBtn.setOnTouchListener((v, e) -> { if(e.getAction() == MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, true, this); return true; });
+        float pX = prefs.getFloat("placeBtn_X", -1); float pY = prefs.getFloat("placeBtn_Y", -1);
+        if(pX != -1) { placeBtn.setX(pX); placeBtn.setY(pY); }
+        placeBtn.setOnTouchListener((v, e) -> {
+            if(handleTouch(v, e, "placeBtn")) return true;
+            if(e.getAction() == MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, true, this); return true;
+        });
 
         btnLayout.addView(jumpBtn); btnLayout.addView(breakBtn); btnLayout.addView(placeBtn);
+        if (!engine.gameplay.isCreative) {
+            Button attackBtn = createBtn("⚔️", "#e67e22");
+            float aX = prefs.getFloat("attackBtn_X", -1); float aY = prefs.getFloat("attackBtn_Y", -1);
+            if(aX != -1) { attackBtn.setX(aX); attackBtn.setY(aY); }
+            attackBtn.setOnTouchListener((v, e) -> {
+                if(handleTouch(v, e, "attackBtn")) return true;
+                if(e.getAction() == android.view.MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, false, this); return true;
+            });
+            btnLayout.addView(attackBtn);
+        }
 
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.BOTTOM | Gravity.END;
@@ -328,6 +350,16 @@ public class UIManager {
         settingsPanel.addView(sfxBtn);
 
         settingsPanel.addView(createHeading("--- SYSTEM ---"));
+
+                Button uiEditorBtn = createBtn(uiEditorMode ? "UI EDITOR: AN" : "UI EDITOR: AUS", "#f1c40f");
+        uiEditorBtn.setOnClickListener(v -> {
+            uiEditorMode = !uiEditorMode;
+            uiEditorBtn.setText(uiEditorMode ? "UI EDITOR: AN" : "UI EDITOR: AUS");
+            if(uiEditorMode) {
+                android.widget.Toast.makeText(activity, "Verschiebe Buttons mit Touch. Druecke SCHLIESSEN zum Speichern.", android.widget.Toast.LENGTH_LONG).show();
+            }
+        });
+        settingsPanel.addView(uiEditorBtn);
 
         Button debugBtn = createBtn(showDebug ? "DEBUG INFO: AN" : "DEBUG INFO: AUS", "#9b59b6");
         debugBtn.setOnClickListener(v -> {
@@ -473,4 +505,18 @@ public class UIManager {
             return true;
         }
     }
+
+    private boolean handleTouch(View v, MotionEvent e, String idKey) {
+        if(uiEditorMode) {
+            if(e.getAction() == MotionEvent.ACTION_MOVE) {
+                v.setX(v.getX() + e.getX() - v.getWidth()/2f);
+                v.setY(v.getY() + e.getY() - v.getHeight()/2f);
+            } else if(e.getAction() == MotionEvent.ACTION_UP) {
+                prefs.edit().putFloat(idKey + "_X", v.getX()).putFloat(idKey + "_Y", v.getY()).apply();
+            }
+            return true;
+        }
+        return false;
+    }
+
 }
