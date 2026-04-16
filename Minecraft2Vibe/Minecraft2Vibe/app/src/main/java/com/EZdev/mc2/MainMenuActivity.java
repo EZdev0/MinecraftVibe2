@@ -102,25 +102,13 @@ public class MainMenuActivity extends Activity {
                 Log.e(TAG, "Failed to create swap file", e);
             }
 
-            // Try killing background apps with su
-            boolean rootSuccess = false;
-            try {
-                Process p = Runtime.getRuntime().exec(new String[]{"su", "-c", "am kill-all"});
-                p.waitFor();
-                rootSuccess = p.exitValue() == 0;
-            } catch (Exception e) {
-                // Ignore
-            }
-
-            // Fallback to ActivityManager killBackgroundProcesses
-            if (!rootSuccess) {
-                ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-                if (am != null) {
-                    PackageManager pm = getPackageManager();
-                    for (ApplicationInfo packageInfo : pm.getInstalledApplications(0)) {
-                        if ((packageInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 && !packageInfo.packageName.equals(getPackageName())) {
-                            am.killBackgroundProcesses(packageInfo.packageName);
-                        }
+            // ActivityManager killBackgroundProcesses for background app optimization
+            ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            if (am != null) {
+                PackageManager pm = getPackageManager();
+                for (ApplicationInfo packageInfo : pm.getInstalledApplications(0)) {
+                    if ((packageInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 && !packageInfo.packageName.equals(getPackageName())) {
+                        am.killBackgroundProcesses(packageInfo.packageName);
                     }
                 }
             }
