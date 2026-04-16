@@ -20,7 +20,14 @@ public class CrashHandlerActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         String errorLog = getIntent().getStringExtra("error");
-        if (errorLog == null) errorLog = "Unbekannter Fehler!";
+        if (errorLog == null) {
+            errorLog = "Unbekannter Fehler!";
+        } else {
+            if (errorLog.length() > 10000) {
+                errorLog = errorLog.substring(0, 10000) + "... [Truncated]";
+            }
+            errorLog = sanitize(errorLog);
+        }
 
         boolean canContinue = getIntent().getBooleanExtra("canContinue", false);
 
@@ -92,5 +99,11 @@ public class CrashHandlerActivity extends Activity {
         root.addView(restartBtn);
 
         setContentView(root);
+    }
+
+    private String sanitize(String input) {
+        if (input == null) return null;
+        // Strip potential malicious control characters while keeping newlines and tabs
+        return input.replaceAll("[\\p{Cc}&&[^\\n\\r\\t]]", "");
     }
 }
