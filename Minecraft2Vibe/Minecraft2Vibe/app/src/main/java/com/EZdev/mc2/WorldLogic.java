@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class WorldLogic {
     private final Random random = new Random();
-    private HashMap<String, Chunk> chunks = new HashMap<>();
+    private HashMap<Long, Chunk> chunks = new HashMap<>();
     private float[] finalMVP = new float[16];
     private float[] modelMatrix = new float[16];
 
@@ -55,6 +55,10 @@ public class WorldLogic {
 
     public ArrayList<ItemEntity> droppedItems = new ArrayList<>();
 
+    private long getChunkKey(int cx, int cz) {
+        return ((long) cx << 32) | (cz & 0xFFFFFFFFL);
+    }
+
     public void spawnItemEntity(int x, int y, int z, byte type) {
         spawnItemEntity(x + 0.5f, y + 0.5f, z + 0.5f, type, 1);
     }
@@ -70,7 +74,7 @@ public class WorldLogic {
             for (int z = -renderDistance; z <= renderDistance; z++) {
                 if (x*x + z*z > renderDistance*renderDistance) continue;
 
-                String key = (playerChunkX + x) + "," + (playerChunkZ + z);
+                long key = getChunkKey(playerChunkX + x, playerChunkZ + z);
                 if (!chunks.containsKey(key)) {
                     Chunk newChunk = new Chunk(this, playerChunkX + x, playerChunkZ + z);
                     chunks.put(key, newChunk);
@@ -88,8 +92,8 @@ public class WorldLogic {
     }
 
     private void updateNeighbors(int cx, int cz) {
-        String[] ns = {(cx+1)+","+cz, (cx-1)+","+cz, cx+","+(cz+1), cx+","+(cz-1)};
-        for(String nKey : ns) {
+        long[] ns = {getChunkKey(cx+1, cz), getChunkKey(cx-1, cz), getChunkKey(cx, cz+1), getChunkKey(cx, cz-1)};
+        for(long nKey : ns) {
             Chunk n = chunks.get(nKey);
             if(n != null) n.buildMesh();
         }
@@ -99,7 +103,7 @@ public class WorldLogic {
         if (y < 0 || y >= 128) return 0;
         int cx = (int) Math.floor(x / 16.0);
         int cz = (int) Math.floor(z / 16.0);
-        String key = cx + "," + cz;
+        long key = getChunkKey(cx, cz);
         Chunk c = chunks.get(key);
         if (c != null) return c.blocks[x - (cx * 16)][y][z - (cz * 16)];
         return 0;
@@ -112,7 +116,7 @@ public class WorldLogic {
 
         int cx = (int) Math.floor(x / 16.0);
         int cz = (int) Math.floor(z / 16.0);
-        String key = cx + "," + cz;
+        long key = getChunkKey(cx, cz);
         Chunk c = chunks.get(key);
         if (c != null) {
             int lx = x - (cx * 16);
@@ -222,7 +226,7 @@ public class WorldLogic {
 
                             int cx = (int) Math.floor(x / 16.0);
                             int cz = (int) Math.floor(z / 16.0);
-                            Chunk c = chunks.get(cx + "," + cz);
+                            Chunk c = chunks.get(getChunkKey(cx, cz));
                             if (c != null) {
                                 c.blocks[x - (cx * 16)][y][z - (cz * 16)] = 0;
                                 chunksToUpdate.add(c);
@@ -271,7 +275,7 @@ public class WorldLogic {
         float camChunkZ = gameplay.camZ / 16.0f;
         float renderRadiusSq = (renderDistance + 1) * (renderDistance + 1);
 
-        for (Map.Entry<String, Chunk> entry : chunks.entrySet()) {
+        for (Map.Entry<Long, Chunk> entry : chunks.entrySet()) {
             Chunk c = entry.getValue();
             if (c.vertexBuffer == null || c.vertexCount == 0) continue;
 
