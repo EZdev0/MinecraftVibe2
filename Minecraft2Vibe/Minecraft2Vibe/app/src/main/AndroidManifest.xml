@@ -25,7 +25,12 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".CrashHandlerActivity" android:exported="false" android:screenOrientation="fullSensor" android:configChanges="orientation|screenSize|keyboardHidden|screenLayout" android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+        <activity
+            android:name=".CrashHandlerActivity"
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
 
         <activity android:name=".MainActivity"
                   android:exported="false"
