@@ -18,7 +18,16 @@ public class SaveManager {
 
     public void saveChunk(Chunk chunk) {
         try {
-            File dir = new File(context.getFilesDir(), worldName);
+            if (chunk == null) {
+                Log.e(TAG, "Cannot save chunk: chunk is null");
+                return;
+            }
+            File baseDir = getBaseDir();
+            if (baseDir == null) {
+                Log.e(TAG, "Cannot save chunk: base directory is null");
+                return;
+            }
+            File dir = new File(baseDir, worldName);
             if (!dir.exists()) dir.mkdirs();
 
             File file = new File(dir, "chunk_" + chunk.chunkX + "_" + chunk.chunkZ + ".dat");
@@ -37,7 +46,16 @@ public class SaveManager {
 
     public boolean loadChunk(Chunk chunk) {
         try {
-            File dir = new File(context.getFilesDir(), worldName);
+            if (chunk == null) {
+                Log.e(TAG, "Cannot load chunk: chunk is null");
+                return false;
+            }
+            File baseDir = getBaseDir();
+            if (baseDir == null) {
+                Log.e(TAG, "Cannot load chunk: base directory is null");
+                return false;
+            }
+            File dir = new File(baseDir, worldName);
             File file = new File(dir, "chunk_" + chunk.chunkX + "_" + chunk.chunkZ + ".dat");
 
             if (!file.exists()) return false;
@@ -54,5 +72,9 @@ public class SaveManager {
             Log.e(TAG, "Error loading chunk", e);
             return false;
         }
+    }
+
+    protected File getBaseDir() {
+        return (context != null) ? context.getFilesDir() : null;
     }
 }
