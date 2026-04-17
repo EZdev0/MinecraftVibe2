@@ -15,6 +15,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class CrashHandlerActivity extends Activity {
+    private static final int MAX_ERROR_LOG_LENGTH = 10000;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,8 +25,8 @@ public class CrashHandlerActivity extends Activity {
         if (errorLog == null) {
             errorLog = "Unbekannter Fehler!";
         } else {
-            if (errorLog.length() > 10000) {
-                errorLog = errorLog.substring(0, 10000) + "... [Truncated]";
+            if (errorLog.length() > MAX_ERROR_LOG_LENGTH) {
+                errorLog = errorLog.substring(0, MAX_ERROR_LOG_LENGTH) + "... [Truncated]";
             }
             errorLog = sanitize(errorLog);
         }
