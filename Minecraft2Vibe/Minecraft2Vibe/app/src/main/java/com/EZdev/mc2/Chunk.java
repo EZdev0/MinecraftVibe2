@@ -13,6 +13,10 @@ public class Chunk {
     public FloatBuffer vertexBuffer, colorBuffer;
     public int vertexCount = 0;
 
+    private static final int MAX_POSSIBLE_VERTS = 16 * 128 * 16 * 12;
+    private static final float[] sharedVData = new float[MAX_POSSIBLE_VERTS * 3];
+    private static final float[] sharedCData = new float[MAX_POSSIBLE_VERTS * 4];
+    private static final Object meshLock = new Object();
 
     private int bufferCapacity = 0;
 
@@ -133,12 +137,10 @@ private void addDecorations() {
     }
 
     public void buildMesh() {
-        int MAX_POSSIBLE_VERTS = 16*128*16 * 12;
-        float[] vData = new float[MAX_POSSIBLE_VERTS * 3];
-        float[] cData = new float[MAX_POSSIBLE_VERTS * 4];
-        vertexCount = 0;
+        synchronized (meshLock) {
+            vertexCount = 0;
 
-        for (int x = 0; x < 16; x++) {
+            for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 128; y++) {
                 for (int z = 0; z < 16; z++) {
                     byte type = blocks[x][y][z];
@@ -157,38 +159,39 @@ private void addDecorations() {
                         r = 0.4f; g = 0.25f; b = 0.1f;
                     }
 
-                    if (type == 6) { addFireCross(vData, cData, x, y, z, 0.9f, 0.5f, 0.1f); continue; }
+                    if (type == 6) { addFireCross(sharedVData, sharedCData, x, y, z, 0.9f, 0.5f, 0.1f); continue; }
 
-                    if (isTransparent(x, y+1, z, type)) addFace(vData, cData, x, y, z, 0, r, g, b, a);
-                    if (isTransparent(x, y-1, z, type)) addFace(vData, cData, x, y, z, 1, r*0.5f, g*0.5f, b*0.5f, a);
-                    if (isTransparent(x-1, y, z, type)) addFace(vData, cData, x, y, z, 2, r*0.8f, g*0.8f, b*0.8f, a);
-                    if (isTransparent(x+1, y, z, type)) addFace(vData, cData, x, y, z, 3, r*0.8f, g*0.8f, b*0.8f, a);
-                    if (isTransparent(x, y, z-1, type)) addFace(vData, cData, x, y, z, 4, r*0.9f, g*0.9f, b*0.9f, a);
-                    if (isTransparent(x, y, z+1, type)) addFace(vData, cData, x, y, z, 5, r*0.9f, g*0.9f, b*0.9f, a);
+                    if (isTransparent(x, y+1, z, type)) addFace(sharedVData, sharedCData, x, y, z, 0, r, g, b, a);
+                    if (isTransparent(x, y-1, z, type)) addFace(sharedVData, sharedCData, x, y, z, 1, r*0.5f, g*0.5f, b*0.5f, a);
+                    if (isTransparent(x-1, y, z, type)) addFace(sharedVData, sharedCData, x, y, z, 2, r*0.8f, g*0.8f, b*0.8f, a);
+                    if (isTransparent(x+1, y, z, type)) addFace(sharedVData, sharedCData, x, y, z, 3, r*0.8f, g*0.8f, b*0.8f, a);
+                    if (isTransparent(x, y, z-1, type)) addFace(sharedVData, sharedCData, x, y, z, 4, r*0.9f, g*0.9f, b*0.9f, a);
+                    if (isTransparent(x, y, z+1, type)) addFace(sharedVData, sharedCData, x, y, z, 5, r*0.9f, g*0.9f, b*0.9f, a);
 
                     if (type == 5) {
-                        if (isTransparent(x, y, z-1, type)) drawLetterT(vData, cData, x, y, z, 4);
-                        if (isTransparent(x, y, z+1, type)) drawLetterT(vData, cData, x, y, z, 5);
-                        if (isTransparent(x-1, y, z, type)) drawLetterT(vData, cData, x, y, z, 2);
-                        if (isTransparent(x+1, y, z, type)) drawLetterT(vData, cData, x, y, z, 3);
+                        if (isTransparent(x, y, z-1, type)) drawLetterT(sharedVData, sharedCData, x, y, z, 4);
+                        if (isTransparent(x, y, z+1, type)) drawLetterT(sharedVData, sharedCData, x, y, z, 5);
+                        if (isTransparent(x-1, y, z, type)) drawLetterT(sharedVData, sharedCData, x, y, z, 2);
+                        if (isTransparent(x+1, y, z, type)) drawLetterT(sharedVData, sharedCData, x, y, z, 3);
                     }
                 }
             }
         }
 
-        if (vertexBuffer == null || vertexCount > bufferCapacity) {
-            bufferCapacity = vertexCount + 1000;
-            vertexBuffer = ByteBuffer.allocateDirect(bufferCapacity * 3 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-            colorBuffer = ByteBuffer.allocateDirect(bufferCapacity * 4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        }
+            if (vertexBuffer == null || vertexCount > bufferCapacity) {
+                bufferCapacity = vertexCount + 1000;
+                vertexBuffer = ByteBuffer.allocateDirect(bufferCapacity * 3 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+                colorBuffer = ByteBuffer.allocateDirect(bufferCapacity * 4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            }
 
-        synchronized(this) {
-            vertexBuffer.clear();
-            vertexBuffer.put(vData, 0, vertexCount * 3).position(0);
+            synchronized(this) {
+                vertexBuffer.clear();
+                vertexBuffer.put(sharedVData, 0, vertexCount * 3).position(0);
 
-            colorBuffer.clear();
-            colorBuffer.put(cData, 0, vertexCount * 4).position(0);
+                colorBuffer.clear();
+                colorBuffer.put(sharedCData, 0, vertexCount * 4).position(0);
 
+            }
         }
     }
 
