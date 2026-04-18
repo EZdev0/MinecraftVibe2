@@ -21,17 +21,22 @@ public class CrashHandlerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String errorLog = getIntent().getStringExtra("error");
-        if (errorLog == null) {
-            errorLog = "Unbekannter Fehler!";
-        } else {
-            if (errorLog.length() > MAX_ERROR_LOG_LENGTH) {
-                errorLog = errorLog.substring(0, MAX_ERROR_LOG_LENGTH) + "... [Truncated]";
-            }
-            errorLog = sanitize(errorLog);
-        }
+        Intent intent = getIntent();
+        String errorLog = "Unbekannter Fehler!";
+        final boolean canContinue;
 
-        boolean canContinue = getIntent().getBooleanExtra("canContinue", false);
+        if (intent != null) {
+            String rawError = intent.getStringExtra("error");
+            if (rawError != null) {
+                if (rawError.length() > MAX_ERROR_LOG_LENGTH) {
+                    rawError = rawError.substring(0, MAX_ERROR_LOG_LENGTH) + "... [Truncated]";
+                }
+                errorLog = sanitize(rawError);
+            }
+            canContinue = intent.getBooleanExtra("canContinue", false);
+        } else {
+            canContinue = false;
+        }
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -105,7 +110,9 @@ public class CrashHandlerActivity extends Activity {
 
     private String sanitize(String input) {
         if (input == null) return null;
-        // Strip potential malicious control characters while keeping newlines and tabs
-        return input.replaceAll("[\\p{Cc}&&[^\\n\\r\\t]]", "");
+        // Strip potential malicious control characters, format characters,
+        // private use and unassigned characters while keeping newlines and tabs.
+        // This prevents UI spoofing (e.g. RTL override) and other character-based attacks.
+        return input.replaceAll("[\\p{Cc}\\p{Cf}\\p{Co}\\p{Cn}&&[^\\n\\r\\t]]", "");
     }
 }
