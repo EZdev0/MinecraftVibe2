@@ -63,7 +63,12 @@ public class SaveManager {
             FileInputStream fis = new FileInputStream(file);
             for (int x = 0; x < 16; x++) {
                 for (int y = 0; y < 128; y++) {
-                    fis.read(chunk.blocks[x][y]);
+                    int bytesRead = fis.read(chunk.blocks[x][y]);
+                    if (bytesRead < 16) {
+                        Log.e(TAG, "Incomplete chunk file: read only " + bytesRead + " bytes for x=" + x + ", y=" + y);
+                        fis.close();
+                        return false;
+                    }
                 }
             }
             fis.close();

@@ -71,4 +71,50 @@ public class SaveManagerTest {
             fail("Exception should have been caught inside saveChunk: " + e.getMessage());
         }
     }
+
+    @Test
+    public void testLoadChunkIOException() {
+        // Use a directory instead of a file to trigger IOException on FileInputStream
+        File tempDir = new File(System.getProperty("java.io.tmpdir"), "test_world");
+        tempDir.mkdirs();
+        File chunkFile = new File(tempDir, "world1/chunk_0_0.dat");
+        chunkFile.getParentFile().mkdirs();
+        chunkFile.mkdir(); // chunkFile is now a directory
+
+        SaveManager saveManager = new TestSaveManager(tempDir);
+        Chunk chunk = new Chunk(null, 0, 0);
+        boolean result = saveManager.loadChunk(chunk);
+        assertFalse("loadChunk should return false on IOException", result);
+
+        // Cleanup
+        chunkFile.delete();
+        new File(tempDir, "world1").delete();
+        tempDir.delete();
+    }
+
+    @Test
+    public void testLoadChunkIncompleteFile() throws Exception {
+        File tempDir = new File(System.getProperty("java.io.tmpdir"), "test_world_incomplete");
+        tempDir.mkdirs();
+        File worldDir = new File(tempDir, "world1");
+        worldDir.mkdirs();
+        File chunkFile = new File(worldDir, "chunk_0_0.dat");
+
+        // Create a truncated file (e.g., only 10 bytes instead of 16*128*16)
+        java.io.FileOutputStream fos = new java.io.FileOutputStream(chunkFile);
+        fos.write(new byte[10]);
+        fos.close();
+
+        SaveManager saveManager = new TestSaveManager(tempDir);
+        Chunk chunk = new Chunk(null, 0, 0);
+        boolean result = saveManager.loadChunk(chunk);
+
+        // This is expected to FAIL currently because SaveManager doesn't check read lengths
+        assertFalse("loadChunk should return false for incomplete file", result);
+
+        // Cleanup
+        chunkFile.delete();
+        worldDir.delete();
+        tempDir.delete();
+    }
 }
