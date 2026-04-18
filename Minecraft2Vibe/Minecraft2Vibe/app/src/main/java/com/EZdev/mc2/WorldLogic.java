@@ -530,10 +530,9 @@ public class WorldLogic {
                 }
                 if (place && lastX != -1 && !isPlayerInside(g, lastX, lastY, lastZ)) {
                     if (!g.isCreative && ui != null) {
-                        int slot = -1;
-                        for(int s=0; s<ui.blockIds.length; s++) if(ui.blockIds[s] == g.activeBlock) slot = s;
-                        if(slot != -1 && ui.inventory[slot] <= 0) return;
-                        if(slot != -1 && ui.inventory[slot] != 999) {
+                        int slot = g.activeSlot;
+                        if(ui.inventory[slot] <= 0) return;
+                        if(ui.inventory[slot] != 999) {
                             ui.inventory[slot]--;
                             ui.updateHotbarUI();
                         }
