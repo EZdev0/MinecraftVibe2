@@ -139,8 +139,10 @@ public class UIManager {
             btn.setPadding(0, 0, 0, 0);
 
             final byte id = blockIds[i];
+            final int slotIndex = i;
             btn.setOnClickListener(v -> {
                 engine.gameplay.activeBlock = id;
+                engine.gameplay.activeSlot = slotIndex;
                 updateHotbarUI();
             });
 

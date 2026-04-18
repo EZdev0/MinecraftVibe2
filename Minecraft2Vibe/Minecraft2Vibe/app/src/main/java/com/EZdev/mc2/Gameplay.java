@@ -25,6 +25,7 @@ public class Gameplay {
     public float playerWidth = 0.6f;
 
     public byte activeBlock = 1;
+    public int activeSlot = 0;
     public float gameTime = 0f;
 
     public ArrayList<ActiveTNT> tickingTNTs = new ArrayList<>();
