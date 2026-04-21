@@ -28,7 +28,7 @@ public class UIManager {
     private TextView chunkText;
 
     private Button[] hotbarButtons = new Button[6];
-    public byte[] blockIds = {1, 2, 3, 4, 5, 6};
+    public byte[] blockIds = {Blocks.GRASS, Blocks.STONE, Blocks.WOOD, Blocks.LEAVES, Blocks.TNT, Blocks.FIRE};
     public int[] inventory = {0, 0, 0, 0, 0, 0}; // Count per slot
 
     private Button sneakBtn, sprintBtn, flyBtn;
