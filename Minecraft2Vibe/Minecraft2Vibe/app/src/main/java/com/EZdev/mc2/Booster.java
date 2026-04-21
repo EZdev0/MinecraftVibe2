@@ -12,20 +12,20 @@ public class Booster {
 
     public static void initGeometry() {
         String v = "precision mediump float; precision mediump int; uniform mat4 uMVPMatrix; uniform float uTime; uniform int pType; attribute vec4 vPosition; attribute vec4 vColor; varying vec4 fColor; varying float vDist; " +
-                   "void main() { vec4 pos = vPosition; if (vColor.r > 0.8 && vColor.g > 0.4 && vColor.b < 0.2 && pType != 99 && pType != 100) { float w = 1.0 - vColor.a; " +
+                   "void main() { vec4 pos = vPosition; if (vColor.r > 0.8 && vColor.g > 0.4 && vColor.b < 0.2 && pType != " + Blocks.SMOKE + " && pType != " + Blocks.ENTITY_PIG + ") { float w = 1.0 - vColor.a; " +
                    "pos.x += sin(uTime * 15.0 + pos.y * 10.0) * 0.15 * w; pos.z += cos(uTime * 15.0 + pos.x * 10.0) * 0.15 * w; } " +
                    "gl_Position = uMVPMatrix * pos; fColor = vec4(vColor.rgb, 1.0); vDist = gl_Position.w; }";
 
         String f = "precision mediump float; precision mediump int; varying vec4 fColor; varying float vDist; uniform int uFogEnabled; uniform float uFogEnd; uniform float uTime; uniform int uIsFlashing; uniform int pType; " +
                    "void main() { vec4 fc = fColor; " +
                    "if (uIsFlashing == 1) { float p = (sin(uTime * 15.0) + 1.0) * 0.5; fc = mix(fColor, vec4(1.0), p); } " +
-                   "else if (uIsFlashing == 2 && pType == 99) { fc = vec4(0.8, 0.8, 0.8, 0.7); } " + // Smoke
-                   "else if (pType == 100) { fc = vec4(0.9, 0.6, 0.7, 1.0); } " + // Pig! Pinkish
-                   "else if (pType == 1) { fc = vec4(0.3, 0.7, 0.2, 1.0); } " +
-                   "else if (pType == 2) { fc = vec4(0.4, 0.4, 0.4, 1.0); } " +
-                   "else if (pType == 3) { fc = vec4(0.4, 0.25, 0.1, 1.0); } " +
-                   "else if (pType == 4) { fc = vec4(0.1, 0.5, 0.1, 1.0); } " +
-                   "else if (pType == 6) { fc = vec4(0.9, 0.5, 0.1, 1.0); } " +
+                   "else if (uIsFlashing == 2 && pType == " + Blocks.SMOKE + ") { fc = vec4(0.8, 0.8, 0.8, 0.7); } " + // Smoke
+                   "else if (pType == " + Blocks.ENTITY_PIG + ") { fc = vec4(0.9, 0.6, 0.7, 1.0); } " + // Pig! Pinkish
+                   "else if (pType == " + Blocks.GRASS + ") { fc = vec4(0.3, 0.7, 0.2, 1.0); } " +
+                   "else if (pType == " + Blocks.STONE + ") { fc = vec4(0.4, 0.4, 0.4, 1.0); } " +
+                   "else if (pType == " + Blocks.WOOD + ") { fc = vec4(0.4, 0.25, 0.1, 1.0); } " +
+                   "else if (pType == " + Blocks.LEAVES + ") { fc = vec4(0.1, 0.5, 0.1, 1.0); } " +
+                   "else if (pType == " + Blocks.FIRE + ") { fc = vec4(0.9, 0.5, 0.1, 1.0); } " +
                    "if (uFogEnabled == 1) { float ff = clamp((vDist - (uFogEnd * 0.4)) / (uFogEnd * 0.6), 0.0, 1.0); gl_FragColor = mix(fc, vec4(0.5, 0.8, 1.0, 1.0), ff); } " +
                    "else { gl_FragColor = fc; } }";
 

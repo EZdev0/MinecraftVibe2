@@ -47,14 +47,14 @@ public class Chunk {
                 int height = 70 + (int)(noiseVal * 30f);
 
                 for (int y = 0; y <= height; y++) {
-                    if (y == 0) { blocks[x][y][z] = 9; continue; } // Bedrock
-                    if (y <= 2 && random.nextDouble() < 0.5) { blocks[x][y][z] = 9; continue; } // Bedrock noise
+                    if (y == 0) { blocks[x][y][z] = Blocks.BEDROCK; continue; } // Bedrock
+                    if (y <= 2 && random.nextDouble() < 0.5) { blocks[x][y][z] = Blocks.BEDROCK; continue; } // Bedrock noise
 
                     // Base block types
-                    if (y == height) blocks[x][y][z] = 1; // Grass
-                    else if (y > height - 4) blocks[x][y][z] = 1; // Dirt
-                    else blocks[x][y][z] = 2; // Stone
-                    if (y < 20 && random.nextFloat() < 0.005f) blocks[x][y][z] = 5; // TNT
+                    if (y == height) blocks[x][y][z] = Blocks.GRASS; // Grass
+                    else if (y > height - 4) blocks[x][y][z] = Blocks.DIRT; // Dirt
+                    else blocks[x][y][z] = Blocks.STONE; // Stone
+                    if (y < 20 && random.nextFloat() < 0.005f) blocks[x][y][z] = Blocks.TNT; // TNT
 
                     // Cave generation (only dig below surface)
                     if (y < height - 5 && y > 2) {
@@ -85,21 +85,21 @@ public class Chunk {
                         boolean isRavine = Math.abs(ravineNoise) < 0.05f && ravineMask > 0.3f;
 
                         if (isCheese || isSpaghetti || isNoodle || isRavine) {
-                            blocks[x][y][z] = 0; // Dig air
+                            blocks[x][y][z] = Blocks.AIR; // Dig air
 
                             // Fill bottom of caves with water/lava
-                            if (y < 12) blocks[x][y][z] = 7; // Water
+                            if (y < 12) blocks[x][y][z] = Blocks.WATER; // Water
                         }
                     }
                 }
 
                 // Water fill for oceans/lakes
                 for (int y = 60; y > height; y--) {
-                    blocks[x][y][z] = 7;
+                    blocks[x][y][z] = Blocks.WATER;
                 }
                 // Convert grass under water to dirt
-                if (height < 60 && blocks[x][height][z] == 1) {
-                    blocks[x][height][z] = 1; // It's already 1, but this logic was in original
+                if (height < 60 && blocks[x][height][z] == Blocks.GRASS) {
+                    blocks[x][height][z] = Blocks.DIRT; // It's already 1, but this logic was in original
                 }
             }
         }
@@ -108,11 +108,11 @@ private void addDecorations() {
         for (int x = 2; x < 14; x++) {
             for (int z = 2; z < 14; z++) {
                 for (int y = 100; y > 50; y--) {
-                    if (blocks[x][y][z] == 1 && blocks[x][y+1][z] == 0) {
+                    if (blocks[x][y][z] == Blocks.GRASS && blocks[x][y+1][z] == Blocks.AIR) {
                         if (random.nextDouble() < 0.02) {
-                            for(int h=1; h<=4; h++) blocks[x][y+h][z] = 3;
+                            for(int h=1; h<=4; h++) blocks[x][y+h][z] = Blocks.WOOD;
                             for(int lx=x-2; lx<=x+2; lx++) for(int ly=y+3; ly<=y+5; ly++) for(int lz=z-2; lz<=z+2; lz++)
-                                if (blocks[lx][ly][lz] == 0 && random.nextDouble() < 0.8) blocks[lx][ly][lz] = 4;
+                                if (blocks[lx][ly][lz] == Blocks.AIR && random.nextDouble() < 0.8) blocks[lx][ly][lz] = Blocks.LEAVES;
                         }
                         break;
                     }
@@ -120,19 +120,19 @@ private void addDecorations() {
             }
         }
         for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = 5; y < 40; y++)
-            if (blocks[x][y][z] == 0 && blocks[x][y+1][z] == 2 && random.nextDouble() < 0.05) blocks[x][y][z] = 2;
+            if (blocks[x][y][z] == Blocks.AIR && blocks[x][y+1][z] == Blocks.STONE && random.nextDouble() < 0.05) blocks[x][y][z] = Blocks.STONE;
     }
 
     private byte getBlockWorldAware(int lx, int ly, int lz) {
-        if (ly < 0 || ly >= 128) return 0;
+        if (ly < 0 || ly >= 128) return Blocks.AIR;
         if (lx >= 0 && lx < 16 && lz >= 0 && lz < 16) return blocks[lx][ly][lz];
         return world.getBlock((chunkX * 16) + lx, ly, (chunkZ * 16) + lz);
     }
 
     private boolean isTransparent(int x, int y, int z, byte sourceBlockType) {
         byte b = getBlockWorldAware(x, y, z);
-        if (b == 0 || b == 6) return true;
-        if (sourceBlockType != 7 && b == 7) return true;
+        if (b == Blocks.AIR || b == Blocks.FIRE) return true;
+        if (sourceBlockType != Blocks.WATER && b == Blocks.WATER) return true;
         return false;
     }
 
@@ -144,22 +144,22 @@ private void addDecorations() {
             for (int y = 0; y < 128; y++) {
                 for (int z = 0; z < 16; z++) {
                     byte type = blocks[x][y][z];
-                    if (type == 0) continue;
+                    if (type == Blocks.AIR) continue;
 
                     float r = 1f, g = 1f, b = 1f, a = 1f;
-                    if (type == 1) { r = 0.3f; g = 0.7f; b = 0.2f; }
-                    else if (type == 2) { r = 0.4f; g = 0.4f; b = 0.4f; }
-                    else if (type == 3) { r = 0.4f; g = 0.25f; b = 0.1f; }
-                    else if (type == 4) { r = 0.1f; g = 0.5f; b = 0.1f; }
-                    else if (type == 5) { r = 0.9f; g = 0.2f; b = 0.2f; }
-                    else if (type == 7) { r = 0.2f; g = 0.4f; b = 0.9f; a = 0.7f; }
-                    else if (type == 9) { r = 0.1f; g = 0.1f; b = 0.1f; } // Bedrock (very dark grey)
+                    if (type == Blocks.GRASS) { r = 0.3f; g = 0.7f; b = 0.2f; }
+                    else if (type == Blocks.STONE) { r = 0.4f; g = 0.4f; b = 0.4f; }
+                    else if (type == Blocks.WOOD) { r = 0.4f; g = 0.25f; b = 0.1f; }
+                    else if (type == Blocks.LEAVES) { r = 0.1f; g = 0.5f; b = 0.1f; }
+                    else if (type == Blocks.TNT) { r = 0.9f; g = 0.2f; b = 0.2f; }
+                    else if (type == Blocks.WATER) { r = 0.2f; g = 0.4f; b = 0.9f; a = 0.7f; }
+                    else if (type == Blocks.BEDROCK) { r = 0.1f; g = 0.1f; b = 0.1f; } // Bedrock (very dark grey)
 
-                    if (type == 1 && y < 127 && blocks[x][y+1][z] != 0 && blocks[x][y+1][z] != 7) {
+                    if (type == Blocks.GRASS && y < 127 && blocks[x][y+1][z] != Blocks.AIR && blocks[x][y+1][z] != Blocks.WATER) {
                         r = 0.4f; g = 0.25f; b = 0.1f;
                     }
 
-                    if (type == 6) { addFireCross(sharedVData, sharedCData, x, y, z, 0.9f, 0.5f, 0.1f); continue; }
+                    if (type == Blocks.FIRE) { addFireCross(sharedVData, sharedCData, x, y, z, 0.9f, 0.5f, 0.1f); continue; }
 
                     if (isTransparent(x, y+1, z, type)) addFace(sharedVData, sharedCData, x, y, z, 0, r, g, b, a);
                     if (isTransparent(x, y-1, z, type)) addFace(sharedVData, sharedCData, x, y, z, 1, r*0.5f, g*0.5f, b*0.5f, a);
@@ -168,7 +168,7 @@ private void addDecorations() {
                     if (isTransparent(x, y, z-1, type)) addFace(sharedVData, sharedCData, x, y, z, 4, r*0.9f, g*0.9f, b*0.9f, a);
                     if (isTransparent(x, y, z+1, type)) addFace(sharedVData, sharedCData, x, y, z, 5, r*0.9f, g*0.9f, b*0.9f, a);
 
-                    if (type == 5) {
+                    if (type == Blocks.TNT) {
                         if (isTransparent(x, y, z-1, type)) drawLetterT(sharedVData, sharedCData, x, y, z, 4);
                         if (isTransparent(x, y, z+1, type)) drawLetterT(sharedVData, sharedCData, x, y, z, 5);
                         if (isTransparent(x-1, y, z, type)) drawLetterT(sharedVData, sharedCData, x, y, z, 2);

@@ -43,7 +43,7 @@ public class WorldLogic {
             if(pickupDelay > 0) pickupDelay -= dt;
             vy -= 15f * dt;
             float nextY = y + vy * dt;
-            if(getBlock((int)Math.floor(x), (int)Math.floor(nextY), (int)Math.floor(z)) == 0) {
+            if(getBlock((int)Math.floor(x), (int)Math.floor(nextY), (int)Math.floor(z)) == Blocks.AIR) {
                 y = nextY;
             } else {
                 vy = 0;
@@ -100,7 +100,7 @@ public class WorldLogic {
     }
 
     public byte getBlock(int x, int y, int z) {
-        if (y < 0 || y >= 128) return 0;
+        if (y < 0 || y >= 128) return Blocks.AIR;
         int cx = (int) Math.floor(x / 16.0);
         int cz = (int) Math.floor(z / 16.0);
         long key = getChunkKey(cx, cz);
@@ -112,7 +112,7 @@ public class WorldLogic {
     public void setBlock(int x, int y, int z, byte type) {
         if (y < 0 || y >= 128) return;
         // Feature 9: Bedrock cannot be modified
-        if (getBlock(x, y, z) == 9 && type == 0) return;
+        if (getBlock(x, y, z) == Blocks.BEDROCK && type == Blocks.AIR) return;
 
         int cx = (int) Math.floor(x / 16.0);
         int cz = (int) Math.floor(z / 16.0);
@@ -139,8 +139,8 @@ public class WorldLogic {
             int nx = x + n[0];
             int ny = y + n[1];
             int nz = z + n[2];
-            if(getBlock(nx, ny, nz) == 5) {
-                setBlock(nx, ny, nz, (byte)0);
+            if(getBlock(nx, ny, nz) == Blocks.TNT) {
+                setBlock(nx, ny, nz, Blocks.AIR);
                 Gameplay.ActiveTNT newTNT = g.new ActiveTNT(nx + 0.5f, ny, nz + 0.5f);
                 g.tickingTNTs.add(newTNT);
             }
@@ -204,10 +204,10 @@ public class WorldLogic {
                     float distSq = dx*dx + dy*dy + dz*dz;
                     if (distSq <= radiusSq && y >= 1 && y < 128) {
                         byte block = getBlock(x, y, z);
-                        if (block == 9) continue; // Bedrock immune
+                        if (block == Blocks.BEDROCK) continue; // Bedrock immune
 
-                        if (block == 5 && gameplayRef != null) {
-                            setBlock(x, y, z, (byte)0);
+                        if (block == Blocks.TNT && gameplayRef != null) {
+                            setBlock(x, y, z, Blocks.AIR);
                             Gameplay.ActiveTNT newTNT = gameplayRef.new ActiveTNT(x + 0.5f, y + 0.5f, z + 0.5f);
                             float dist = (float) Math.sqrt(distSq);
                             float force = (radius - dist) / radius;
@@ -216,7 +216,7 @@ public class WorldLogic {
                             newTNT.vz = (dz / dist) * force * 15.0f;
                             newTNT.timer = 0.5f + random.nextFloat() * 1.5f;
                             gameplayRef.tickingTNTs.add(newTNT);
-                        } else if (block != 0 && block != 7) {
+                        } else if (block != Blocks.AIR && block != Blocks.WATER) {
                             if (gameplayRef != null && random.nextFloat() < 0.2f) gameplayRef.addBlockParticles(x, y, z, block);
 
                             // Explosion drops some blocks in survival
@@ -228,7 +228,7 @@ public class WorldLogic {
                             int cz = (int) Math.floor(z / 16.0);
                             Chunk c = chunks.get(getChunkKey(cx, cz));
                             if (c != null) {
-                                c.blocks[x - (cx * 16)][y][z - (cz * 16)] = 0;
+                                c.blocks[x - (cx * 16)][y][z - (cz * 16)] = Blocks.AIR;
                                 chunksToUpdate.add(c);
                             }
                         }
@@ -298,7 +298,7 @@ public class WorldLogic {
         GLES20.glDisable(GLES20.GL_BLEND);
 
         if (Booster.tntVertexBuffer != null) {
-            GLES20.glUniform1i(Booster.pTypeHandle, 100);
+            GLES20.glUniform1i(Booster.pTypeHandle, Blocks.ENTITY_PIG);
             for(int i=0; i<entities.size(); i++) {
                 Entity e = entities.get(i);
                 if (e == null) { int lastIdx = entities.size() - 1; if (i < lastIdx) entities.set(i, entities.get(lastIdx)); entities.remove(lastIdx); continue; }
@@ -436,7 +436,7 @@ public class WorldLogic {
             for(int i=0; i<gameplay.fireParticles.size(); i++) {
                 Gameplay.ActiveFireParticle p = gameplay.fireParticles.get(i);
                 if (p != null) {
-                    float size = p.type == 99 ? 0.3f : 0.15f;
+                    float size = p.type == Blocks.SMOKE ? 0.3f : 0.15f;
                     renderParticle(p, vpMatrix, size, p.type);
                 }
             }
@@ -461,7 +461,7 @@ public class WorldLogic {
         GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, Booster.tntVertexBuffer);
 
         GLES20.glUniform1i(Booster.pTypeHandle, type);
-        if (type == 99) GLES20.glUniform1i(Booster.isFlashingHandle, 2);
+        if (type == Blocks.SMOKE) GLES20.glUniform1i(Booster.isFlashingHandle, 2);
 
         GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, Booster.tntColorBuffer);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
@@ -479,7 +479,7 @@ public class WorldLogic {
             int by = (int) Math.floor(eyeHeight + dirY * dist);
             int bz = (int) Math.floor(g.camZ + dirZ * dist);
             byte hitBlock = getBlock(bx, by, bz);
-            if (hitBlock > 0 && hitBlock != 6 && hitBlock != 7) {
+            if (hitBlock > Blocks.AIR && hitBlock != Blocks.FIRE && hitBlock != Blocks.WATER) {
                 return new int[]{bx, by, bz};
             }
         }
@@ -513,10 +513,10 @@ public class WorldLogic {
             }
 
             byte hitBlock = getBlock(bx, by, bz);
-            if (hitBlock > 0 && hitBlock != 6 && hitBlock != 7) {
-                if (hitBlock == 9) return; // Cannot interact with Bedrock
+            if (hitBlock > Blocks.AIR && hitBlock != Blocks.FIRE && hitBlock != Blocks.WATER) {
+                if (hitBlock == Blocks.BEDROCK) return; // Cannot interact with Bedrock
 
-                if (!place && hitBlock == 5 && g.activeBlock == 6) {
+                if (!place && hitBlock == Blocks.TNT && g.activeBlock == Blocks.FIRE) {
                     if(ui != null && !ui.tntUnlocked) {
                         ui.tntUnlocked = true;
                         if(g.activity != null) {
@@ -524,7 +524,7 @@ public class WorldLogic {
                             g.activity.runOnUiThread(() -> android.widget.Toast.makeText(g.activity, "TNT FREIGESCHALTET!", android.widget.Toast.LENGTH_LONG).show());
                         }
                     }
-                    setBlock(bx, by, bz, (byte)0);
+                    setBlock(bx, by, bz, Blocks.AIR);
                     g.tickingTNTs.add(g.new ActiveTNT(bx + 0.5f, by, bz + 0.5f));
                     return;
                 }
@@ -539,17 +539,17 @@ public class WorldLogic {
                     }
 
                     setBlock(lastX, lastY, lastZ, g.activeBlock);
-                    if(g.activeBlock == 6) {
+                    if(g.activeBlock == Blocks.FIRE) {
                         checkIgnition(lastX, lastY, lastZ, g);
                         g.activeFires.add(g.new ActiveFire(lastX, lastY, lastZ));
                     }
-                    if (g.activeBlock == 5) {
+                    if (g.activeBlock == Blocks.TNT) {
                         checkIgnitionIfTntPlaced(lastX, lastY, lastZ, g);
                     }
                 } else if (!place) {
                     if (g.isCreative) {
                         g.addBlockParticles(bx, by, bz, hitBlock);
-                        setBlock(bx, by, bz, (byte)0);
+                        setBlock(bx, by, bz, Blocks.AIR);
                     } else {
                         // Mark as target
                         g.isBreaking = true;
@@ -571,8 +571,8 @@ public class WorldLogic {
             int nx = x + n[0];
             int ny = y + n[1];
             int nz = z + n[2];
-            if(getBlock(nx, ny, nz) == 6) {
-                setBlock(x, y, z, (byte)0);
+            if(getBlock(nx, ny, nz) == Blocks.FIRE) {
+                setBlock(x, y, z, Blocks.AIR);
                 Gameplay.ActiveTNT newTNT = g.new ActiveTNT(x + 0.5f, y, z + 0.5f);
                 g.tickingTNTs.add(newTNT);
                 return;
