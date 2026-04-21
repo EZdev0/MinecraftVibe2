@@ -18,7 +18,6 @@ import android.widget.TextView;
 import java.io.File;
 import android.app.ActivityManager;
 import android.content.pm.ApplicationInfo;
-import java.io.RandomAccessFile;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -61,7 +60,7 @@ public class MainMenuActivity extends Activity {
         loadingPanel.setGravity(Gravity.CENTER);
 
         TextView t = new TextView(this);
-        t.setText("⚙️ MAGIC TUNER & SWAP NO ROOT OPTIMIERUNG LÄUFT... ⚙️\nClear Cache & Allocate Virtual Memory...");
+        t.setText("⚙️ MAGIC TUNER OPTIMIERUNG LÄUFT... ⚙️\nClear Cache...");
         t.setTextColor(Color.GREEN);
         t.setTextSize(20);
         t.setGravity(Gravity.CENTER);
@@ -79,27 +78,8 @@ public class MainMenuActivity extends Activity {
                     }
                 }
 
-                // Create SWAP file logic safely
-                File swapFile = new File(getCacheDir(), "swapfile.swp");
-                RandomAccessFile raf = new RandomAccessFile(swapFile, "rw");
-
-                // Real space check vs 4GB. Using 4GB swap or max available
-                long spaceToAllocate = 4L * 1024 * 1024 * 1024; // 4GB
-                long freeSpace = getCacheDir().getFreeSpace();
-                if (freeSpace < spaceToAllocate) {
-                    spaceToAllocate = Math.max(0, freeSpace - (100L * 1024 * 1024)); // leave 100mb
-                }
-
-                if (spaceToAllocate > 0) {
-                    raf.setLength(spaceToAllocate);
-
-                    // Actually force allocation by writing chunk at end
-                    raf.seek(spaceToAllocate - 1);
-                    raf.write(0);
-                }
-                raf.close();
             } catch (Exception e) {
-                Log.e(TAG, "Failed to create swap file", e);
+                Log.e(TAG, "Failed to optimize", e);
             }
 
             // ActivityManager killBackgroundProcesses for background app optimization
