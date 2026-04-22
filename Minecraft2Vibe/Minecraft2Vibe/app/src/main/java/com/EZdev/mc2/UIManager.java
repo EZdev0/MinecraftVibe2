@@ -26,6 +26,7 @@ public class UIManager {
     public TouchOverlay touchOverlay;
     private LinearLayout settingsPanel;
     private TextView chunkText;
+    private float dX, dY;
 
     private Button[] hotbarButtons = new Button[6];
     public byte[] blockIds = {Blocks.GRASS, Blocks.STONE, Blocks.WOOD, Blocks.LEAVES, Blocks.TNT, Blocks.FIRE};
@@ -141,6 +142,7 @@ public class UIManager {
             final byte id = blockIds[i];
             final int slotIndex = i;
             btn.setOnClickListener(v -> {
+                if(uiEditorMode) return;
                 engine.gameplay.activeBlock = id;
                 engine.gameplay.activeSlot = slotIndex;
                 updateHotbarUI();
@@ -153,9 +155,13 @@ public class UIManager {
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
         params.setMargins(0, 0, 0, 50);
+
+        float hX = prefs.getFloat("hotbar_X", -1); float hY = prefs.getFloat("hotbar_Y", -1);
+        if(hX != -1) { hotbar.setX(hX); hotbar.setY(hY); }
+        hotbar.setOnTouchListener((v, e) -> handleTouch(v, e, "hotbar"));
+
         root.addView(hotbar, params);
     }
-
     public void updateHotbarUI() {
         String[] icons = {"🟫", "🪨", "🪵", "🍃", "🧨", "🔥"};
         for (int i = 0; i < hotbarButtons.length; i++) {
@@ -186,8 +192,9 @@ public class UIManager {
     }
 
     private void createActionButtons(FrameLayout root) {
-        LinearLayout btnLayout = new LinearLayout(activity);
-        btnLayout.setOrientation(LinearLayout.HORIZONTAL);
+        FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        p.gravity = Gravity.BOTTOM | Gravity.END;
+        p.setMargins(0, 0, 50, 50);
 
         Button jumpBtn = createBtn("⬆️", "#3498db");
         float jX = prefs.getFloat("jumpBtn_X", -1); float jY = prefs.getFloat("jumpBtn_Y", -1);
@@ -198,6 +205,7 @@ public class UIManager {
             else if(e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_CANCEL) engine.gameplay.wantsToJump = false;
             return true;
         });
+        root.addView(jumpBtn, p);
 
         Button breakBtn = createBtn("⛏️", "#e74c3c");
         float bX = prefs.getFloat("breakBtn_X", -1); float bY = prefs.getFloat("breakBtn_Y", -1);
@@ -213,6 +221,7 @@ public class UIManager {
             }
             return true;
         });
+        root.addView(breakBtn, p);
 
         Button placeBtn = createBtn("🧱", "#2ecc71");
         float pX = prefs.getFloat("placeBtn_X", -1); float pY = prefs.getFloat("placeBtn_Y", -1);
@@ -221,8 +230,8 @@ public class UIManager {
             if(handleTouch(v, e, "placeBtn")) return true;
             if(e.getAction() == MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, true, this); return true;
         });
+        root.addView(placeBtn, p);
 
-        btnLayout.addView(jumpBtn); btnLayout.addView(breakBtn); btnLayout.addView(placeBtn);
         if (!engine.gameplay.isCreative) {
             Button attackBtn = createBtn("⚔️", "#e67e22");
             float aX = prefs.getFloat("attackBtn_X", -1); float aY = prefs.getFloat("attackBtn_Y", -1);
@@ -231,51 +240,55 @@ public class UIManager {
                 if(handleTouch(v, e, "attackBtn")) return true;
                 if(e.getAction() == android.view.MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, false, this); return true;
             });
-            btnLayout.addView(attackBtn);
+            root.addView(attackBtn, p);
         }
-
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.gravity = Gravity.BOTTOM | Gravity.END;
-        params.setMargins(0, 0, 50, 50);
-        root.addView(btnLayout, params);
     }
-
     private void createToggles(FrameLayout root) {
-        LinearLayout btnLayout = new LinearLayout(activity);
-        btnLayout.setOrientation(LinearLayout.VERTICAL);
+        FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        p.gravity = Gravity.TOP | Gravity.START;
+        p.setMargins(50, 150, 0, 0);
 
         sneakBtn = createBtn("Sneak", "#95a5a6");
-        sneakBtn.setOnClickListener(v -> {
-            engine.gameplay.isSneaking = !engine.gameplay.isSneaking;
-            sneakBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isSneaking ? "#2ecc71" : "#95a5a6"));
+        float snX = prefs.getFloat("sneakBtn_X", -1); float snY = prefs.getFloat("sneakBtn_Y", -1);
+        if(snX != -1) { sneakBtn.setX(snX); sneakBtn.setY(snY); }
+        sneakBtn.setOnTouchListener((v, e) -> {
+            if(handleTouch(v, e, "sneakBtn")) return true;
+            if(e.getAction() == MotionEvent.ACTION_UP) {
+                engine.gameplay.isSneaking = !engine.gameplay.isSneaking;
+                sneakBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isSneaking ? "#2ecc71" : "#95a5a6"));
+            }
+            return true;
         });
+        root.addView(sneakBtn, p);
 
         sprintBtn = createBtn("Sprint", "#95a5a6");
-        sprintBtn.setOnClickListener(v -> {
-            engine.gameplay.isSprinting = !engine.gameplay.isSprinting;
-            sprintBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isSprinting ? "#2ecc71" : "#95a5a6"));
-        });
-
-        flyBtn = createBtn("Fly", "#95a5a6");
-        flyBtn.setOnClickListener(v -> {
-            if (engine.gameplay.isCreative) {
-                engine.gameplay.isFlying = !engine.gameplay.isFlying;
-                flyBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isFlying ? "#2ecc71" : "#95a5a6"));
+        float spX = prefs.getFloat("sprintBtn_X", -1); float spY = prefs.getFloat("sprintBtn_Y", -1);
+        if(spX != -1) { sprintBtn.setX(spX); sprintBtn.setY(spY); }
+        sprintBtn.setOnTouchListener((v, e) -> {
+            if(handleTouch(v, e, "sprintBtn")) return true;
+            if(e.getAction() == MotionEvent.ACTION_UP) {
+                engine.gameplay.isSprinting = !engine.gameplay.isSprinting;
+                sprintBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isSprinting ? "#2ecc71" : "#95a5a6"));
             }
+            return true;
         });
+        root.addView(sprintBtn, p);
 
         if (engine.gameplay.isCreative) {
-            btnLayout.addView(flyBtn);
+            flyBtn = createBtn("Fly", "#95a5a6");
+            float fX = prefs.getFloat("flyBtn_X", -1); float fY = prefs.getFloat("flyBtn_Y", -1);
+            if(fX != -1) { flyBtn.setX(fX); flyBtn.setY(fY); }
+            flyBtn.setOnTouchListener((v, e) -> {
+                if(handleTouch(v, e, "flyBtn")) return true;
+                if(e.getAction() == MotionEvent.ACTION_UP) {
+                    engine.gameplay.isFlying = !engine.gameplay.isFlying;
+                    flyBtn.setBackgroundColor(Color.parseColor(engine.gameplay.isFlying ? "#2ecc71" : "#95a5a6"));
+                }
+                return true;
+            });
+            root.addView(flyBtn, p);
         }
-        btnLayout.addView(sprintBtn);
-        btnLayout.addView(sneakBtn);
-
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.gravity = Gravity.TOP | Gravity.START;
-        params.setMargins(50, 150, 0, 0);
-        root.addView(btnLayout, params);
     }
-
     private android.widget.TextView createHeading(String text) {
         android.widget.TextView h = new android.widget.TextView(activity);
         h.setText(text); h.setTextColor(Color.CYAN); h.setTextSize(18); h.setTypeface(null, Typeface.BOLD);
@@ -510,9 +523,12 @@ public class UIManager {
 
     private boolean handleTouch(View v, MotionEvent e, String idKey) {
         if(uiEditorMode) {
-            if(e.getAction() == MotionEvent.ACTION_MOVE) {
-                v.setX(v.getX() + e.getX() - v.getWidth()/2f);
-                v.setY(v.getY() + e.getY() - v.getHeight()/2f);
+            if(e.getAction() == MotionEvent.ACTION_DOWN) {
+                dX = v.getX() - e.getRawX();
+                dY = v.getY() - e.getRawY();
+            } else if(e.getAction() == MotionEvent.ACTION_MOVE) {
+                v.setX(e.getRawX() + dX);
+                v.setY(e.getRawY() + dY);
             } else if(e.getAction() == MotionEvent.ACTION_UP) {
                 prefs.edit().putFloat(idKey + "_X", v.getX()).putFloat(idKey + "_Y", v.getY()).apply();
             }
