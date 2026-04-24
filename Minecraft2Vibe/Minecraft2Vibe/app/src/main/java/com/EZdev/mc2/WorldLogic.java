@@ -63,7 +63,7 @@ public class WorldLogic {
         spawnItemEntity(x + 0.5f, y + 0.5f, z + 0.5f, type, 1);
     }
     public void spawnItemEntity(float x, float y, float z, byte type, int count) {
-        droppedItems.add(new ItemEntity(x, y, z, type, count));
+        droppedItems.add(new ItemEntity(x, y, z, type, Math.max(0, count)));
     }
 
     public void updateChunks(float playerX, float playerZ) {

@@ -88,4 +88,13 @@ public class WorldLogicTest {
         worldLogic.setBlock(x, y, z, Blocks.GRASS);
         assertEquals("Setting block in non-existent chunk should do nothing", Blocks.AIR, worldLogic.getBlock(x, y, z));
     }
+
+    @Test
+    public void testSpawnItemEntityNegativeCount() {
+        WorldLogic worldLogic = new WorldLogic();
+        worldLogic.spawnItemEntity(10.0f, 64.0f, 10.0f, Blocks.GRASS, -5);
+
+        assertEquals("One item entity should have been spawned", 1, worldLogic.droppedItems.size());
+        assertEquals("Negative count should be clamped to 0", 0, worldLogic.droppedItems.get(0).count);
+    }
 }
