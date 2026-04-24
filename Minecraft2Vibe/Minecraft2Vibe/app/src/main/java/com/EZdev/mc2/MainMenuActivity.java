@@ -16,8 +16,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import java.io.File;
-import android.app.ActivityManager;
-import android.content.pm.ApplicationInfo;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -80,17 +78,6 @@ public class MainMenuActivity extends Activity {
 
             } catch (Exception e) {
                 Log.e(TAG, "Failed to optimize", e);
-            }
-
-            // ActivityManager killBackgroundProcesses for background app optimization
-            ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-            if (am != null) {
-                PackageManager pm = getPackageManager();
-                for (ApplicationInfo packageInfo : pm.getInstalledApplications(0)) {
-                    if ((packageInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 && !packageInfo.packageName.equals(getPackageName())) {
-                        am.killBackgroundProcesses(packageInfo.packageName);
-                    }
-                }
             }
 
             new Handler(Looper.getMainLooper()).post(() -> {
