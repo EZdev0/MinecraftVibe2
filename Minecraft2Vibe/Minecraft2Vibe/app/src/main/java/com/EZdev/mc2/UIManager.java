@@ -459,15 +459,15 @@ public class UIManager {
 
             if (!engine.gameplay.isCreative) {
                 // Heart Display ABOVE Hotbar! Hotbar is ~200px from bottom.
-                String hpStr = "";
+                StringBuilder hpSb = new StringBuilder(20);
                 int hearts = (int)engine.gameplay.health / 2;
                 for(int h=0; h<10; h++) {
-                    if(h < hearts) hpStr += "❤️";
-                    else hpStr += "🖤";
+                    if(h < hearts) hpSb.append("❤️");
+                    else hpSb.append("🖤");
                 }
 
                 // Draw in center, above bottom
-                canvas.drawText(hpStr, getWidth() / 2f - 220, getHeight() - 200, healthPaint);
+                canvas.drawText(hpSb.toString(), getWidth() / 2f - 220, getHeight() - 200, healthPaint);
 
                 // Fire Overlay effect if taking fire damage
                 if (engine.gameplay.fireDamageTimer > 0) {
