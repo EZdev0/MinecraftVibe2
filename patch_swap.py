@@ -44,25 +44,11 @@ search = """    private void showLoadingScreenAndOptimize() {
 
             new Handler(Looper.getMainLooper()).post(() -> {
                 mainOverlay.removeView(loadingPanel);
-
-                // Request Shizuku Permission
-                if (checkSelfPermission("moe.shizuku.manager.permission.API_V23") != PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(new String[]{"moe.shizuku.manager.permission.API_V23"}, 100);
-                }
             });
         }).start();
     }"""
 
 replace = """    private void showLoadingScreenAndOptimize() {
-        // Request Permissions immediately
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission("moe.shizuku.manager.permission.API_V23") != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{
-                        "moe.shizuku.manager.permission.API_V23"
-                }, 100);
-            }
-        }
-
         loadingPanel = new LinearLayout(this);
         loadingPanel.setOrientation(LinearLayout.VERTICAL);
         loadingPanel.setBackgroundColor(Color.parseColor("#000000"));

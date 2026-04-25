@@ -80,11 +80,6 @@ oncreate_replace = """    @Override
 
             new Handler(Looper.getMainLooper()).post(() -> {
                 mainOverlay.removeView(loadingPanel);
-
-                // Request Shizuku Permission
-                if (checkSelfPermission("moe.shizuku.manager.permission.API_V23") != PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(new String[]{"moe.shizuku.manager.permission.API_V23"}, 100);
-                }
             });
         }).start();
     }"""
