@@ -2,6 +2,8 @@ package com.EZdev.mc2;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import org.junit.Test;
 
 public class WorldLogicTest {
@@ -96,5 +98,73 @@ public class WorldLogicTest {
 
         assertEquals("One item entity should have been spawned", 1, worldLogic.droppedItems.size());
         assertEquals("Negative count should be clamped to 0", 0, worldLogic.droppedItems.get(0).count);
+    }
+
+    @Test
+    public void testExplodeRemovesBlocks() {
+        WorldLogic worldLogic = new WorldLogic();
+        for (int i = 0; i < 25; i++) {
+            worldLogic.updateChunks(0, 0);
+        }
+
+        // Set some blocks to be exploded
+        worldLogic.setBlock(0, 64, 0, Blocks.STONE);
+        worldLogic.setBlock(1, 64, 0, Blocks.STONE);
+        worldLogic.setBlock(0, 65, 0, Blocks.STONE);
+
+        assertEquals("Block should be stone before explosion", Blocks.STONE, worldLogic.getBlock(0, 64, 0));
+
+        // Explode at (0.5, 64.5, 0.5) with radius 2.0
+        worldLogic.explode(0.5f, 64.5f, 0.5f, 2.0f);
+
+        assertEquals("Block at center should be AIR after explosion", Blocks.AIR, worldLogic.getBlock(0, 64, 0));
+        assertEquals("Block at (1,64,0) should be AIR after explosion", Blocks.AIR, worldLogic.getBlock(1, 64, 0));
+        assertEquals("Block at (0,65,0) should be AIR after explosion", Blocks.AIR, worldLogic.getBlock(0, 65, 0));
+    }
+
+    @Test
+    public void testExplodeBedrockImmunity() {
+        WorldLogic worldLogic = new WorldLogic();
+        for (int i = 0; i < 25; i++) {
+            worldLogic.updateChunks(0, 0);
+        }
+
+        // y=0 is bedrock
+        assertEquals("Block at y=0 should be bedrock", Blocks.BEDROCK, worldLogic.getBlock(0, 0, 0));
+
+        // Explode at (0.5, 0.5, 0.5) with radius 2.0
+        worldLogic.explode(0.5f, 0.5f, 0.5f, 2.0f);
+
+        assertEquals("Bedrock should persist after explosion", Blocks.BEDROCK, worldLogic.getBlock(0, 0, 0));
+    }
+
+    @Test
+    public void testExplodeWithGameplay() throws Exception {
+        WorldLogic worldLogic = new WorldLogic();
+        for (int i = 0; i < 25; i++) {
+            worldLogic.updateChunks(0, 0);
+        }
+
+        Gameplay gameplay = new Gameplay();
+        // We use reflection to set gameplayRef to avoid calling render() which triggers GLES20 (stubbed in tests)
+        java.lang.reflect.Field field = WorldLogic.class.getDeclaredField("gameplayRef");
+        field.setAccessible(true);
+        field.set(worldLogic, gameplay);
+
+        // Setup some blocks and TNT
+        worldLogic.setBlock(0, 64, 0, Blocks.TNT);
+
+        worldLogic.explode(5f, 64f, 5f, 10f);
+
+        // Check if particles were added to gameplay
+        // addExplosionParticles adds 25 particles
+        // addBlockParticles adds 8 particles per block
+        // Since we exploded (5,64,5) and TNT was at (0,64,0), and radius was 10.
+        // Distance is ~7.07, radius 10. TNT should be affected.
+
+        assertTrue("Explosion particles should be added", gameplay.fireParticles.size() >= 25);
+        // The TNT block should be removed and a ticking TNT should be added to gameplay
+        assertEquals("TNT block should be removed", Blocks.AIR, worldLogic.getBlock(0, 64, 0));
+        assertFalse("Ticking TNT should be added to gameplay", gameplay.tickingTNTs.isEmpty());
     }
 }
