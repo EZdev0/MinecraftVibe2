@@ -22,6 +22,7 @@ public class Booster {
                    "else if (uIsFlashing == 2 && pType == " + Blocks.SMOKE + ") { fc = vec4(0.8, 0.8, 0.8, 0.7); } " + // Smoke
                    "else if (pType == " + Blocks.ENTITY_PIG + ") { fc = vec4(0.9, 0.6, 0.7, 1.0); } " + // Pig! Pinkish
                    "else if (pType == " + Blocks.GRASS + ") { fc = vec4(0.3, 0.7, 0.2, 1.0); } " +
+                   "else if (pType == " + Blocks.DIRT + ") { fc = vec4(0.4, 0.25, 0.1, 1.0); } " +
                    "else if (pType == " + Blocks.STONE + ") { fc = vec4(0.4, 0.4, 0.4, 1.0); } " +
                    "else if (pType == " + Blocks.WOOD + ") { fc = vec4(0.4, 0.25, 0.1, 1.0); } " +
                    "else if (pType == " + Blocks.LEAVES + ") { fc = vec4(0.1, 0.5, 0.1, 1.0); } " +
