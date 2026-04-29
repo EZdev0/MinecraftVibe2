@@ -3,7 +3,7 @@ package com.EZdev.mc2;
 public class Blocks {
     public static final byte AIR = 0;
     public static final byte GRASS = 1;
-    public static final byte DIRT = 1;
+    public static final byte DIRT = 10;
     public static final byte STONE = 2;
     public static final byte WOOD = 3;
     public static final byte LEAVES = 4;

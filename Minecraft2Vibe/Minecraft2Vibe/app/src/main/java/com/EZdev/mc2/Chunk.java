@@ -148,6 +148,7 @@ private void addDecorations() {
 
                     float r = 1f, g = 1f, b = 1f, a = 1f;
                     if (type == Blocks.GRASS) { r = 0.3f; g = 0.7f; b = 0.2f; }
+                    else if (type == Blocks.DIRT) { r = 0.4f; g = 0.25f; b = 0.1f; }
                     else if (type == Blocks.STONE) { r = 0.4f; g = 0.4f; b = 0.4f; }
                     else if (type == Blocks.WOOD) { r = 0.4f; g = 0.25f; b = 0.1f; }
                     else if (type == Blocks.LEAVES) { r = 0.1f; g = 0.5f; b = 0.1f; }

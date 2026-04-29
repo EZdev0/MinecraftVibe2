@@ -67,11 +67,11 @@ public class SoundManager {
         int soundId = -1;
         float volume = 1.0f;
 
-        // 1=Dirt/Grass, 2=Stone, 3=Wood, 4=Leaves, 5=TNT, 6=Fire, 7=Water, 9=Bedrock
-        if (blockId == 1 || blockId == 4) soundId = grassSoundId;
-        else if (blockId == 2 || blockId == 9) soundId = stoneSoundId;
-        else if (blockId == 3) soundId = woodSoundId;
-        else if (blockId == 5) {
+        // Grass, Dirt, Leaves play grass sound
+        if (blockId == Blocks.GRASS || blockId == Blocks.DIRT || blockId == Blocks.LEAVES) soundId = grassSoundId;
+        else if (blockId == Blocks.STONE || blockId == Blocks.BEDROCK) soundId = stoneSoundId;
+        else if (blockId == Blocks.WOOD) soundId = woodSoundId;
+        else if (blockId == Blocks.TNT) {
             long currentTime = System.currentTimeMillis();
             if (currentTime - lastTntTime > 150) { // Limit TNT sounds (intelligent handling)
                 soundId = tntSoundId;
@@ -81,7 +81,7 @@ public class SoundManager {
                 return; // Skip if too many TNTs
             }
         }
-        else if (blockId == 7) soundId = waterSoundId;
+        else if (blockId == Blocks.WATER) soundId = waterSoundId;
         else soundId = stoneSoundId; // default
 
         if (soundId != -1) {
