@@ -1,12 +1,12 @@
 package com.EZdev.mc2;
 
-import java.util.Random;
+import java.security.SecureRandom;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 public class Chunk {
-    private final Random random = new Random();
+    private final SecureRandom random = new SecureRandom();
     public int chunkX, chunkZ;
     public byte[][][] blocks = new byte[16][128][16];
     private WorldLogic world;

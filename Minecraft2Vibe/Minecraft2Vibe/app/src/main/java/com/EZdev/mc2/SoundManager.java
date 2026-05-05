@@ -4,13 +4,13 @@ import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.media.audiofx.EnvironmentalReverb;
-import java.util.Random;
+import java.security.SecureRandom;
 
 public class SoundManager {
     private SoundPool soundPool;
     private Context context;
     private boolean isEnabled;
-    private Random random;
+    private SecureRandom random;
 
     private int grassSoundId = -1;
     private int stoneSoundId = -1;
@@ -25,7 +25,7 @@ public class SoundManager {
     public SoundManager(Context context) {
         this.context = context;
         this.isEnabled = context.getSharedPreferences("McPrefs", Context.MODE_PRIVATE).getBoolean("SFX_ENABLED", true);
-        this.random = new Random();
+        this.random = new SecureRandom();
 
         AudioAttributes attributes = new AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_GAME)

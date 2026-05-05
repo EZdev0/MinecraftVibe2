@@ -1,6 +1,6 @@
 package com.EZdev.mc2;
 
-import java.util.Random;
+import java.security.SecureRandom;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -13,7 +13,7 @@ import android.util.Log;
 
 public class MyGdxGame implements GLSurfaceView.Renderer {
     private static final String TAG = "MyGdxGame";
-    private final Random random = new Random();
+    private final SecureRandom random = new SecureRandom();
 
     public Gameplay gameplay = new Gameplay();
     public WorldLogic world = new WorldLogic();
