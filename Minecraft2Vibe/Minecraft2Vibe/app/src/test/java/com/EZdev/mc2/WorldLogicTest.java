@@ -167,4 +167,56 @@ public class WorldLogicTest {
         assertEquals("TNT block should be removed", Blocks.AIR, worldLogic.getBlock(0, 64, 0));
         assertFalse("Ticking TNT should be added to gameplay", gameplay.tickingTNTs.isEmpty());
     }
+
+    @Test
+    public void testCheckIgnition() {
+        WorldLogic worldLogic = new WorldLogic();
+        for (int i = 0; i < 25; i++) {
+            worldLogic.updateChunks(0, 0);
+        }
+        Gameplay gameplay = new Gameplay();
+
+        // Place TNT next to the target coordinates (0, 64, 0)
+        worldLogic.setBlock(1, 64, 0, Blocks.TNT);
+        worldLogic.setBlock(-1, 64, 0, Blocks.TNT);
+        worldLogic.setBlock(0, 65, 0, Blocks.TNT);
+        worldLogic.setBlock(0, 63, 0, Blocks.TNT);
+        worldLogic.setBlock(0, 64, 1, Blocks.TNT);
+        worldLogic.setBlock(0, 64, -1, Blocks.TNT);
+
+        // Call checkIgnition as if fire was placed at (0, 64, 0)
+        worldLogic.checkIgnition(0, 64, 0, gameplay);
+
+        // Verify all 6 adjacent TNT blocks were removed and added to tickingTNTs
+        assertEquals("All 6 adjacent TNT blocks should be removed", 6, gameplay.tickingTNTs.size());
+        assertEquals("Block at (1,64,0) should be AIR", Blocks.AIR, worldLogic.getBlock(1, 64, 0));
+        assertEquals("Block at (-1,64,0) should be AIR", Blocks.AIR, worldLogic.getBlock(-1, 64, 0));
+        assertEquals("Block at (0,65,0) should be AIR", Blocks.AIR, worldLogic.getBlock(0, 65, 0));
+        assertEquals("Block at (0,63,0) should be AIR", Blocks.AIR, worldLogic.getBlock(0, 63, 0));
+        assertEquals("Block at (0,64,1) should be AIR", Blocks.AIR, worldLogic.getBlock(0, 64, 1));
+        assertEquals("Block at (0,64,-1) should be AIR", Blocks.AIR, worldLogic.getBlock(0, 64, -1));
+    }
+
+    @Test
+    public void testCheckIgnitionIfTntPlaced() throws Exception {
+        WorldLogic worldLogic = new WorldLogic();
+        for (int i = 0; i < 25; i++) {
+            worldLogic.updateChunks(0, 0);
+        }
+        Gameplay gameplay = new Gameplay();
+
+        // Place fire next to where TNT will be "placed" (0, 64, 0)
+        worldLogic.setBlock(1, 64, 0, Blocks.FIRE);
+        // Set the TNT block
+        worldLogic.setBlock(0, 64, 0, Blocks.TNT);
+
+        // Use reflection to call private checkIgnitionIfTntPlaced
+        java.lang.reflect.Method method = WorldLogic.class.getDeclaredMethod("checkIgnitionIfTntPlaced", int.class, int.class, int.class, Gameplay.class);
+        method.setAccessible(true);
+        method.invoke(worldLogic, 0, 64, 0, gameplay);
+
+        // Verify TNT block was removed and added to tickingTNTs
+        assertEquals("Ticking TNT should be added", 1, gameplay.tickingTNTs.size());
+        assertEquals("TNT block should be removed", Blocks.AIR, worldLogic.getBlock(0, 64, 0));
+    }
 }

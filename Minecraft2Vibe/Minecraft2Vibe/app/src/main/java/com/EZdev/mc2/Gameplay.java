@@ -2,11 +2,10 @@ package com.EZdev.mc2;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Random;
+import java.security.SecureRandom;
 
 public class Gameplay {
-    private final Random random = new Random();
+    private final SecureRandom random = new SecureRandom();
     public float camX = 8f, camY = 100f, camZ = 8f;
     public float yaw = 0f, pitch = 0f;
     public float joyMoveX = 0f, joyMoveY = 0f;
