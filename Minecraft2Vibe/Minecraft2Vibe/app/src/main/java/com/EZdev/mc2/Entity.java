@@ -1,9 +1,9 @@
 package com.EZdev.mc2;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 public class Entity {
-    private final Random random = new Random();
+    private final SecureRandom random = new SecureRandom();
     public float x, y, z;
     public float vx = 0, vy = 0, vz = 0;
     public float targetX, targetZ;

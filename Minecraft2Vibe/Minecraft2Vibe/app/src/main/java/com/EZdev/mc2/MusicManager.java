@@ -4,7 +4,7 @@ import android.content.Context;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.util.Log;
-import java.util.Random;
+import java.security.SecureRandom;
 
 public class MusicManager {
     private static final String TAG = "MusicManager";
@@ -12,7 +12,7 @@ public class MusicManager {
     private Context context;
     private boolean isPlaying = false;
     private boolean isEnabled = true;
-    private Random random;
+    private SecureRandom random;
 
     // A free public domain background track as fallback, normally you'd use raw resources
     private String[] trackUrls = {
@@ -25,7 +25,7 @@ public class MusicManager {
     public MusicManager(Context context) {
         this.context = context;
         this.isEnabled = context.getSharedPreferences("McPrefs", Context.MODE_PRIVATE).getBoolean("MUSIC_ENABLED", true);
-        this.random = new Random();
+        this.random = new SecureRandom();
     }
 
     public void startMusic() {

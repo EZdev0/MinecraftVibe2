@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.ArrayList;
-import java.util.Random;
+import java.security.SecureRandom;
 
 public class WorldLogic {
-    private final Random random = new Random();
+    private final SecureRandom random = new SecureRandom();
     private HashMap<Long, Chunk> chunks = new HashMap<>();
     private float[] finalMVP = new float[16];
     private float[] modelMatrix = new float[16];
