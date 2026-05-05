@@ -141,7 +141,7 @@ public class WorldLogic {
             int nz = z + n[2];
             if(getBlock(nx, ny, nz) == Blocks.TNT) {
                 setBlock(nx, ny, nz, Blocks.AIR);
-                Gameplay.ActiveTNT newTNT = g.new ActiveTNT(nx + 0.5f, ny, nz + 0.5f);
+                Gameplay.ActiveTNT newTNT = g.obtainTNT(nx + 0.5f, ny, nz + 0.5f);
                 g.tickingTNTs.add(newTNT);
             }
         }
@@ -208,7 +208,7 @@ public class WorldLogic {
 
                         if (block == Blocks.TNT && gameplayRef != null) {
                             setBlock(x, y, z, Blocks.AIR);
-                            Gameplay.ActiveTNT newTNT = gameplayRef.new ActiveTNT(x + 0.5f, y + 0.5f, z + 0.5f);
+                            Gameplay.ActiveTNT newTNT = gameplayRef.obtainTNT(x + 0.5f, y + 0.5f, z + 0.5f);
                             float dist = (float) Math.sqrt(distSq);
                             float force = (radius - dist) / radius;
                             newTNT.vx = (dx / dist) * force * 15.0f;
@@ -525,7 +525,7 @@ public class WorldLogic {
                         }
                     }
                     setBlock(bx, by, bz, Blocks.AIR);
-                    g.tickingTNTs.add(g.new ActiveTNT(bx + 0.5f, by, bz + 0.5f));
+                    g.tickingTNTs.add(g.obtainTNT(bx + 0.5f, by, bz + 0.5f));
                     return;
                 }
                 if (place && lastX != -1 && !isPlayerInside(g, lastX, lastY, lastZ)) {
@@ -541,7 +541,7 @@ public class WorldLogic {
                     setBlock(lastX, lastY, lastZ, g.activeBlock);
                     if(g.activeBlock == Blocks.FIRE) {
                         checkIgnition(lastX, lastY, lastZ, g);
-                        g.activeFires.add(g.new ActiveFire(lastX, lastY, lastZ));
+                        g.activeFires.add(g.obtainFire(lastX, lastY, lastZ));
                     }
                     if (g.activeBlock == Blocks.TNT) {
                         checkIgnitionIfTntPlaced(lastX, lastY, lastZ, g);
@@ -573,7 +573,7 @@ public class WorldLogic {
             int nz = z + n[2];
             if(getBlock(nx, ny, nz) == Blocks.FIRE) {
                 setBlock(x, y, z, Blocks.AIR);
-                Gameplay.ActiveTNT newTNT = g.new ActiveTNT(x + 0.5f, y, z + 0.5f);
+                Gameplay.ActiveTNT newTNT = g.obtainTNT(x + 0.5f, y, z + 0.5f);
                 g.tickingTNTs.add(newTNT);
                 return;
             }

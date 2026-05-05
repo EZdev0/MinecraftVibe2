@@ -1,5 +1,6 @@
 package com.EZdev.mc2;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.security.SecureRandom;
 
@@ -33,6 +34,10 @@ public class Gameplay {
     public ArrayList<ActiveFireParticle> fireParticles = new ArrayList<>();
     public ArrayList<ActiveFireParticle> blockParticles = new ArrayList<>();
 
+    private final Deque<ActiveTNT> tntPool = new ArrayDeque<>();
+    private final Deque<ActiveFire> firePool = new ArrayDeque<>();
+    private final Deque<ActiveFireParticle> particlePool = new ArrayDeque<>();
+
     public boolean isCreative = false;
     public boolean isFlying = false;
     public float health = 20.0f;
@@ -53,14 +58,20 @@ public class Gameplay {
         public float x, y, z;
         public float vx = 0f, vy = 0f, vz = 0f;
         public float timer = 3.0f;
-        public ActiveTNT(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
+        public ActiveTNT(float x, float y, float z) { init(x, y, z); }
+        public void init(float x, float y, float z) {
+            this.x = x; this.y = y; this.z = z;
+            this.vx = 0f; this.vy = 0f; this.vz = 0f;
+            this.timer = 3.0f;
+        }
     }
 
     public class ActiveFire {
         public int x, y, z;
         public float life;
         public float spreadTimer;
-        public ActiveFire(int x, int y, int z) {
+        public ActiveFire(int x, int y, int z) { init(x, y, z); }
+        public void init(int x, int y, int z) {
             this.x = x; this.y = y; this.z = z;
             this.life = 5.0f + random.nextFloat() * 5.0f;
             this.spreadTimer = 0.5f + random.nextFloat() * 1.5f;
@@ -72,7 +83,8 @@ public class Gameplay {
         public float vx, vy, vz;
         public float life;
         public byte type;
-        public ActiveFireParticle(float x, float y, float z, byte type) {
+        public ActiveFireParticle(float x, float y, float z, byte type) { init(x, y, z, type); }
+        public void init(float x, float y, float z, byte type) {
             this.x = x; this.y = y; this.z = z;
             this.vx = (random.nextFloat() - 0.5f) * 6f;
             this.vy = (random.nextFloat()) * 6f + 3f;
@@ -80,7 +92,8 @@ public class Gameplay {
             this.life = 0.8f + random.nextFloat() * 2.0f;
             this.type = type;
         }
-        public ActiveFireParticle(float x, float y, float z, float intensity) {
+        public ActiveFireParticle(float x, float y, float z, float intensity) { init(x, y, z, intensity); }
+        public void init(float x, float y, float z, float intensity) {
             this.x = x; this.y = y; this.z = z;
             this.vx = (random.nextFloat() - 0.5f) * intensity;
             this.vy = (random.nextFloat() - 0.5f) * intensity;
@@ -90,15 +103,63 @@ public class Gameplay {
         }
     }
 
+    public ActiveTNT obtainTNT(float x, float y, float z) {
+        if (!tntPool.isEmpty()) {
+            ActiveTNT tnt = tntPool.pop();
+            tnt.init(x, y, z);
+            return tnt;
+        }
+        return new ActiveTNT(x, y, z);
+    }
+
+    public void releaseTNT(ActiveTNT tnt) {
+        if (tnt != null) tntPool.push(tnt);
+    }
+
+    public ActiveFire obtainFire(int x, int y, int z) {
+        if (!firePool.isEmpty()) {
+            ActiveFire fire = firePool.pop();
+            fire.init(x, y, z);
+            return fire;
+        }
+        return new ActiveFire(x, y, z);
+    }
+
+    public void releaseFire(ActiveFire fire) {
+        if (fire != null) firePool.push(fire);
+    }
+
+    public ActiveFireParticle obtainParticle(float x, float y, float z, byte type) {
+        if (!particlePool.isEmpty()) {
+            ActiveFireParticle p = particlePool.pop();
+            p.init(x, y, z, type);
+            return p;
+        }
+        return new ActiveFireParticle(x, y, z, type);
+    }
+
+    public ActiveFireParticle obtainParticle(float x, float y, float z, float intensity) {
+        if (!particlePool.isEmpty()) {
+            ActiveFireParticle p = particlePool.pop();
+            p.init(x, y, z, intensity);
+            return p;
+        }
+        return new ActiveFireParticle(x, y, z, intensity);
+    }
+
+    public void releaseParticle(ActiveFireParticle p) {
+        if (p != null) particlePool.push(p);
+    }
+
     public void addBlockParticles(float x, float y, float z, byte blockType) {
         for(int i=0; i<8; i++) { // Reduced count!
-            blockParticles.add(new ActiveFireParticle(x+0.5f, y+0.5f, z+0.5f, blockType));
+            blockParticles.add(obtainParticle(x+0.5f, y+0.5f, z+0.5f, blockType));
         }
     }
 
     public void addExplosionParticles(float x, float y, float z) {
         for(int i=0; i<25; i++) {
-            fireParticles.add(new ActiveFireParticle(x, y, z, 20f));
+            fireParticles.add(obtainParticle(x, y, z, 20f));
         }
     }
 
@@ -135,7 +196,7 @@ public class Gameplay {
                 float rx = camX + (random.nextFloat() * 40f - 20f);
                 float rz = camZ + (random.nextFloat() * 40f - 20f);
                 float ry = camY + 20f + random.nextFloat() * 10f;
-                ActiveFireParticle p = new ActiveFireParticle(rx, ry, rz, Blocks.WATER);
+                ActiveFireParticle p = obtainParticle(rx, ry, rz, Blocks.WATER);
                 p.vy = -10f - random.nextFloat() * 5f;
                 blockParticles.add(p);
             }
@@ -146,7 +207,7 @@ public class Gameplay {
             for (int y = 127; y > 0; y--) {
                 if (world != null && world.getBlock((int)tx, y, (int)tz) > Blocks.AIR) {
                     world.setBlock((int)tx, y + 1, (int)tz, Blocks.FIRE);
-                    activeFires.add(new ActiveFire((int)tx, y + 1, (int)tz));
+                    activeFires.add(obtainFire((int)tx, y + 1, (int)tz));
                     if (activity != null) activity.runOnUiThread(() -> {
                         activity.getWindow().getDecorView().setBackgroundColor(android.graphics.Color.WHITE);
                         new android.os.Handler().postDelayed(() -> activity.getWindow().getDecorView().setBackgroundColor(android.graphics.Color.BLACK), 50);
@@ -244,6 +305,7 @@ public class Gameplay {
                 int lastIdx = tickingTNTs.size() - 1;
                 if (i < lastIdx) tickingTNTs.set(i, tickingTNTs.get(lastIdx));
                 tickingTNTs.remove(lastIdx);
+                releaseTNT(tnt);
             }
         }
 
@@ -262,6 +324,7 @@ public class Gameplay {
                     activeFires.set(i, activeFires.get(lastIdx));
                 }
                 activeFires.remove(lastIdx);
+                releaseFire(fire);
                 continue;
             }
 
@@ -271,12 +334,13 @@ public class Gameplay {
                     hasSupport = true;
             }
             if (!hasSupport) {
-                if (world != null) if(world != null) world.setBlock(fire.x, fire.y, fire.z, Blocks.AIR);
+                if (world != null) world.setBlock(fire.x, fire.y, fire.z, Blocks.AIR);
                 int lastIdx = activeFires.size() - 1;
                 if (i < lastIdx) {
                     activeFires.set(i, activeFires.get(lastIdx));
                 }
                 activeFires.remove(lastIdx);
+                releaseFire(fire);
                 continue;
             }
 
@@ -284,16 +348,17 @@ public class Gameplay {
             fire.spreadTimer -= dt;
 
             if (random.nextFloat() < 0.01f) {
-                fireParticles.add(new ActiveFireParticle(fire.x + 0.5f, fire.y + 0.5f, fire.z + 0.5f, Blocks.FIRE));
+                fireParticles.add(obtainParticle(fire.x + 0.5f, fire.y + 0.5f, fire.z + 0.5f, Blocks.FIRE));
             }
 
             if (fire.life <= 0) {
-                if (world != null) if(world != null) world.setBlock(fire.x, fire.y, fire.z, Blocks.AIR);
+                if (world != null) world.setBlock(fire.x, fire.y, fire.z, Blocks.AIR);
                 int lastIdx = activeFires.size() - 1;
                 if (i < lastIdx) {
                     activeFires.set(i, activeFires.get(lastIdx));
                 }
                 activeFires.remove(lastIdx);
+                releaseFire(fire);
                 continue;
             }
 
@@ -310,7 +375,7 @@ public class Gameplay {
                         float baseChance = (blockType == Blocks.LEAVES) ? 0.9f : 0.6f;
                         if (random.nextFloat() < baseChance - distancePenalty) {
                             if(world != null) world.setBlock(nx, ny, nz, Blocks.FIRE);
-                            activeFires.add(new ActiveFire(nx, ny, nz));
+                            activeFires.add(obtainFire(nx, ny, nz));
                         }
                     }
                 }
@@ -459,7 +524,13 @@ public class Gameplay {
             p.vy -= 15.0f * dt;
             p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
 
-            if (p.life <= 0) { int lastIdx = list.size() - 1; if (i < lastIdx) list.set(i, list.get(lastIdx)); list.remove(lastIdx); continue; }
+            if (p.life <= 0) {
+                int lastIdx = list.size() - 1;
+                if (i < lastIdx) list.set(i, list.get(lastIdx));
+                list.remove(lastIdx);
+                releaseParticle(p);
+                continue;
+            }
 
             if(checkCollisionPoint(world, p.x, p.y, p.z)) {
                 if (isFire && p.type == Blocks.FIRE) {
@@ -467,7 +538,7 @@ public class Gameplay {
                     if (block == Blocks.WOOD || block == Blocks.LEAVES) {
                         if (random.nextFloat() < 0.3f) {
                             if(world != null) world.setBlock((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z), Blocks.FIRE);
-                            activeFires.add(new ActiveFire((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z)));
+                            activeFires.add(obtainFire((int)Math.floor(p.x), (int)Math.floor(p.y), (int)Math.floor(p.z)));
                         }
                     }
                 } else if (!isFire) {
@@ -477,7 +548,12 @@ public class Gameplay {
                     if(Math.abs(p.vy) < 0.1f) { p.vx = 0; p.vz = 0; }
                 }
 
-                if (isFire) { int lastIdx = list.size() - 1; if (i < lastIdx) list.set(i, list.get(lastIdx)); list.remove(lastIdx); }
+                if (isFire) {
+                    int lastIdx = list.size() - 1;
+                    if (i < lastIdx) list.set(i, list.get(lastIdx));
+                    list.remove(lastIdx);
+                    releaseParticle(p);
+                }
             }
         }
     }
