@@ -20,14 +20,12 @@ public class McApp extends Application {
         super.onCreate();
 
         Thread.setDefaultUncaughtExceptionHandler((thread, e) -> {
-            Log.e("McApp", "CRASH", e);
             StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            String stackTrace = sw.toString();
+            e.printStackTrace(new PrintWriter(sw));
+            Log.e("McApp", "Crash detected: " + sw.toString());
 
             Intent intent = new Intent(getApplicationContext(), CrashHandlerActivity.class);
-            intent.putExtra("error", stackTrace);
+            intent.putExtra("error", "An unexpected error occurred. Please restart the app.");
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
 
@@ -53,17 +51,14 @@ public class McApp extends Application {
                 if (lastTick == currentTick && lastTick != 0) {
                     // Main thread is blocked
                     StackTraceElement[] stackTrace = Looper.getMainLooper().getThread().getStackTrace();
-
-                    StringBuilder sb = new StringBuilder("ANR - App Not Responding\nMain Thread Stacktrace:\n");
+                    StringBuilder sb = new StringBuilder("ANR detected\n");
                     for (StackTraceElement el : stackTrace) {
                         sb.append(el.toString()).append("\n");
                     }
-
-                    String errorLog = sb.toString();
-                    Log.e("McApp", errorLog);
+                    Log.e("McApp", sb.toString());
 
                     Intent intent = new Intent(getApplicationContext(), CrashHandlerActivity.class);
-                    intent.putExtra("error", errorLog);
+                    intent.putExtra("error", "The application has stopped responding.");
                     intent.putExtra("canContinue", true); // Optional: allows continuing if it unblocks
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
