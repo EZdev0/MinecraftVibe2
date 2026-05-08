@@ -291,20 +291,6 @@ private void addDecorations() {
         vertexCount += 6;
     }
 
-    private void addDirect(float[] v, float[] c, float[] values) {
-        if(vertexCount >= (v.length/3) - 6) return;
-        int vc = vertexCount * 3;
-        for(int i=0; i<18; i++) v[vc + i] = values[i];
-        int cc = vertexCount * 4;
-        c[cc] = 0f; c[cc + 1] = 0f; c[cc + 2] = 0f; c[cc + 3] = 1.0f;
-        c[cc + 4] = 0f; c[cc + 5] = 0f; c[cc + 6] = 0f; c[cc + 7] = 1.0f;
-        c[cc + 8] = 0f; c[cc + 9] = 0f; c[cc + 10] = 0f; c[cc + 11] = 1.0f;
-        c[cc + 12] = 0f; c[cc + 13] = 0f; c[cc + 14] = 0f; c[cc + 15] = 1.0f;
-        c[cc + 16] = 0f; c[cc + 17] = 0f; c[cc + 18] = 0f; c[cc + 19] = 1.0f;
-        c[cc + 20] = 0f; c[cc + 21] = 0f; c[cc + 22] = 0f; c[cc + 23] = 1.0f;
-        vertexCount += 6;
-    }
-
     // Memory-friendly T draw using simple local assignment instead of new float[]
     private void drawLetterT(float[] v, float[] c, float x, float y, float z, int s) {
         if(vertexCount >= (v.length/3) - 12) return;
