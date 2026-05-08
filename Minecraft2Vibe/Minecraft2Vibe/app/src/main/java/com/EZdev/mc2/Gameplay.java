@@ -2,6 +2,7 @@ package com.EZdev.mc2;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.security.SecureRandom;
 
 public class Gameplay {
@@ -53,6 +54,7 @@ public class Gameplay {
     public boolean isBreaking = false;
     public float breakTimer = 0f;
     public int targetX = -1, targetY = -1, targetZ = -1;
+    private final int[] raycastResult = new int[3];
 
     public class ActiveTNT {
         public float x, y, z;
@@ -484,7 +486,7 @@ public class Gameplay {
             int bz = (int) Math.floor(camZ + dirZ * 3.0f);
 
             // To make it simple: we use world.interact for raycast to find target block
-            int[] hit = (world != null) ? world.raycastBlock(this) : null;
+            int[] hit = (world != null) ? world.raycastBlock(this, raycastResult) : null;
             if(hit != null) {
                 if(hit[0] == targetX && hit[1] == targetY && hit[2] == targetZ) {
                     breakTimer += dt;

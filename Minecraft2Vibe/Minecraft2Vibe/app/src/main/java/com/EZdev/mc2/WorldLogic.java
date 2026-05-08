@@ -469,6 +469,10 @@ public class WorldLogic {
     }
 
     public int[] raycastBlock(Gameplay g) {
+        return raycastBlock(g, null);
+    }
+
+    public int[] raycastBlock(Gameplay g, int[] out) {
         float eyeHeight = g.camY + g.playerHeight - 0.2f;
         float dirX = (float) (Math.cos(Math.toRadians(g.pitch)) * Math.sin(Math.toRadians(g.yaw)));
         float dirY = (float) Math.sin(Math.toRadians(g.pitch));
@@ -480,6 +484,10 @@ public class WorldLogic {
             int bz = (int) Math.floor(g.camZ + dirZ * dist);
             byte hitBlock = getBlock(bx, by, bz);
             if (hitBlock > Blocks.AIR && hitBlock != Blocks.FIRE && hitBlock != Blocks.WATER) {
+                if (out != null && out.length >= 3) {
+                    out[0] = bx; out[1] = by; out[2] = bz;
+                    return out;
+                }
                 return new int[]{bx, by, bz};
             }
         }
