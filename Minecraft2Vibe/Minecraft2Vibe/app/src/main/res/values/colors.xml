@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="green">#00FF00</color>
+    <color name="yellow">#FFFF00</color>
+
+    <color name="menu_background">#34495e</color>
+    <color name="settings_panel_background">#E62c3e50</color>
+
+    <color name="button_default">#7f8c8d</color>
+    <color name="button_load">#f39c12</color>
+    <color name="button_settings">#8e44ad</color>
+    <color name="button_secondary">#95a5a6</color>
+    <color name="button_minus">#e74c3c</color>
+    <color name="button_plus">#2ecc71</color>
+
+    <color name="button_purple">#9b59b6</color>
+    <color name="button_orange">#e67e22</color>
+    <color name="button_teal">#1abc9c</color>
+    <color name="button_blue">#3498db</color>
+</resources>

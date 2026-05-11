@@ -44,12 +44,12 @@ public class MainMenuActivity extends Activity {
     private void showLoadingScreenAndOptimize() {
         loadingPanel = new LinearLayout(this);
         loadingPanel.setOrientation(LinearLayout.VERTICAL);
-        loadingPanel.setBackgroundColor(Color.parseColor("#000000"));
+        loadingPanel.setBackgroundColor(getColor(R.color.black));
         loadingPanel.setGravity(Gravity.CENTER);
 
         TextView t = new TextView(this);
         t.setText("⚙️ MAGIC TUNER OPTIMIERUNG LÄUFT... ⚙️\nClear Cache...");
-        t.setTextColor(Color.GREEN);
+        t.setTextColor(getColor(R.color.green));
         t.setTextSize(20);
         t.setGravity(Gravity.CENTER);
         loadingPanel.addView(t);
@@ -79,12 +79,12 @@ public class MainMenuActivity extends Activity {
     private void initMainMenuLayout() {
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.parseColor("#34495e"));
+        root.setBackgroundColor(getColor(R.color.menu_background));
         root.setGravity(Gravity.CENTER);
 
         TextView title = new TextView(this);
         title.setText("MINECRAFT 2 VIBE");
-        title.setTextColor(Color.WHITE);
+        title.setTextColor(getColor(R.color.white));
         title.setTextSize(40);
         title.setGravity(Gravity.CENTER);
         title.setPadding(0, 0, 0, 80);
@@ -101,18 +101,18 @@ public class MainMenuActivity extends Activity {
         File dir = new File(getFilesDir(), "world1");
         if (dir.exists() && dir.listFiles() != null && dir.listFiles().length > 0) {
             Button btnLoadS = createMenuBtn("LADEN (SURVIVAL)");
-            btnLoadS.setBackgroundColor(Color.parseColor("#f39c12"));
+            btnLoadS.setBackgroundColor(getColor(R.color.button_load));
             btnLoadS.setOnClickListener(v -> startGame(false, true));
             root.addView(btnLoadS);
 
             Button btnLoadC = createMenuBtn("LADEN (KREATIV)");
-            btnLoadC.setBackgroundColor(Color.parseColor("#f39c12"));
+            btnLoadC.setBackgroundColor(getColor(R.color.button_load));
             btnLoadC.setOnClickListener(v -> startGame(true, true));
             root.addView(btnLoadC);
         }
 
         Button btnSettings = createMenuBtn("EINSTELLUNGEN");
-        btnSettings.setBackgroundColor(Color.parseColor("#8e44ad"));
+        btnSettings.setBackgroundColor(getColor(R.color.button_settings));
         btnSettings.setOnClickListener(v -> showSettings());
         root.addView(btnSettings);
     }
@@ -127,8 +127,8 @@ public class MainMenuActivity extends Activity {
     private Button createMenuBtn(String text) {
         Button b = new Button(this);
         b.setText(text);
-        b.setBackgroundColor(Color.parseColor("#7f8c8d"));
-        b.setTextColor(Color.WHITE);
+        b.setBackgroundColor(getColor(R.color.button_default));
+        b.setTextColor(getColor(R.color.white));
         b.setTextSize(20);
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(600, 120);
         p.setMargins(0, 15, 0, 15);
@@ -139,13 +139,13 @@ public class MainMenuActivity extends Activity {
     private void createSettingsMenu() {
         settingsPanel = new LinearLayout(this);
         settingsPanel.setOrientation(LinearLayout.VERTICAL);
-        settingsPanel.setBackgroundColor(Color.parseColor("#E62c3e50"));
+        settingsPanel.setBackgroundColor(getColor(R.color.settings_panel_background));
         settingsPanel.setPadding(60, 60, 60, 60);
         settingsPanel.setClickable(true);
 
         TextView title = new TextView(this);
         title.setText("EINSTELLUNGEN");
-        title.setTextColor(Color.WHITE);
+        title.setTextColor(getColor(R.color.white));
         title.setTextSize(26);
         title.setGravity(Gravity.CENTER);
         settingsPanel.addView(title);
@@ -154,7 +154,7 @@ public class MainMenuActivity extends Activity {
         setupSettingsToggles();
 
         Button closeBtn = createMenuBtn("SCHLIESSEN");
-        closeBtn.setBackgroundColor(Color.parseColor("#95a5a6"));
+        closeBtn.setBackgroundColor(getColor(R.color.button_secondary));
         closeBtn.setOnClickListener(v -> hideSettings());
         settingsPanel.addView(closeBtn);
 
@@ -180,7 +180,7 @@ public class MainMenuActivity extends Activity {
         final TextView chunkText = new TextView(this);
         int currentDist = prefs.getInt("RENDER_DISTANCE", 2);
         chunkText.setText("Sichtweite (Chunks): " + currentDist);
-        chunkText.setTextColor(Color.YELLOW);
+        chunkText.setTextColor(getColor(R.color.yellow));
         chunkText.setTextSize(20);
         chunkText.setPadding(0, 50, 0, 50);
         chunkText.setGravity(Gravity.CENTER);
@@ -189,9 +189,9 @@ public class MainMenuActivity extends Activity {
         plusMinus.setOrientation(LinearLayout.HORIZONTAL);
 
         Button minusBtn = createMenuBtn("- WENIGER");
-        minusBtn.setBackgroundColor(Color.parseColor("#e74c3c"));
+        minusBtn.setBackgroundColor(getColor(R.color.button_minus));
         Button plusBtn = createMenuBtn("+ MEHR");
-        plusBtn.setBackgroundColor(Color.parseColor("#2ecc71"));
+        plusBtn.setBackgroundColor(getColor(R.color.button_plus));
 
         LinearLayout.LayoutParams btnP = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         btnP.setMargins(10, 10, 10, 10);
@@ -225,7 +225,7 @@ public class MainMenuActivity extends Activity {
     private void setupSettingsToggles() {
         boolean isFog = prefs.getBoolean("FOG_ENABLED", true);
         Button fogBtn = createMenuBtn(isFog ? "NEBEL: AN" : "NEBEL: AUS");
-        fogBtn.setBackgroundColor(Color.parseColor("#9b59b6"));
+        fogBtn.setBackgroundColor(getColor(R.color.button_purple));
         fogBtn.setOnClickListener(v -> {
             boolean f = !prefs.getBoolean("FOG_ENABLED", true);
             prefs.edit().putBoolean("FOG_ENABLED", f).apply();
@@ -234,7 +234,7 @@ public class MainMenuActivity extends Activity {
 
         boolean isFast = prefs.getBoolean("FAST_RENDER", false);
         Button vulkanBtn = createMenuBtn(isFast ? "VULKAN (FAST RENDER): AN" : "VULKAN (FAST RENDER): AUS");
-        vulkanBtn.setBackgroundColor(Color.parseColor("#e67e22"));
+        vulkanBtn.setBackgroundColor(getColor(R.color.button_orange));
         vulkanBtn.setOnClickListener(v -> {
             boolean f = !prefs.getBoolean("FAST_RENDER", false);
             prefs.edit().putBoolean("FAST_RENDER", f).apply();
@@ -243,7 +243,7 @@ public class MainMenuActivity extends Activity {
 
         boolean isMusic = prefs.getBoolean("MUSIC_ENABLED", true);
         Button musicBtn = createMenuBtn(isMusic ? "MUSIK: AN" : "MUSIK: AUS");
-        musicBtn.setBackgroundColor(Color.parseColor("#1abc9c"));
+        musicBtn.setBackgroundColor(getColor(R.color.button_teal));
         musicBtn.setOnClickListener(v -> {
             boolean m = !prefs.getBoolean("MUSIC_ENABLED", true);
             prefs.edit().putBoolean("MUSIC_ENABLED", m).apply();
@@ -256,7 +256,7 @@ public class MainMenuActivity extends Activity {
 
         boolean isSfx = prefs.getBoolean("SFX_ENABLED", true);
         Button sfxBtn = createMenuBtn(isSfx ? "EFFEKTE: AN" : "EFFEKTE: AUS");
-        sfxBtn.setBackgroundColor(Color.parseColor("#3498db"));
+        sfxBtn.setBackgroundColor(getColor(R.color.button_blue));
         sfxBtn.setOnClickListener(v -> {
             boolean s = !prefs.getBoolean("SFX_ENABLED", true);
             prefs.edit().putBoolean("SFX_ENABLED", s).apply();
@@ -266,7 +266,7 @@ public class MainMenuActivity extends Activity {
 
         boolean isDebug = prefs.getBoolean("SHOW_DEBUG", false);
         Button debugBtn = createMenuBtn(isDebug ? "DEBUG INFO: AN" : "DEBUG INFO: AUS");
-        debugBtn.setBackgroundColor(Color.parseColor("#9b59b6"));
+        debugBtn.setBackgroundColor(getColor(R.color.button_purple));
         debugBtn.setOnClickListener(v -> {
             boolean d = !prefs.getBoolean("SHOW_DEBUG", false);
             prefs.edit().putBoolean("SHOW_DEBUG", d).apply();
@@ -276,7 +276,7 @@ public class MainMenuActivity extends Activity {
 
         boolean isGLWarn = prefs.getBoolean("GL_WARN", false);
         Button glWarnBtn = createMenuBtn(isGLWarn ? "GL-WARNUNGEN: AN" : "GL-WARNUNGEN: AUS");
-        glWarnBtn.setBackgroundColor(Color.parseColor("#8e44ad"));
+        glWarnBtn.setBackgroundColor(getColor(R.color.button_settings));
         glWarnBtn.setOnClickListener(v -> {
             boolean g = !prefs.getBoolean("GL_WARN", false);
             prefs.edit().putBoolean("GL_WARN", g).apply();
