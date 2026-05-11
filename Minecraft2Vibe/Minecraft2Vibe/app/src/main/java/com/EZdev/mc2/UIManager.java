@@ -436,6 +436,7 @@ public class UIManager {
         private Paint healthPaint = new Paint(); private Paint blockBreakPaint = new Paint();
         private int joyId = -1, lookId = -1;
         private float joyBaseX, joyBaseY, joyKnobX, joyKnobY, lastLookX, lastLookY;
+        private final StringBuilder sb = new StringBuilder(128);
 
         public TouchOverlay(Context c) {
             super(c);
@@ -449,25 +450,27 @@ public class UIManager {
             if (engine == null || engine.gameplay == null) return;
 
             if (showDebug) {
-                String coords = "X: " + (int)engine.gameplay.camX + " Y: " + (int)engine.gameplay.camY + " Z: " + (int)engine.gameplay.camZ;
-                String fpsStr = "FPS: " + engine.currentFPS;
-                if(fastRender) fpsStr += " [VULKAN ENABLED]";
+                sb.setLength(0);
+                sb.append("X: ").append((int)engine.gameplay.camX).append(" Y: ").append((int)engine.gameplay.camY).append(" Z: ").append((int)engine.gameplay.camZ);
+                canvas.drawText(sb, 0, sb.length(), 30, 60, textPaint);
 
-                canvas.drawText(coords, 30, 60, textPaint);
-                canvas.drawText(fpsStr, 30, 110, fpsPaint);
+                sb.setLength(0);
+                sb.append("FPS: ").append(engine.currentFPS);
+                if(fastRender) sb.append(" [VULKAN ENABLED]");
+                canvas.drawText(sb, 0, sb.length(), 30, 110, fpsPaint);
             }
 
             if (!engine.gameplay.isCreative) {
                 // Heart Display ABOVE Hotbar! Hotbar is ~200px from bottom.
-                StringBuilder hpSb = new StringBuilder(20);
+                sb.setLength(0);
                 int hearts = (int)engine.gameplay.health / 2;
                 for(int h=0; h<10; h++) {
-                    if(h < hearts) hpSb.append("❤️");
-                    else hpSb.append("🖤");
+                    if(h < hearts) sb.append("❤️");
+                    else sb.append("🖤");
                 }
 
                 // Draw in center, above bottom
-                canvas.drawText(hpSb.toString(), getWidth() / 2f - 220, getHeight() - 200, healthPaint);
+                canvas.drawText(sb, 0, sb.length(), getWidth() / 2f - 220, getHeight() - 200, healthPaint);
 
                 // Fire Overlay effect if taking fire damage
                 if (engine.gameplay.fireDamageTimer > 0) {
