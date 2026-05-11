@@ -1,12 +1,12 @@
 package com.EZdev.mc2;
 
-import java.security.SecureRandom;
+import java.util.Random;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 public class Chunk {
-    private final SecureRandom random = new SecureRandom();
+    private final Random random;
     public int chunkX, chunkZ;
     public byte[][][] blocks = new byte[16][128][16];
     private WorldLogic world;
@@ -22,6 +22,8 @@ public class Chunk {
 
     public Chunk(WorldLogic world, int cx, int cz) {
         this.world = world; this.chunkX = cx; this.chunkZ = cz;
+        long chunkSeed = world.worldSeed ^ ((long) cx << 32) ^ (long) cz;
+        this.random = new Random(chunkSeed);
 
         boolean loaded = false;
         if (world.saveManager != null) {

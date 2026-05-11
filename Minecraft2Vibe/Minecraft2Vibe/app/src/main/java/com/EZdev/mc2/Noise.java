@@ -6,7 +6,11 @@ public class Noise {
     private static final int[] p = new int[512];
     static {
         // FIXED SEED prevents terrain tearing between app restarts
-        Random random = new Random(1337L);
+        init(1337L);
+    }
+
+    public static void init(long seed) {
+        Random random = new Random(seed);
         for(int i=0; i<256; i++) p[i] = random.nextInt(256);
         for(int i=0; i<256; i++) p[256+i] = p[i];
     }
