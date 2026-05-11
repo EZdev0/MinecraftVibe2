@@ -14,6 +14,7 @@ public class WorldLogic {
     private float[] finalMVP = new float[16];
     private float[] modelMatrix = new float[16];
 
+    public long worldSeed = 1337L;
     public int renderDistance = 2;
     public boolean fogEnabled = true;
 
@@ -21,6 +22,10 @@ public class WorldLogic {
     public SaveManager saveManager;
 
     public ArrayList<Entity> entities = new ArrayList<>();
+
+    public WorldLogic() {
+        Noise.init(worldSeed);
+    }
 
         public class ItemEntity {
         public float x, y, z;
