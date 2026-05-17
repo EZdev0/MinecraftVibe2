@@ -44,10 +44,7 @@ public class UIManager {
         if (!showGLWarnings) return;
         currentGLError = errorMsg;
         activity.runOnUiThread(() -> {
-            android.content.Intent intent = new android.content.Intent(activity, CrashHandlerActivity.class);
-            intent.putExtra("error", "OpenGL Error: " + errorMsg);
-            intent.putExtra("canContinue", true);
-            activity.startActivity(intent);
+            McApp.triggerCrashHandler(activity, "OpenGL Error: " + errorMsg, true);
         });
     }
 

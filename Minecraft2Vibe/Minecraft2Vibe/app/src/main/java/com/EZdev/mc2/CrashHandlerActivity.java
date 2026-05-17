@@ -7,12 +7,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 public class CrashHandlerActivity extends Activity {
     private static final int MAX_ERROR_LOG_LENGTH = 10000;
@@ -25,14 +31,34 @@ public class CrashHandlerActivity extends Activity {
         String errorLog = "Unbekannter Fehler!";
         final boolean canContinue;
 
-        if (intent != null) {
-            String rawError = intent.getStringExtra("error");
-            if (rawError != null) {
-                if (rawError.length() > MAX_ERROR_LOG_LENGTH) {
-                    rawError = rawError.substring(0, MAX_ERROR_LOG_LENGTH) + "... [Truncated]";
-                }
-                errorLog = sanitize(rawError);
+        StringBuilder sb = new StringBuilder();
+        try (FileInputStream fis = openFileInput("crash_log.txt");
+             BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
             }
+            deleteFile("crash_log.txt");
+        } catch (IOException e) {
+            Log.e("CrashHandlerActivity", "Failed to read crash log", e);
+        }
+
+        String rawError = sb.toString().trim();
+        if (rawError.isEmpty() && intent != null) {
+            String intentError = intent.getStringExtra("error");
+            if (intentError != null) {
+                rawError = intentError;
+            }
+        }
+
+        if (!rawError.isEmpty()) {
+            if (rawError.length() > MAX_ERROR_LOG_LENGTH) {
+                rawError = rawError.substring(0, MAX_ERROR_LOG_LENGTH) + "... [Truncated]";
+            }
+            errorLog = sanitize(rawError);
+        }
+
+        if (intent != null) {
             canContinue = intent.getBooleanExtra("canContinue", false);
         } else {
             canContinue = false;
