@@ -1,12 +1,16 @@
 package com.EZdev.mc2;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 
 public class McApp extends Application {
 
@@ -24,16 +28,26 @@ public class McApp extends Application {
             e.printStackTrace(new PrintWriter(sw));
             Log.e("McApp", "Crash detected: " + sw.toString());
 
-            Intent intent = new Intent(getApplicationContext(), CrashHandlerActivity.class);
-            intent.putExtra("error", "An unexpected error occurred. Please restart the app.");
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
+            triggerCrashHandler(getApplicationContext(), "An unexpected error occurred. Please restart the app.", false);
 
             android.os.Process.killProcess(android.os.Process.myPid());
             System.exit(1);
         });
 
         startWatchdog();
+    }
+
+    public static void triggerCrashHandler(Context context, String errorMsg, boolean canContinue) {
+        try (FileOutputStream fos = context.openFileOutput("crash_log.txt", Context.MODE_PRIVATE)) {
+            fos.write(errorMsg.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            Log.e("McApp", "Failed to save crash log", e);
+        }
+
+        Intent intent = new Intent(context, CrashHandlerActivity.class);
+        intent.putExtra("canContinue", canContinue);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        context.startActivity(intent);
     }
 
     private void startWatchdog() {
@@ -57,11 +71,7 @@ public class McApp extends Application {
                     }
                     Log.e("McApp", sb.toString());
 
-                    Intent intent = new Intent(getApplicationContext(), CrashHandlerActivity.class);
-                    intent.putExtra("error", "The application has stopped responding.");
-                    intent.putExtra("canContinue", true); // Optional: allows continuing if it unblocks
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
+                    triggerCrashHandler(getApplicationContext(), "The application has stopped responding.", true);
 
                     // Stop watchdog to avoid multiple triggers
                     break;
