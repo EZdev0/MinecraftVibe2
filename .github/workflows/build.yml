@@ -1,4 +1,4 @@
-name: Build MinecraftVibe2 APK
+name: Build Modded APK
 
 on:
   push:
