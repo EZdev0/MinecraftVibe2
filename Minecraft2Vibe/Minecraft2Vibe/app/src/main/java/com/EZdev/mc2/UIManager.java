@@ -189,24 +189,36 @@ public class UIManager {
     }
 
     private void createActionButtons(FrameLayout root) {
-        FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        p.gravity = Gravity.BOTTOM | Gravity.END;
-        p.setMargins(0, 0, 50, 50);
-
+        // Jump Button
         Button jumpBtn = createBtn("⬆️", "#3498db");
         float jX = prefs.getFloat("jumpBtn_X", -1); float jY = prefs.getFloat("jumpBtn_Y", -1);
-        if(jX != -1) { jumpBtn.setX(jX); jumpBtn.setY(jY); }
+        FrameLayout.LayoutParams lpJump = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        if(jX != -1) {
+            lpJump.gravity = Gravity.TOP | Gravity.START;
+            jumpBtn.setX(jX); jumpBtn.setY(jY);
+        } else {
+            lpJump.gravity = Gravity.BOTTOM | Gravity.END;
+            lpJump.setMargins(0, 0, 50, 250);
+        }
         jumpBtn.setOnTouchListener((v, e) -> {
             if(handleTouch(v, e, "jumpBtn")) return true;
             if(e.getAction() == MotionEvent.ACTION_DOWN) engine.gameplay.wantsToJump = true;
             else if(e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_CANCEL) engine.gameplay.wantsToJump = false;
             return true;
         });
-        root.addView(jumpBtn, p);
+        root.addView(jumpBtn, lpJump);
 
+        // Break Button
         Button breakBtn = createBtn("⛏️", "#e74c3c");
         float bX = prefs.getFloat("breakBtn_X", -1); float bY = prefs.getFloat("breakBtn_Y", -1);
-        if(bX != -1) { breakBtn.setX(bX); breakBtn.setY(bY); }
+        FrameLayout.LayoutParams lpBreak = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        if(bX != -1) {
+            lpBreak.gravity = Gravity.TOP | Gravity.START;
+            breakBtn.setX(bX); breakBtn.setY(bY);
+        } else {
+            lpBreak.gravity = Gravity.BOTTOM | Gravity.END;
+            lpBreak.setMargins(0, 0, 200, 50);
+        }
         breakBtn.setOnTouchListener((v, e) -> {
             if(handleTouch(v, e, "breakBtn")) return true;
             if(e.getAction() == MotionEvent.ACTION_DOWN) {
@@ -218,36 +230,58 @@ public class UIManager {
             }
             return true;
         });
-        root.addView(breakBtn, p);
+        root.addView(breakBtn, lpBreak);
 
+        // Place Button
         Button placeBtn = createBtn("🧱", "#2ecc71");
         float pX = prefs.getFloat("placeBtn_X", -1); float pY = prefs.getFloat("placeBtn_Y", -1);
-        if(pX != -1) { placeBtn.setX(pX); placeBtn.setY(pY); }
+        FrameLayout.LayoutParams lpPlace = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        if(pX != -1) {
+            lpPlace.gravity = Gravity.TOP | Gravity.START;
+            placeBtn.setX(pX); placeBtn.setY(pY);
+        } else {
+            lpPlace.gravity = Gravity.BOTTOM | Gravity.END;
+            lpPlace.setMargins(0, 0, 50, 50);
+        }
         placeBtn.setOnTouchListener((v, e) -> {
             if(handleTouch(v, e, "placeBtn")) return true;
-            if(e.getAction() == MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, true, this); return true;
+            if(e.getAction() == MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, true, this);
+            return true;
         });
-        root.addView(placeBtn, p);
+        root.addView(placeBtn, lpPlace);
 
         if (!engine.gameplay.isCreative) {
+            // Attack Button
             Button attackBtn = createBtn("⚔️", "#e67e22");
             float aX = prefs.getFloat("attackBtn_X", -1); float aY = prefs.getFloat("attackBtn_Y", -1);
-            if(aX != -1) { attackBtn.setX(aX); attackBtn.setY(aY); }
+            FrameLayout.LayoutParams lpAttack = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            if(aX != -1) {
+                lpAttack.gravity = Gravity.TOP | Gravity.START;
+                attackBtn.setX(aX); attackBtn.setY(aY);
+            } else {
+                lpAttack.gravity = Gravity.BOTTOM | Gravity.END;
+                lpAttack.setMargins(0, 0, 200, 250);
+            }
             attackBtn.setOnTouchListener((v, e) -> {
                 if(handleTouch(v, e, "attackBtn")) return true;
-                if(e.getAction() == android.view.MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, false, this); return true;
+                if(e.getAction() == android.view.MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, false, this);
+                return true;
             });
-            root.addView(attackBtn, p);
+            root.addView(attackBtn, lpAttack);
         }
     }
     private void createToggles(FrameLayout root) {
-        FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        p.gravity = Gravity.TOP | Gravity.START;
-        p.setMargins(50, 150, 0, 0);
-
+        // Sneak Button
         sneakBtn = createBtn("Sneak", "#95a5a6");
         float snX = prefs.getFloat("sneakBtn_X", -1); float snY = prefs.getFloat("sneakBtn_Y", -1);
-        if(snX != -1) { sneakBtn.setX(snX); sneakBtn.setY(snY); }
+        FrameLayout.LayoutParams lpSneak = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        if(snX != -1) {
+            lpSneak.gravity = Gravity.TOP | Gravity.START;
+            sneakBtn.setX(snX); sneakBtn.setY(snY);
+        } else {
+            lpSneak.gravity = Gravity.TOP | Gravity.START;
+            lpSneak.setMargins(50, 150, 0, 0);
+        }
         sneakBtn.setOnTouchListener((v, e) -> {
             if(handleTouch(v, e, "sneakBtn")) return true;
             if(e.getAction() == MotionEvent.ACTION_UP) {
@@ -256,11 +290,19 @@ public class UIManager {
             }
             return true;
         });
-        root.addView(sneakBtn, p);
+        root.addView(sneakBtn, lpSneak);
 
+        // Sprint Button
         sprintBtn = createBtn("Sprint", "#95a5a6");
         float spX = prefs.getFloat("sprintBtn_X", -1); float spY = prefs.getFloat("sprintBtn_Y", -1);
-        if(spX != -1) { sprintBtn.setX(spX); sprintBtn.setY(spY); }
+        FrameLayout.LayoutParams lpSprint = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        if(spX != -1) {
+            lpSprint.gravity = Gravity.TOP | Gravity.START;
+            sprintBtn.setX(spX); sprintBtn.setY(spY);
+        } else {
+            lpSprint.gravity = Gravity.TOP | Gravity.START;
+            lpSprint.setMargins(50, 300, 0, 0);
+        }
         sprintBtn.setOnTouchListener((v, e) -> {
             if(handleTouch(v, e, "sprintBtn")) return true;
             if(e.getAction() == MotionEvent.ACTION_UP) {
@@ -269,12 +311,20 @@ public class UIManager {
             }
             return true;
         });
-        root.addView(sprintBtn, p);
+        root.addView(sprintBtn, lpSprint);
 
         if (engine.gameplay.isCreative) {
+            // Fly Button
             flyBtn = createBtn("Fly", "#95a5a6");
             float fX = prefs.getFloat("flyBtn_X", -1); float fY = prefs.getFloat("flyBtn_Y", -1);
-            if(fX != -1) { flyBtn.setX(fX); flyBtn.setY(fY); }
+            FrameLayout.LayoutParams lpFly = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            if(fX != -1) {
+                lpFly.gravity = Gravity.TOP | Gravity.START;
+                flyBtn.setX(fX); flyBtn.setY(fY);
+            } else {
+                lpFly.gravity = Gravity.TOP | Gravity.START;
+                lpFly.setMargins(50, 450, 0, 0);
+            }
             flyBtn.setOnTouchListener((v, e) -> {
                 if(handleTouch(v, e, "flyBtn")) return true;
                 if(e.getAction() == MotionEvent.ACTION_UP) {
@@ -283,7 +333,7 @@ public class UIManager {
                 }
                 return true;
             });
-            root.addView(flyBtn, p);
+            root.addView(flyBtn, lpFly);
         }
     }
     private android.widget.TextView createHeading(String text) {
