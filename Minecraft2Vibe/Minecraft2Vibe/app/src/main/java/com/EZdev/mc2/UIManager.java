@@ -245,8 +245,7 @@ public class UIManager {
         }
         placeBtn.setOnTouchListener((v, e) -> {
             if(handleTouch(v, e, "placeBtn")) return true;
-            if(e.getAction() == MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, true, this);
-            return true;
+            if(e.getAction() == MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, true, this); return true;
         });
         root.addView(placeBtn, lpPlace);
 
@@ -264,8 +263,7 @@ public class UIManager {
             }
             attackBtn.setOnTouchListener((v, e) -> {
                 if(handleTouch(v, e, "attackBtn")) return true;
-                if(e.getAction() == android.view.MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, false, this);
-                return true;
+                if(e.getAction() == android.view.MotionEvent.ACTION_DOWN) engine.world.interact(engine.gameplay, false, this); return true;
             });
             root.addView(attackBtn, lpAttack);
         }
