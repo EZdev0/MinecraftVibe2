@@ -15,10 +15,12 @@ jobs:
     permissions:
       contents: write
       actions: write
-    outputs:
-      apk_path: ${{ steps.find_apk.outputs.path }}
     steps:
       - name: Delete oldest artifacts to free storage quota
+        # IMPORTANT: GitHub's quota recalculation takes 6-12h after deletion.
+        # This step deletes old artifacts so the quota is freed OVER TIME.
+        # The real fix is that upload-artifact is only used as fallback –
+        # the APK is primarily published via GitHub Release (no quota impact).
         uses: actions/github-script@v7
         continue-on-error: true
         with:
@@ -26,26 +28,41 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
+
             const { data } = await github.rest.actions.listArtifactsForRepo({
               owner, repo, per_page: 100
             });
+
             const targets = data.artifacts
-              .filter(a => a.name.includes("APK") || a.name === "app-debug" || a.name === "lint-report")
+              .filter(a => a.name === "MinecraftVibe2-APK")
               .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-            for (const artifact of targets) {
+
+            console.log(`Found ${targets.length} "MinecraftVibe2-APK" artifact(s).`);
+
+            // Keep only 2 newest, delete older ones to free quota over time
+            const keep = 2;
+            const toDelete = targets.slice(0, Math.max(0, targets.length - keep));
+            console.log(`Will delete ${toDelete.length} old artifact(s), keeping ${Math.min(keep, targets.length)} newest.`);
+
+            for (const artifact of toDelete) {
+              console.log(`Deleting id=${artifact.id} created=${artifact.created_at} (${artifact.size_in_bytes} bytes)`);
               try {
                 await github.rest.actions.deleteArtifact({
                   owner, repo, artifact_id: artifact.id
                 });
-              } catch(e) {}
+                console.log(`  -> OK`);
+              } catch(e) {
+                console.log(`  -> FAILED: ${e.message}`);
+              }
             }
+            console.log(`Cleanup done. Deleted ${toDelete.length} artifact(s).`);
 
       - name: Checkout
         uses: actions/checkout@v4
         with:
           lfs: true
 
-      - name: set up JDK 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -60,62 +77,49 @@ jobs:
         run: ./gradlew assembleDebug
         working-directory: Minecraft2Vibe/Minecraft2Vibe
 
-      - name: Rename APK
+      - name: Prepare release assets
         run: |
-          mv Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/app-debug.apk Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/MinecraftVibe2-Debug.apk
+          mkdir -p release-assets
+          cp Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/app-debug.apk release-assets/MinecraftVibe2-Debug.apk
+          ls -lh release-assets/
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        continue-on-error: true
-        with:
-          name: MinecraftVibe2-APK
-          path: Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/MinecraftVibe2-Debug.apk
-
-  release:
-    runs-on: ubuntu-latest
-    needs: build
-    # Run on every push to any branch to ensure APK availability via Release assets (fallback for artifact quota)
-    if: github.event_name == 'push'
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # We dont download artifact here because it might have failed to upload due to quota.
-      # Instead, we rebuild or just use a more robust way.
-      # Actually, since we want this to be fast, rebuilding is not ideal but safe.
-      # However, let attempt to download first.
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: MinecraftVibe2-APK
-          path: release-assets
-
-      - name: Build APK if artifact missing (Fallback)
-        if: steps.download-artifact.outcome != 'success'
-        run: |
-          # Re-setup Java and build if download failed (quota hit)
-          sudo apt-get update && sudo apt-get install -y openjdk-17-jdk
-          cd Minecraft2Vibe/Minecraft2Vibe
-          chmod +x gradlew
-          ./gradlew assembleDebug
-          mkdir -p ../../release-assets
-          cp app/build/outputs/apk/debug/app-debug.apk ../../release-assets/MinecraftVibe2-Debug.apk
-
-      - name: Create or Update Release
+      # ────────────────────────────────────────────────────────────────────────────
+      # PRIMARY DOWNLOAD: GitHub Release asset (does NOT count against the
+      # Actions artifact storage quota – completely separate storage system).
+      # APK is always published as a release, on every branch/PR as a
+      # pre-release so it can be downloaded without waiting for quota reset.
+      # ────────────────────────────────────────────────────────────────────────────
+      - name: Create GitHub Release (PRIMARY - quota-free)
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
-          files: "release-assets/MinecraftVibe2-Debug.apk"
-          tag_name: latest
-          name: Latest MinecraftVibe2 Build
+          tag_name: "build-${{ github.run_number }}"
+          name: "Build #${{ github.run_number }} (${{ github.ref_name }})"
+          prerelease: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
           body: |
-            Automatisch generierter Build der aktuellen Version.
-            Dieser Build enthält die neuesten Optimierungen für den UI Editor.
+            Auto-generated build #${{ github.run_number }} from branch `${{ github.ref_name }}`.
 
-            Branch: ${{ github.ref_name }}
+            **Download & Install:** `MinecraftVibe2-Debug.apk`
+            Contains latest UI Editor optimizations and fixes.
+
             Commit: ${{ github.sha }}
-          draft: false
-          prerelease: false
+          generate_release_notes: false
+          files: |
+            release-assets/MinecraftVibe2-Debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ────────────────────────────────────────────────────────────────────────────
+      # SECONDARY / OPTIONAL: Upload as workflow artifact too.
+      # Uses continue-on-error so quota issues never fail the whole build.
+      # Once GitHub recalculates quota (6-12h) this will work again.
+      # ────────────────────────────────────────────────────────────────────────────
+      - name: Upload APK as workflow artifact (best-effort)
+        uses: actions/upload-artifact@v4
+        continue-on-error: true   # quota error → build still green, APK in Release
+        with:
+          name: MinecraftVibe2-APK
+          path: |
+            release-assets/MinecraftVibe2-Debug.apk
+          if-no-files-found: warn
+          retention-days: 3
