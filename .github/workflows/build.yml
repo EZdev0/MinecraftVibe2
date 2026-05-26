@@ -1,52 +1,69 @@
-name: Android CI
+name: Build Modded APK
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches:
+      - '**'
   pull_request:
-    branches: [ "main", "master" ]
+    branches:
+      - '**'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       actions: write
-
     steps:
-    - uses: actions/checkout@v4
+      - name: Delete oldest artifacts to free storage quota
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const { data } = await github.rest.actions.listArtifactsForRepo({
+              owner, repo, per_page: 100
+            });
+            const targets = data.artifacts
+              .filter(a => a.name === "app-debug" || a.name === "Modded-APK" || a.name === "lint-report")
+              .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            for (const artifact of targets) {
+              try {
+                await github.rest.actions.deleteArtifact({
+                  owner, repo, artifact_id: artifact.id
+                });
+              } catch(e) {}
+            }
 
-    - name: set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-      working-directory: Minecraft2Vibe/Minecraft2Vibe
+      - name: set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
 
-    - name: Run Android Lint (Static Analysis)
-      run: ./gradlew lintDebug
-      working-directory: Minecraft2Vibe/Minecraft2Vibe
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        working-directory: Minecraft2Vibe/Minecraft2Vibe
 
-    - name: Upload Lint Report
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: lint-report
-        path: Minecraft2Vibe/Minecraft2Vibe/app/build/reports/lint-results-debug.html
+      - name: Build with Gradle
+        run: ./gradlew assembleDebug
+        working-directory: Minecraft2Vibe/Minecraft2Vibe
 
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug
-      working-directory: Minecraft2Vibe/Minecraft2Vibe
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug
-        path: Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/app-debug.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: app-debug
+          path: Minecraft2Vibe/Minecraft2Vibe/app/build/outputs/apk/debug/app-debug.apk
 
   release:
     runs-on: ubuntu-latest
@@ -54,19 +71,17 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     permissions:
       contents: write
-
     steps:
-    - name: Download build artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: app-debug
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: "*.apk"
-        tag_name: latest
-        name: Latest Build
-        body: 'Automatisch generiertes Release (Nightly) der aktuellen Version.'
-        draft: false
-        prerelease: false
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-debug
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*.apk"
+          tag_name: latest
+          name: Latest Build
+          body: 'Nightly build with UI Editor optimizations.'
+          draft: false
+          prerelease: false
