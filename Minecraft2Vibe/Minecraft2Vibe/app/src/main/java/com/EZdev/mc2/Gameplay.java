@@ -114,7 +114,7 @@ public class Gameplay {
     }
 
     public void addExplosionParticles(float x, float y, float z) {
-        for(int i=0; i<20; i++) {
+        for(int i=0; i<25; i++) {
             fireParticles.add(obtainParticle(x, y, z,
                 (random.nextFloat()-0.5f)*10f, (random.nextFloat()-0.5f)*10f, (random.nextFloat()-0.5f)*10f,
                 1.0f, Blocks.FIRE));
@@ -198,17 +198,34 @@ public class Gameplay {
         if (!checkCollision(world, camX + moveX, camY, camZ)) camX += moveX;
         if (!checkCollision(world, camX, camY, camZ + moveZ)) camZ += moveZ;
 
+        if (camY < -20f) { hasSpawned = false; camY = 100f; velocityY = 0; }
+
         // --- BREAKING ---
         if (isBreaking && !isCreative) {
             int[] hit = (world != null) ? world.raycastBlock(this, raycastResult) : null;
             if (hit != null) {
-                targetX = hit[0]; targetY = hit[1]; targetZ = hit[2];
-                breakTimer += dt;
-                if (breakTimer > 1.0f) {
-                    world.setBlock(targetX, targetY, targetZ, Blocks.AIR);
-                    isBreaking = false;
+                if (hit[0] == targetX && hit[1] == targetY && hit[2] == targetZ) {
+                    breakTimer += dt;
+                    byte hitType = world.getBlock(targetX, targetY, targetZ);
+                    float req = 1.0f;
+                    if(hitType == Blocks.GRASS || hitType == Blocks.DIRT || hitType == Blocks.LEAVES) req = 0.3f;
+                    else if(hitType == Blocks.STONE) req = 2.0f;
+
+                    if (random.nextFloat() < 0.1f) addBlockParticles(targetX, targetY, targetZ, hitType);
+
+                    if (breakTimer >= req) {
+                        world.setBlock(targetX, targetY, targetZ, Blocks.AIR);
+                        addBlockParticles(targetX, targetY, targetZ, hitType);
+                        world.spawnItemEntity(targetX, targetY, targetZ, hitType);
+                        if(activity != null && activity.soundManager != null) activity.soundManager.playSoundForBlock(hitType);
+                        isBreaking = false;
+                        targetX = -1;
+                    }
+                } else {
+                    targetX = hit[0]; targetY = hit[1]; targetZ = hit[2];
+                    breakTimer = 0f;
                 }
-            } else isBreaking = false;
+            } else { isBreaking = false; targetX = -1; }
         }
     }
 
@@ -222,13 +239,34 @@ public class Gameplay {
 
     private boolean checkCollision(WorldLogic world, float x, float y, float z) {
         if (world == null) return false;
-        byte b = world.getBlock((int)Math.floor(x), (int)Math.floor(y), (int)Math.floor(z));
-        return (b > 0 && b != Blocks.WATER && b != Blocks.FIRE);
+        float shrink = 0.05f;
+        int minX = (int) Math.floor(x - playerWidth / 2f + shrink);
+        int maxX = (int) Math.floor(x + playerWidth / 2f - shrink);
+        int minY = (int) Math.floor(y);
+        int maxY = (int) Math.floor(y + playerHeight - shrink);
+        int minZ = (int) Math.floor(z - playerWidth / 2f + shrink);
+        int maxZ = (int) Math.floor(z + playerWidth / 2f - shrink);
+
+        for (int bx = minX; bx <= maxX; bx++) {
+            for (int by = minY; by <= maxY; by++) {
+                for (int bz = minZ; bz <= maxZ; bz++) {
+                    byte block = world.getBlock(bx, by, bz);
+                    if (block > Blocks.AIR && block != Blocks.FIRE && block != Blocks.WATER) return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void spawnOnHighestBlock(WorldLogic world) {
         if (world == null) return;
-        camY = 80; hasSpawned = true;
+        int cx = (int) Math.floor(camX), cz = (int) Math.floor(camZ);
+        for (int y = 127; y > 0; y--) {
+            if (world.getBlock(cx, y, cz) > Blocks.AIR) {
+                camY = y + 1.1f; hasSpawned = true; return;
+            }
+        }
+        camY = 100;
     }
 
     public void jump() { wantsToJump = true; }
