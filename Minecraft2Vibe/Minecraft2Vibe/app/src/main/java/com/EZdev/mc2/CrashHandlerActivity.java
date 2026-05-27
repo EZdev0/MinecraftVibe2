@@ -5,7 +5,10 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -32,6 +35,17 @@ public class CrashHandlerActivity extends Activity {
         final boolean canContinue;
 
         StringBuilder sb = new StringBuilder();
+
+        sb.append("--- NETZWERK DIAGNOSE ---\n");
+        sb.append("Internet Permission: ").append(checkSelfPermission(android.Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED).append("\n");
+        sb.append("Network State Permission: ").append(checkSelfPermission(android.Manifest.permission.ACCESS_NETWORK_STATE) == PackageManager.PERMISSION_GRANTED).append("\n");
+
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo ni = cm != null ? cm.getActiveNetworkInfo() : null;
+        sb.append("Verbunden: ").append(ni != null && ni.isConnected()).append("\n");
+        if (ni != null) sb.append("Typ: ").append(ni.getTypeName()).append("\n");
+        sb.append("------------------------\n\n");
+
         try (FileInputStream fis = openFileInput("crash_log.txt");
              BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8))) {
             String line;
@@ -44,10 +58,10 @@ public class CrashHandlerActivity extends Activity {
         }
 
         String rawError = sb.toString().trim();
-        if (rawError.isEmpty() && intent != null) {
+        if (intent != null) {
             String intentError = intent.getStringExtra("error");
             if (intentError != null) {
-                rawError = intentError;
+                rawError += "\nIntent Error: " + intentError;
             }
         }
 
@@ -66,11 +80,11 @@ public class CrashHandlerActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.parseColor("#c0392b"));
+        root.setBackgroundColor(Color.parseColor("#2c3e50"));
         root.setPadding(40, 40, 40, 40);
 
         TextView title = new TextView(this);
-        title.setText(canContinue ? "FEHLER ERKANNT" : "MINECRAFT 2 VIBE IST ABGESTÜRZT :(");
+        title.setText(canContinue ? "NETZWERK / FEHLER MELDUNG" : "ABSTURZ / DISCONNECT");
         title.setTextColor(Color.WHITE);
         title.setTextSize(24);
         title.setGravity(Gravity.CENTER);
@@ -91,12 +105,12 @@ public class CrashHandlerActivity extends Activity {
 
         final String finalLog = errorLog;
         Button copyBtn = new Button(this);
-        copyBtn.setText("LOG KOPIEREN");
+        copyBtn.setText("KOMPLETTEN LOG KOPIEREN");
         copyBtn.setBackgroundColor(Color.WHITE);
         copyBtn.setTextColor(Color.BLACK);
         copyBtn.setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText("Crash Log", finalLog);
+            ClipData clip = ClipData.newPlainText("Multiplayer Log", finalLog);
             if (clipboard != null) {
                 clipboard.setPrimaryClip(clip);
                 Toast.makeText(this, "Log kopiert!", Toast.LENGTH_SHORT).show();
@@ -106,17 +120,15 @@ public class CrashHandlerActivity extends Activity {
 
         if (canContinue) {
             Button continueBtn = new Button(this);
-            continueBtn.setText("FORTFAHREN");
+            continueBtn.setText("ZURÜCK ZUM SPIEL");
             continueBtn.setBackgroundColor(Color.parseColor("#2ecc71"));
             continueBtn.setTextColor(Color.WHITE);
-            continueBtn.setOnClickListener(v -> {
-                finish();
-            });
+            continueBtn.setOnClickListener(v -> finish());
             root.addView(continueBtn);
         }
 
         Button restartBtn = new Button(this);
-        restartBtn.setText("NEUSTART (HAUPTMENÜ)");
+        restartBtn.setText("ZUM HAUPTMENÜ");
         restartBtn.setBackgroundColor(Color.WHITE);
         restartBtn.setTextColor(Color.BLACK);
         restartBtn.setOnClickListener(v -> {
@@ -124,10 +136,6 @@ public class CrashHandlerActivity extends Activity {
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(i);
             finish();
-            if (!canContinue) {
-                android.os.Process.killProcess(android.os.Process.myPid());
-                System.exit(1);
-            }
         });
         root.addView(restartBtn);
 
@@ -136,9 +144,6 @@ public class CrashHandlerActivity extends Activity {
 
     private String sanitize(String input) {
         if (input == null) return null;
-        // Strip potential malicious control characters, format characters,
-        // private use and unassigned characters while keeping newlines and tabs.
-        // This prevents UI spoofing (e.g. RTL override) and other character-based attacks.
         return input.replaceAll("[\\p{Cc}\\p{Cf}\\p{Co}\\p{Cn}&&[^\\n\\r\\t]]", "");
     }
 }
