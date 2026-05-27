@@ -13,13 +13,13 @@ public class GameplayTest {
         float z = 30.0f;
         byte blockType = 1;
 
-        gameplay.addBlockParticles(x, y, z, blockType);
+        gameplay.addBlockParticles((int)x, (int)y, (int)z, blockType);
 
         assertEquals("Should add 8 block particles", 8, gameplay.blockParticles.size());
         for (Gameplay.ActiveFireParticle p : gameplay.blockParticles) {
-            assertEquals("X coordinate should have 0.5f offset", x + 0.5f, p.x, 0.001f);
-            assertEquals("Y coordinate should have 0.5f offset", y + 0.5f, p.y, 0.001f);
-            assertEquals("Z coordinate should have 0.5f offset", z + 0.5f, p.z, 0.001f);
+            assertEquals("X coordinate should have 0.5f offset", (int)x + 0.5f, p.x, 0.001f);
+            assertEquals("Y coordinate should have 0.5f offset", (int)y + 0.5f, p.y, 0.001f);
+            assertEquals("Z coordinate should have 0.5f offset", (int)z + 0.5f, p.z, 0.001f);
             assertEquals("Particle type should match block type", blockType, p.type);
         }
     }
@@ -38,7 +38,7 @@ public class GameplayTest {
             assertEquals("X coordinate should match", x, p.x, 0.001f);
             assertEquals("Y coordinate should match", y, p.y, 0.001f);
             assertEquals("Z coordinate should match", z, p.z, 0.001f);
-            assertEquals("Explosion particle type should be 99", 99, p.type);
+            assertEquals("Explosion particle type should be FIRE", Blocks.FIRE, p.type);
         }
     }
 }
