@@ -78,9 +78,6 @@ public class MainMenuActivity extends Activity {
 
         Button btnSettings = createMenuBtn("EINSTELLUNGEN");
         btnSettings.setBackgroundColor(getColor(R.color.button_settings));
-        btnSettings.setOnClickListener(v -> {
-            // Settings logic or Intent
-        });
         root.addView(btnSettings);
     }
 

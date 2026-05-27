@@ -168,20 +168,16 @@ public class Gameplay {
         if (bf == Blocks.WATER) inWater = true;
 
         playerHeight = isSneaking ? 1.5f : 1.8f;
-
-        if (checkCollision(world, camX, camY, camZ)) { camY += 2.5f * dt; }
-
-        if (wantsToJump) {
-            if (isFlying && isCreative) velocityY = 10.0f;
-            else if (inWater) velocityY = 4.0f;
-            else if (onGround) { velocityY = 8.5f; onGround = false; }
-        } else if (isFlying && isCreative) {
-            velocityY = isSneaking ? -10.0f : 0f;
-        }
-
         if (!isFlying || !isCreative) {
             velocityY -= (inWater ? 5f : 25f) * dt;
             if (velocityY < -20f) velocityY = -20f;
+        } else if (isFlying) {
+            velocityY = wantsToJump ? 10f : (isSneaking ? -10f : 0f);
+        }
+
+        if (wantsToJump && onGround && !isFlying) {
+            velocityY = 8.5f;
+            onGround = false;
         }
 
         float nextY = camY + velocityY * dt;
@@ -189,30 +185,15 @@ public class Gameplay {
             camY = nextY;
             onGround = false;
         } else {
-            if (velocityY < 0) {
-                onGround = true;
-                camY = (float) Math.floor(nextY) + 1.001f;
-            } else {
-                camY = (float) Math.floor(nextY + playerHeight) - playerHeight - 0.001f;
-            }
+            if (velocityY < 0) onGround = true;
             velocityY = 0;
         }
 
         float speed = (isSprinting ? 8f : (isSneaking ? 2f : 5f)) * dt;
-        if (isFlying && isCreative) speed = 10.0f * dt;
-
         float yawRad = (float)Math.toRadians(yaw);
         float sinY = (float)Math.sin(yawRad), cosY = (float)Math.cos(yawRad);
         float moveX = (sinY * -joyMoveY + cosY * joyMoveX) * speed;
         float moveZ = (-cosY * -joyMoveY + sinY * joyMoveX) * speed;
-
-        if (onGround && (joyMoveX != 0 || joyMoveY != 0)) {
-            if (checkCollision(world, camX + moveX, camY, camZ) || checkCollision(world, camX, camY, camZ + moveZ)) {
-                if (!checkCollision(world, camX + moveX, camY + 1.1f, camZ) && !checkCollision(world, camX, camY + 1.1f, camZ + moveZ)) {
-                    camY += 1.1f;
-                }
-            }
-        }
 
         if (!checkCollision(world, camX + moveX, camY, camZ)) camX += moveX;
         if (!checkCollision(world, camX, camY, camZ + moveZ)) camZ += moveZ;

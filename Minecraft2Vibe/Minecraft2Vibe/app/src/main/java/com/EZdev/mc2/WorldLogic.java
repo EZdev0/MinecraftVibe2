@@ -140,11 +140,10 @@ public class WorldLogic {
             int bx = hit[0], by = hit[1], bz = hit[2];
             byte hitBlock = getBlock(bx, by, bz);
             if (place) {
-                float eye = g.camY + g.playerHeight - 0.2f;
                 float dirX=(float)(Math.cos(Math.toRadians(g.pitch))*Math.sin(Math.toRadians(g.yaw))), dirY=(float)Math.sin(Math.toRadians(g.pitch)), dirZ=(float)(-Math.cos(Math.toRadians(g.pitch))*Math.cos(Math.toRadians(g.yaw)));
                 int lx = bx, ly = by, lz = bz;
                 for(float d=0; d<6f; d+=0.1f) {
-                    int nx=(int)Math.floor(g.camX+dirX*d), ny=(int)Math.floor(eye+dirY*d), nz=(int)Math.floor(g.camZ+dirZ*d);
+                    int nx=(int)Math.floor(g.camX+dirX*d), ny=(int)Math.floor(g.camY+g.playerHeight-0.2f+dirY*d), nz=(int)Math.floor(g.camZ+dirZ*d);
                     if(getBlock(nx,ny,nz) == Blocks.AIR) { lx=nx; ly=ny; lz=nz; } else break;
                 }
                 setBlock(lx, ly, lz, g.activeBlock);
@@ -167,6 +166,7 @@ public class WorldLogic {
     }
 
     public int[] raycastBlock(Gameplay g) { return raycastBlock(g, new int[3]); }
+
     public void spawnItemEntity(float x, float y, float z, byte type) { droppedItems.add(new Gameplay().new ItemEntity(x, y, z, type)); }
     public void spawnItemEntity(float x, float y, float z, byte type, int count) { Gameplay.ItemEntity item = new Gameplay().new ItemEntity(x, y, z, type); item.count = Math.max(0, count); droppedItems.add(item); }
     public Gameplay gameplayRef; private void setGameplay(Gameplay g) { this.gameplayRef = g; }
