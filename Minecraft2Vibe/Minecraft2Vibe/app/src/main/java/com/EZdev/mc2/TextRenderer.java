@@ -10,13 +10,22 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
+/**
+ * Hilfsklasse zum Rendern von Text in OpenGL.
+ * Erstellt dynamische Texturen aus Strings, die als Billboards (Namensschilder) genutzt werden.
+ */
 public class TextRenderer {
     public static void init() {}
 
+    /**
+     * Erstellt eine GL-Textur aus dem übergebenen Text.
+     * @param text Der anzuzeigende Name des Spielers.
+     * @return Die generierte OpenGL Textur-ID.
+     */
     public static int createTextTexture(String text) {
         Bitmap bitmap = Bitmap.createBitmap(256, 64, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
-        bitmap.eraseColor(0);
+        bitmap.eraseColor(0); // Transparent
         Paint paint = new Paint();
         paint.setTextSize(32); paint.setAntiAlias(true); paint.setARGB(255, 255, 255, 255);
         paint.setTextAlign(Paint.Align.CENTER);
