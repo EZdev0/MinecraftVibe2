@@ -33,7 +33,7 @@ public class GameplayTest {
 
         gameplay.addExplosionParticles(x, y, z);
 
-        assertEquals("Should add 20 explosion particles", 20, gameplay.fireParticles.size());
+        assertEquals("Should add 25 explosion particles", 25, gameplay.fireParticles.size());
         for (Gameplay.ActiveFireParticle p : gameplay.fireParticles) {
             assertEquals("X coordinate should match", x, p.x, 0.001f);
             assertEquals("Y coordinate should match", y, p.y, 0.001f);

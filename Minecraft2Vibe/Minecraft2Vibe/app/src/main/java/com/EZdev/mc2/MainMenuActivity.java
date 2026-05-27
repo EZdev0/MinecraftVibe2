@@ -20,7 +20,6 @@ public class MainMenuActivity extends Activity {
     private LinearLayout root, multiplayerPanel, serverList;
     private ScrollView multiplayerScroll;
     private MultiplayerManager dummyManager;
-    private boolean isPublic = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,14 +50,35 @@ public class MainMenuActivity extends Activity {
         title.setGravity(Gravity.CENTER);
         root.addView(title);
 
-        Button btnSurvival = createMenuBtn("SINGLEPLAYER");
+        Button btnSurvival = createMenuBtn("NEUE WELT (SURVIVAL)");
         btnSurvival.setOnClickListener(v -> startGame(false, false, false, null));
         root.addView(btnSurvival);
+
+        Button btnCreative = createMenuBtn("NEUE WELT (KREATIV)");
+        btnCreative.setOnClickListener(v -> startGame(true, false, false, null));
+        root.addView(btnCreative);
+
+        File dir = new File(getFilesDir(), "world1");
+        if (dir.exists() && dir.listFiles() != null && dir.listFiles().length > 0) {
+            Button btnLoadS = createMenuBtn("LADEN (SURVIVAL)");
+            btnLoadS.setBackgroundColor(getColor(R.color.button_load));
+            btnLoadS.setOnClickListener(v -> startGame(false, true, false, null));
+            root.addView(btnLoadS);
+
+            Button btnLoadC = createMenuBtn("LADEN (KREATIV)");
+            btnLoadC.setBackgroundColor(getColor(R.color.button_load));
+            btnLoadC.setOnClickListener(v -> startGame(true, true, false, null));
+            root.addView(btnLoadC);
+        }
 
         Button btnMultiplayer = createMenuBtn("MEHRSPIELER (GLOBAL/LAN)");
         btnMultiplayer.setBackgroundColor(getColor(R.color.button_blue));
         btnMultiplayer.setOnClickListener(v -> showMultiplayer());
         root.addView(btnMultiplayer);
+
+        Button btnSettings = createMenuBtn("EINSTELLUNGEN");
+        btnSettings.setBackgroundColor(getColor(R.color.button_settings));
+        root.addView(btnSettings);
     }
 
     private void createMultiplayerMenu() {
@@ -68,7 +88,7 @@ public class MainMenuActivity extends Activity {
         multiplayerPanel.setPadding(60, 60, 60, 60);
 
         TextView title = new TextView(this);
-        title.setText("MULTIPL-LOBBY");
+        title.setText("MEHRSPIELER-LOBBY");
         title.setTextColor(getColor(R.color.white));
         title.setTextSize(26);
         title.setGravity(Gravity.CENTER);
@@ -120,7 +140,6 @@ public class MainMenuActivity extends Activity {
         t.setText("Suche läuft...");
         t.setTextColor(getColor(R.color.white));
         serverList.addView(t);
-
         dummyManager.findServers();
         GlobalLobbyClient.fetchRooms(rooms -> runOnUiThread(() -> {
             serverList.removeAllViews();
