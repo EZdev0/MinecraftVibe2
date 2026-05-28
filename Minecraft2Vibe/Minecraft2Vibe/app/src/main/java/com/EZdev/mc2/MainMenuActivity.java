@@ -5,13 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import java.io.File;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainMenuActivity extends Activity {
@@ -39,12 +39,12 @@ public class MainMenuActivity extends Activity {
     private void initMainMenuLayout() {
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(getColor(R.color.menu_background));
+        root.setBackgroundColor(getResources().getColor(R.color.menu_background));
         root.setGravity(Gravity.CENTER);
 
         TextView title = new TextView(this);
         title.setText("MINECRAFT 2 VIBE");
-        title.setTextColor(getColor(R.color.white));
+        title.setTextColor(getResources().getColor(R.color.white));
         title.setTextSize(40);
         title.setPadding(0, 0, 0, 80);
         title.setGravity(Gravity.CENTER);
@@ -61,35 +61,36 @@ public class MainMenuActivity extends Activity {
         File dir = new File(getFilesDir(), "world1");
         if (dir.exists() && dir.listFiles() != null && dir.listFiles().length > 0) {
             Button btnLoadS = createMenuBtn("LADEN (SURVIVAL)");
-            btnLoadS.setBackgroundColor(getColor(R.color.button_load));
+            btnLoadS.setBackgroundColor(getResources().getColor(R.color.button_load));
             btnLoadS.setOnClickListener(v -> startGame(false, true, false, null));
             root.addView(btnLoadS);
 
             Button btnLoadC = createMenuBtn("LADEN (KREATIV)");
-            btnLoadC.setBackgroundColor(getColor(R.color.button_load));
+            btnLoadC.setBackgroundColor(getResources().getColor(R.color.button_load));
             btnLoadC.setOnClickListener(v -> startGame(true, true, false, null));
             root.addView(btnLoadC);
         }
 
         Button btnMultiplayer = createMenuBtn("MEHRSPIELER (GLOBAL/LAN)");
-        btnMultiplayer.setBackgroundColor(getColor(R.color.button_blue));
+        btnMultiplayer.setBackgroundColor(getResources().getColor(R.color.button_blue));
         btnMultiplayer.setOnClickListener(v -> showMultiplayer());
         root.addView(btnMultiplayer);
 
         Button btnSettings = createMenuBtn("EINSTELLUNGEN");
-        btnSettings.setBackgroundColor(getColor(R.color.button_settings));
+        btnSettings.setBackgroundColor(getResources().getColor(R.color.button_settings));
+        btnSettings.setOnClickListener(v -> Toast.makeText(this, "Einstellungen bald verfügbar!", Toast.LENGTH_SHORT).show());
         root.addView(btnSettings);
     }
 
     private void createMultiplayerMenu() {
         multiplayerPanel = new LinearLayout(this);
         multiplayerPanel.setOrientation(LinearLayout.VERTICAL);
-        multiplayerPanel.setBackgroundColor(getColor(R.color.settings_panel_background));
+        multiplayerPanel.setBackgroundColor(getResources().getColor(R.color.settings_panel_background));
         multiplayerPanel.setPadding(60, 60, 60, 60);
 
         TextView title = new TextView(this);
         title.setText("MEHRSPIELER-LOBBY");
-        title.setTextColor(getColor(R.color.white));
+        title.setTextColor(getResources().getColor(R.color.white));
         title.setTextSize(26);
         title.setGravity(Gravity.CENTER);
         multiplayerPanel.addView(title);
@@ -97,17 +98,17 @@ public class MainMenuActivity extends Activity {
         final EditText nameInput = new EditText(this);
         nameInput.setHint("Name");
         nameInput.setText(prefs.getString("PLAYER_NAME", "Player" + (int)(Math.random()*999)));
-        nameInput.setTextColor(getColor(R.color.white));
+        nameInput.setTextColor(getResources().getColor(R.color.white));
         multiplayerPanel.addView(nameInput);
 
         final CheckBox publicCheck = new CheckBox(this);
         publicCheck.setText("ÖFFENTLICH GELISTET");
-        publicCheck.setTextColor(getColor(R.color.white));
+        publicCheck.setTextColor(getResources().getColor(R.color.white));
         publicCheck.setChecked(true);
         multiplayerPanel.addView(publicCheck);
 
         Button btnHost = createMenuBtn("RAUM HOSTEN");
-        btnHost.setBackgroundColor(getColor(R.color.button_plus));
+        btnHost.setBackgroundColor(getResources().getColor(R.color.button_plus));
         btnHost.setOnClickListener(v -> {
             String name = nameInput.getText().toString();
             prefs.edit().putString("PLAYER_NAME", name).apply();
@@ -125,7 +126,7 @@ public class MainMenuActivity extends Activity {
         multiplayerPanel.addView(btnRefresh);
 
         Button closeBtn = createMenuBtn("ZURÜCK");
-        closeBtn.setBackgroundColor(getColor(R.color.button_secondary));
+        closeBtn.setBackgroundColor(getResources().getColor(R.color.button_secondary));
         closeBtn.setOnClickListener(v -> hideMultiplayer());
         multiplayerPanel.addView(closeBtn);
 
@@ -138,12 +139,19 @@ public class MainMenuActivity extends Activity {
         serverList.removeAllViews();
         TextView t = new TextView(this);
         t.setText("Suche läuft...");
-        t.setTextColor(getColor(R.color.white));
+        t.setTextColor(getResources().getColor(R.color.white));
         serverList.addView(t);
         dummyManager.findServers();
         GlobalLobbyClient.fetchRooms(rooms -> runOnUiThread(() -> {
             serverList.removeAllViews();
-            for (InetAddress addr : dummyManager.discoveredServers) {
+
+            // Fix: Create a local copy to avoid ConcurrentModificationException
+            List<InetAddress> lanServers;
+            synchronized(dummyManager.discoveredServers) {
+                lanServers = new ArrayList<>(dummyManager.discoveredServers);
+            }
+
+            for (InetAddress addr : lanServers) {
                 Button s = createMenuBtn("LAN: " + addr.getHostAddress());
                 s.setOnClickListener(v -> startGame(false, false, true, addr.getHostAddress()));
                 serverList.addView(s);
@@ -152,6 +160,12 @@ public class MainMenuActivity extends Activity {
                 Button s = createMenuBtn("GLOBAL: " + room.hostName);
                 s.setOnClickListener(v -> startGame(false, false, true, room.ip));
                 serverList.addView(s);
+            }
+            if (serverList.getChildCount() == 0) {
+                TextView empty = new TextView(this);
+                empty.setText("Keine Server gefunden.");
+                empty.setTextColor(getResources().getColor(R.color.white));
+                serverList.addView(empty);
             }
         }));
     }
@@ -168,8 +182,8 @@ public class MainMenuActivity extends Activity {
     private Button createMenuBtn(String text) {
         Button b = new Button(this);
         b.setText(text);
-        b.setBackgroundColor(getColor(R.color.button_default));
-        b.setTextColor(getColor(R.color.white));
+        b.setBackgroundColor(getResources().getColor(R.color.button_default));
+        b.setTextColor(getResources().getColor(R.color.white));
         b.setTextSize(20);
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 120);
         p.setMargins(0, 15, 0, 15);
@@ -177,6 +191,13 @@ public class MainMenuActivity extends Activity {
         return b;
     }
 
-    private void showMultiplayer() { multiplayerScroll.setVisibility(View.VISIBLE); root.setVisibility(View.GONE); refreshServers(); }
-    private void hideMultiplayer() { multiplayerScroll.setVisibility(View.GONE); root.setVisibility(View.VISIBLE); }
+    private void showMultiplayer() {
+        multiplayerScroll.setVisibility(View.VISIBLE);
+        root.setVisibility(View.GONE);
+        refreshServers();
+    }
+    private void hideMultiplayer() {
+        multiplayerScroll.setVisibility(View.GONE);
+        root.setVisibility(View.VISIBLE);
+    }
 }

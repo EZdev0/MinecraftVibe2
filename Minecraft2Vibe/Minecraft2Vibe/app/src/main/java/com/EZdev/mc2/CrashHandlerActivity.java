@@ -12,6 +12,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -37,8 +38,13 @@ public class CrashHandlerActivity extends Activity {
         StringBuilder sb = new StringBuilder();
 
         sb.append("--- NETZWERK DIAGNOSE ---\n");
-        sb.append("Internet Permission: ").append(checkSelfPermission(android.Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED).append("\n");
-        sb.append("Network State Permission: ").append(checkSelfPermission(android.Manifest.permission.ACCESS_NETWORK_STATE) == PackageManager.PERMISSION_GRANTED).append("\n");
+
+        // Safer permission check
+        boolean hasInternet = checkPermission(android.Manifest.permission.INTERNET);
+        boolean hasState = checkPermission(android.Manifest.permission.ACCESS_NETWORK_STATE);
+
+        sb.append("Internet Permission: ").append(hasInternet).append("\n");
+        sb.append("Network State Permission: ").append(hasState).append("\n");
 
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo ni = cm != null ? cm.getActiveNetworkInfo() : null;
@@ -140,6 +146,10 @@ public class CrashHandlerActivity extends Activity {
         root.addView(restartBtn);
 
         setContentView(root);
+    }
+
+    private boolean checkPermission(String permission) {
+        return checkCallingOrSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     private String sanitize(String input) {
