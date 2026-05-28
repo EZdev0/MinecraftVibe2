@@ -55,6 +55,18 @@ public class WorldLogic {
         if (c != null) {
             c.blocks[x & 15][y][z & 15] = block;
             c.buildMesh();
+
+            if (block == Blocks.FIRE && gameplayRef != null) {
+                boolean exists = false;
+                for (int i = 0; i < gameplayRef.activeFires.size(); i++) {
+                    Gameplay.ActiveFire f = gameplayRef.activeFires.get(i);
+                    if (f.x == x && f.y == y && f.z == z) { exists = true; break; }
+                }
+                if (!exists) {
+                    gameplayRef.activeFires.add(gameplayRef.obtainFire(x, y, z));
+                }
+            }
+
             if (sync && multiplayerManager != null) {
                 multiplayerManager.sendBlockChange(x, y, z, block);
             }
@@ -115,10 +127,6 @@ public class WorldLogic {
                 g.tickingTNTs.add(g.obtainTNT(x + 0.5f, y, z + 0.5f));
                 return;
             }
-        }
-        if (getBlock(x, y, z) == Blocks.TNT && g.activeBlock == Blocks.FIRE) {
-             setBlock(x, y, z, Blocks.AIR);
-             g.tickingTNTs.add(g.obtainTNT(x + 0.5f, y, z + 0.5f));
         }
     }
 
@@ -227,6 +235,11 @@ public class WorldLogic {
             byte hitBlock = getBlock(bx, by, bz);
             if (hitBlock > 0 && hitBlock != Blocks.WATER && hitBlock != Blocks.FIRE) {
                 if (place) {
+                    if (g.activeBlock == Blocks.FIRE && hitBlock == Blocks.TNT) {
+                        setBlock(bx, by, bz, Blocks.AIR);
+                        g.tickingTNTs.add(g.obtainTNT(bx + 0.5f, by, bz + 0.5f));
+                        return;
+                    }
                     if (lastX != -1 && !isPlayerInside(g, lastX, lastY, lastZ)) {
                         setBlock(lastX, lastY, lastZ, g.activeBlock);
                         if (g.activeBlock == Blocks.FIRE) checkIgnition(lastX, lastY, lastZ, g);
