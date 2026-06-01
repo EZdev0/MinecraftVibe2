@@ -1,0 +1,20 @@
+*.class
+*.dex
+*.apk
+*.zip
+*.log
+bin/
+build/
+.gradle/
+local.properties
+.DS_Store
+
+# Ignore scripts as requested
+*.sh
+*.py
+
+# Old/temp folders
+old_version/
+current_zip/
+/tmp/old_version/
+/tmp/current_zip/

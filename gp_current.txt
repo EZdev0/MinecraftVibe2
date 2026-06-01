@@ -62,12 +62,7 @@ public class Gameplay {
     public class ActiveFire {
         public int x, y, z;
         public float life = 10.0f;
-        public float spreadTimer = 1.0f;
-        public void init(int x, int y, int z) {
-            this.x = x; this.y = y; this.z = z;
-            this.life = 10.0f + random.nextFloat() * 10f;
-            this.spreadTimer = 0.5f + random.nextFloat() * 1.0f;
-        }
+        public void init(int x, int y, int z) { this.x = x; this.y = y; this.z = z; this.life = 10.0f + random.nextFloat() * 10f; }
     }
 
     public class ActiveFireParticle {
@@ -153,37 +148,14 @@ public class Gameplay {
         for (int i = activeFires.size() - 1; i >= 0; i--) {
             ActiveFire f = activeFires.get(i);
             f.life -= dt;
-            f.spreadTimer -= dt;
-
             if (f.life <= 0 || (world != null && world.getBlock(f.x, f.y, f.z) != Blocks.FIRE)) {
                 if (world != null && world.getBlock(f.x, f.y, f.z) == Blocks.FIRE) world.setBlock(f.x, f.y, f.z, Blocks.AIR);
                 activeFires.remove(i);
                 releaseFire(f);
                 continue;
             }
-
-            if (random.nextFloat() < 0.01f) {
-                fireParticles.add(obtainParticle(f.x + 0.5f, f.y + 0.5f, f.z + 0.5f, 0, 1.0f + random.nextFloat(), 0, 0.5f + random.nextFloat(), Blocks.FIRE));
-            }
-
-            // Spreading logic from original
-            if (f.spreadTimer <= 0 && world != null) {
-                f.spreadTimer = 0.5f + random.nextFloat() * 1.0f;
-                for (int attempts = 0; attempts < 3; attempts++) {
-                    int dx = random.nextInt(3) - 1;
-                    int dy = random.nextInt(3) - 1;
-                    int dz = random.nextInt(3) - 1;
-                    int nx = f.x + dx, ny = f.y + dy, nz = f.z + dz;
-                    byte block = world.getBlock(nx, ny, nz);
-                    if (block == Blocks.WOOD || block == Blocks.LEAVES) {
-                        float distPenalty = (Math.abs(dx) + Math.abs(dy) + Math.abs(dz)) * 0.15f;
-                        float baseChance = (block == Blocks.LEAVES) ? 0.9f : 0.6f;
-                        if (random.nextFloat() < (baseChance - distPenalty)) {
-                            world.setBlock(nx, ny, nz, Blocks.FIRE);
-                            activeFires.add(obtainFire(nx, ny, nz));
-                        }
-                    }
-                }
+            if (random.nextFloat() < 0.2f) {
+                fireParticles.add(obtainParticle(f.x + random.nextFloat(), f.y + random.nextFloat(), f.z + random.nextFloat(), 0, 1.0f + random.nextFloat(), 0, 0.5f + random.nextFloat(), Blocks.FIRE));
             }
         }
 
@@ -238,7 +210,6 @@ public class Gameplay {
                     float req = 1.0f;
                     if(hitType == Blocks.GRASS || hitType == Blocks.DIRT || hitType == Blocks.LEAVES) req = 0.3f;
                     else if(hitType == Blocks.STONE) req = 2.0f;
-                    else if(hitType == Blocks.WOOD) req = 1.5f;
 
                     if (random.nextFloat() < 0.1f) addBlockParticles(targetX, targetY, targetZ, hitType);
 
