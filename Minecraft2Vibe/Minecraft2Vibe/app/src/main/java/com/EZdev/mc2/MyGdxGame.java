@@ -34,6 +34,7 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
     public MyGdxGame(MainActivity act) {
         this.activity = act;
         this.gameplay.activity = act;
+        this.world.setGameplay(gameplay);
         world.saveManager = new SaveManager(act);
     }
 
@@ -46,7 +47,6 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
         if (activity != null) {
             SharedPreferences prefs = activity.getSharedPreferences("McPrefs", Context.MODE_PRIVATE);
             if (prefs.getBoolean("FAST_RENDER", false)) {
-                // Disable VSync using EGL14 to boost FPS
                 try {
                     android.opengl.EGL14.eglSwapInterval(android.opengl.EGL14.eglGetCurrentDisplay(), 0);
                 } catch (Exception e) {
@@ -99,6 +99,8 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
             shakeX = (random.nextFloat() - 0.5f) * gameplay.shakeIntensity;
             shakeY = (random.nextFloat() - 0.5f) * gameplay.shakeIntensity;
             shakeZ = (random.nextFloat() - 0.5f) * gameplay.shakeIntensity;
+            gameplay.shakeIntensity -= dt * 2.0f;
+            if (gameplay.shakeIntensity < 0) gameplay.shakeIntensity = 0;
         }
 
         float dirX = (float) (Math.cos(Math.toRadians(gameplay.pitch)) * Math.sin(Math.toRadians(gameplay.yaw)));
@@ -116,7 +118,7 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
         GLES20.glUseProgram(Booster.shaderProgram);
         GLES20.glUniform1f(Booster.timeHandle, gameplay.gameTime);
 
-                world.render(vpMatrix, gameplay);
+        world.render(vpMatrix, gameplay);
 
         int error = GLES20.glGetError();
         if (error != GLES20.GL_NO_ERROR && activity != null && activity.uiManager != null) {

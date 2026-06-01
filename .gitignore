@@ -1,0 +1,19 @@
+*.class
+*.dex
+*.apk
+*.zip
+*.log
+bin/
+build/
+.gradle/
+local.properties
+.DS_Store
+
+# Tools/Scripts
+# tools/  <-- Keep tools tracked but in their folder
+
+# Old/temp folders
+old_version/
+current_zip/
+/tmp/old_version/
+/tmp/current_zip/

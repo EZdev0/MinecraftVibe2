@@ -1,24 +1,36 @@
 # MinecraftVibe2
-Mc vibecoding 2 Gemini No AIDE - Die ultimative Voxel-Erfahrung für Android.
+Mc vibecoding 2 Gemini No AIDE - The ultimate voxel experience for Android.
 
-## 🚀 Neue Features: Mehrspieler-Modus (2026 Edition)
-Wir haben ein komplettes Multiplayer-System implementiert, das auf modernsten P2P-Technologien basiert:
-- **Global & LAN Lobby**: Finde Mitspieler weltweit oder im lokalen WLAN.
-- **Hybrides Netzwerk-Protokoll**:
-  - **TCP**: Für zuverlässige Daten wie Block-Updates, Items und Chat.
-  - **UDP**: Für ultra-schnelle Positions-Synchronisation ohne Jitter.
-- **3D-Spielermodelle**: Sieh deine Freunde als animierte Charaktere in der Welt.
-- **Namensschilder**: Dynamische 3D-Billboards zeigen die Namen der Spieler über ihren Köpfen an.
-- **Interpolation**: Glatte Bewegungen durch intelligente LERP-Logik (Linear Interpolation).
-- **NAT-Traversal**: Unterstützung für UPnP und STUN, um das Hosten auf dem Smartphone zu vereinfachen.
+## 🚀 New Features: Multiplayer Mode (2026 Edition)
+We have implemented a complete multiplayer system based on modern P2P technologies:
+- **Global & LAN Lobby:** Find players worldwide via our master server or in your local Wi-Fi.
+- **Hybrid Network Protocol:**
+  - **TCP:** For reliable data like block updates, items, and chat.
+  - **UDP:** For ultra-fast position synchronization without jitter.
+- **3D Player Models:** See your friends as animated characters in the world.
+- **Name Tags:** Dynamic 3D billboards show player names above their heads.
+- **Interpolation:** Smooth movements through intelligent LERP (Linear Interpolation) logic.
+- **NAT Traversal:** Support for UPnP and STUN to make hosting on a smartphone easier.
 
-## 🛠 Technische Details
-- **Architektur**: Host-Client (P2P). Der Host fungiert als Server.
-- **Ports**: 9999 (TCP), 9998 (UDP), 8888 (UDP-Disc).
-- **Infrastruktur**: Keine teuren APIs oder Keys nötig – nutzt freie Master-Server-Konzepte.
+## ⚙️ Settings & Optimization
+Customize your experience in the settings menu:
+- **Render Distance (Chunks):** Adjust how many chunks are visible around the player. Lower values improve performance on older devices.
+- **Fog Enabled:** Toggles the distance-based fog effect. Fog helps hide chunk loading and improves atmosphere.
+- **Fast Render (Vulkan/VSync):** Experimental mode that disables VSync to unlock maximum frame rates. Recommended for high-refresh-rate displays.
+- **Music & SFX:** Independent toggles for atmospheric background music and block interaction sounds.
+- **Debug Info:** Displays real-time coordinates and FPS.
+- **GL Warnings:** Enables detailed reporting of OpenGL errors via the internal crash handler.
 
-## 🎨 UI Editor & Optimierung
-Der UI Editor ermöglicht das freie Verschieben aller Steuerelemente. Die Positionen werden zuverlässig in den `SharedPreferences` gespeichert. Dank optimierter Layout-Gravity gibt es keine Konflikte mehr zwischen absoluten Koordinaten und verschiedenen Bildschirmauflösungen.
+## 🎨 UI Editor
+The UI Editor allows you to freely move all controls (Buttons, Joysticks, Hotbar).
+- **Usage:** Toggle UI Editor in settings, drag elements to your desired position, and press "CLOSE" to save permanently to `SharedPreferences`.
+- **Adaptive Layout:** Uses optimized gravity logic to ensure positions remain consistent across different screen resolutions.
 
-## 🔧 Crash-Management
-Integrierter Netzwerk-Diagnose-Handler im CrashHandler. Bei Verbindungsfehlern werden detaillierte Logs inklusive Berechtigungsstatus erstellt, die einfach per Knopfdruck in die Zwischenablage kopiert werden können.
+## 🛠 Technical Details
+- **Architecture:** Host-Client (P2P). The host acts as the server.
+- **Ports:** 9999 (TCP), 9998 (UDP), 8888 (UDP-Disc).
+- **Infrastructure:** No expensive APIs or keys needed – uses free master server concepts.
+- **Fire & TNT Logic:** Realistic fire spreading to WOOD and LEAVES, and chain-reaction TNT ignition.
+
+## 🔧 Crash Management
+Integrated network diagnostic handler in the `CrashHandlerActivity`. If a connection error occurs, detailed logs including permission status are generated and can be copied to the clipboard with a single tap.
