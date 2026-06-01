@@ -9,9 +9,8 @@ build/
 local.properties
 .DS_Store
 
-# Ignore scripts as requested
-*.sh
-*.py
+# Tools/Scripts
+# tools/  <-- Keep tools tracked but in their folder
 
 # Old/temp folders
 old_version/
