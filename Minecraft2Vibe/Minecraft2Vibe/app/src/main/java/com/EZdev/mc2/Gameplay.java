@@ -214,7 +214,12 @@ public class Gameplay {
             camY = nextY;
             onGround = false;
         } else {
-            if (velocityY < 0) onGround = true;
+            if (velocityY < 0) {
+                onGround = true;
+                camY = (float) Math.floor(nextY) + 1.001f;
+            } else {
+                camY = (float) Math.floor(nextY + playerHeight) - playerHeight - 0.001f;
+            }
             velocityY = 0;
         }
 
