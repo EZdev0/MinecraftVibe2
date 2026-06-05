@@ -197,23 +197,29 @@ public class Gameplay {
 
         playerHeight = isSneaking ? 1.5f : 1.8f;
         if (!isFlying || !isCreative) {
-            velocityY -= (inWater ? 5f : 25f) * dt;
+            velocityY -= 25f * dt;
             if (velocityY < -20f) velocityY = -20f;
         } else if (isFlying) {
             velocityY = wantsToJump ? 10f : (isSneaking ? -10f : 0f);
         }
 
-        if (wantsToJump && onGround && !isFlying) {
+        if (wantsToJump && onGround) {
             velocityY = 8.5f;
             onGround = false;
         }
+        wantsToJump = false;
 
         float nextY = camY + velocityY * dt;
         if (!checkCollision(world, camX, nextY, camZ)) {
             camY = nextY;
             onGround = false;
         } else {
-            if (velocityY < 0) onGround = true;
+            if (velocityY < 0) {
+                onGround = true;
+                camY = (float) Math.floor(nextY) + 1.001f;
+            } else {
+                camY = (float) Math.floor(nextY + playerHeight) - playerHeight - 0.001f;
+            }
             velocityY = 0;
         }
 
@@ -280,7 +286,7 @@ public class Gameplay {
             for (int by = minY; by <= maxY; by++) {
                 for (int bz = minZ; bz <= maxZ; bz++) {
                     byte block = world.getBlock(bx, by, bz);
-                    if (block > Blocks.AIR && block != Blocks.FIRE && block != Blocks.WATER) return true;
+                    if (block > Blocks.AIR && block != Blocks.FIRE) return true;
                 }
             }
         }
