@@ -225,6 +225,49 @@ public class Gameplay {
         updateParticles(fireParticles, dt, world, true);
         updateParticles(blockParticles, dt, world, false);
 
+
+        // --- DROPPED ITEMS ---
+        if (world != null) {
+            for (int i = world.droppedItems.size() - 1; i >= 0; i--) {
+                ItemEntity item = world.droppedItems.get(i);
+                float dx = camX - (item.x + 0.5f);
+                float dy = camY - (item.y + 0.5f);
+                float dz = camZ - (item.z + 0.5f);
+                float distSq = dx * dx + dy * dy + dz * dz;
+
+                if (distSq < 2.0f) {
+                    if (activity != null && activity.soundManager != null) {
+                        activity.soundManager.playSoundForBlock(Blocks.GRASS); // Plop sound
+                    }
+                    if (activity != null && activity.uiManager != null) {
+                        // Find slot
+                        boolean added = false;
+                        for (int j = 0; j < 6; j++) {
+                            if (activity.uiManager.blockIds[j] == item.type) {
+                                activity.uiManager.inventory[j] += item.count;
+                                added = true;
+                                break;
+                            }
+                        }
+                        if (!added) {
+                            for (int j = 0; j < 6; j++) {
+                                if (activity.uiManager.inventory[j] <= 0) {
+                                    activity.uiManager.blockIds[j] = item.type;
+                                    activity.uiManager.inventory[j] = item.count;
+                                    added = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (added) {
+                            activity.runOnUiThread(() -> activity.uiManager.updateHotbarUI());
+                        }
+                    }
+                    world.droppedItems.remove(i);
+                }
+            }
+        }
+
         // --- PLAYER MOVEMENT ---
         boolean inWater = false;
         byte bf = (world != null) ? world.getBlock((int)Math.floor(camX), (int)Math.floor(camY), (int)Math.floor(camZ)) : 0;
