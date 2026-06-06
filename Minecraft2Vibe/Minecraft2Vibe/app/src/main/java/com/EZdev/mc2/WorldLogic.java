@@ -193,6 +193,25 @@ public class WorldLogic {
             }
         }
 
+
+        // --- Render Dropped Items ---
+        if (Booster.tntVertexBuffer != null) {
+            GLES20.glUniform1i(Booster.isFlashingHandle, 0);
+            for (Gameplay.ItemEntity item : droppedItems) {
+                Matrix.setIdentityM(modelMatrix, 0);
+                float hoverY = (float) Math.sin(gameplay.gameTime * 2.0 + item.hoverOffset) * 0.1f;
+                Matrix.translateM(modelMatrix, 0, item.x + 0.5f, item.y + 0.2f + hoverY, item.z + 0.5f);
+                Matrix.rotateM(modelMatrix, 0, gameplay.gameTime * 50f + item.hoverOffset * 10f, 0, 1, 0);
+                Matrix.scaleM(modelMatrix, 0, 0.25f, 0.25f, 0.25f);
+                Matrix.multiplyMM(finalMVP, 0, vpMatrix, 0, modelMatrix, 0);
+                GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
+                GLES20.glUniform1i(Booster.pTypeHandle, item.type);
+                GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, Booster.tntVertexBuffer);
+                GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, Booster.tntColorBuffer);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
+            }
+        }
+
         // --- Render Particles ---
         if (Booster.tntVertexBuffer != null) {
             GLES20.glUniform1i(Booster.isFlashingHandle, 0);
