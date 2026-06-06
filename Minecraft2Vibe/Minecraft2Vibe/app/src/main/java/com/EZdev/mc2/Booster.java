@@ -1,6 +1,11 @@
 package com.EZdev.mc2;
 
 import android.opengl.GLES20;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.opengl.GLUtils;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -10,6 +15,30 @@ public class Booster {
     public static int fogEnabledHandle, fogEndHandle, timeHandle, isFlashingHandle, pTypeHandle;
     public static int texHandle, texCoordHandle, useTexHandle;
     public static FloatBuffer tntVertexBuffer, tntColorBuffer, quadTexCoordBuffer;
+    public static int tntTexId = -1;
+
+
+    public static void createTNTTexture() {
+        if (tntTexId != -1) return;
+        Bitmap bitmap = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.rgb(200, 50, 50)); // Red base
+        Paint paint = new Paint();
+        paint.setColor(Color.WHITE);
+        paint.setTextSize(24);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setFakeBoldText(true);
+        canvas.drawText("TNT", 32, 40, paint);
+
+        int[] textures = new int[1];
+        android.opengl.GLES20.glGenTextures(1, textures, 0);
+        tntTexId = textures[0];
+        android.opengl.GLES20.glBindTexture(android.opengl.GLES20.GL_TEXTURE_2D, tntTexId);
+        android.opengl.GLES20.glTexParameteri(android.opengl.GLES20.GL_TEXTURE_2D, android.opengl.GLES20.GL_TEXTURE_MIN_FILTER, android.opengl.GLES20.GL_NEAREST);
+        android.opengl.GLES20.glTexParameteri(android.opengl.GLES20.GL_TEXTURE_2D, android.opengl.GLES20.GL_TEXTURE_MAG_FILTER, android.opengl.GLES20.GL_NEAREST);
+        GLUtils.texImage2D(android.opengl.GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+        bitmap.recycle();
+    }
 
     public static void initGeometry() {
         String v = "precision mediump float; precision mediump int; uniform mat4 uMVPMatrix; uniform float uTime; uniform int pType; attribute vec4 vPosition; attribute vec4 vColor; attribute vec2 aTexCoord; varying vec4 fColor; varying float vDist; varying vec2 vTexCoord; " +
@@ -19,7 +48,7 @@ public class Booster {
 
         String f = "precision mediump float; precision mediump int; varying vec4 fColor; varying float vDist; varying vec2 vTexCoord; uniform int uFogEnabled; uniform float uFogEnd; uniform float uTime; uniform int uIsFlashing; uniform int pType; uniform sampler2D uTexture; uniform int uUseTex; " +
                    "void main() { vec4 fc = fColor; if (uUseTex == 1) { fc = texture2D(uTexture, vTexCoord); if (fc.a < 0.1) discard; } " +
-                   "else if (uIsFlashing == 1) { float p = (sin(uTime * 15.0) + 1.0) * 0.5; fc = mix(fColor, vec4(1.0), p); } " +
+                   "if (uIsFlashing == 1) { float p = (sin(uTime * 15.0) + 1.0) * 0.5; fc = mix(fc, vec4(1.0), p); } " +
                    "else if (uIsFlashing == 2 && pType == " + Blocks.SMOKE + ") { fc = vec4(0.8, 0.8, 0.8, 0.7); } " +
                    "else if (pType == " + Blocks.ENTITY_PIG + ") { fc = vec4(0.9, 0.6, 0.7, 1.0); } " +
                    "else if (pType == " + Blocks.GRASS + ") { fc = vec4(0.3, 0.7, 0.2, 1.0); } " +
@@ -57,5 +86,6 @@ public class Booster {
 
         float[] tc = {0,0, 0,1, 1,1, 1,1, 1,0, 0,0, 0,1, 0,0, 1,0, 1,0, 1,1, 0,1, 0,1, 1,1, 1,0, 1,0, 0,0, 0,1, 0,1, 1,1, 1,0, 1,0, 0,0, 0,1, 0,0, 1,0, 1,1, 1,1, 0,1, 0,0, 0,1, 0,0, 1,0, 1,0, 1,1, 0,1};
         quadTexCoordBuffer = ByteBuffer.allocateDirect(tc.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().put(tc); quadTexCoordBuffer.position(0);
+        createTNTTexture();
     }
 }
