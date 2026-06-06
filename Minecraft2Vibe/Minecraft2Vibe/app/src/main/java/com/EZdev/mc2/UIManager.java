@@ -109,6 +109,7 @@ public class UIManager {
         createSettingsMenu(root);
 
         updateHotbarUI();
+        engine.gameplay.autoJump = prefs.getBoolean("AUTO_JUMP", false);
     }
 
     private void createCrosshair(FrameLayout root) {
@@ -408,6 +409,16 @@ public class UIManager {
             }
         });
         settingsPanel.addView(sfxBtn);
+
+        settingsPanel.addView(createHeading("--- STEUERUNG ---"));
+
+        Button autoJumpBtn = createBtn(engine.gameplay.autoJump ? "AUTO JUMP: AN" : "AUTO JUMP: AUS", "#3498db");
+        autoJumpBtn.setOnClickListener(v -> {
+            engine.gameplay.autoJump = !engine.gameplay.autoJump;
+            prefs.edit().putBoolean("AUTO_JUMP", engine.gameplay.autoJump).apply();
+            autoJumpBtn.setText(engine.gameplay.autoJump ? "AUTO JUMP: AN" : "AUTO JUMP: AUS");
+        });
+        settingsPanel.addView(autoJumpBtn);
 
         settingsPanel.addView(createHeading("--- SYSTEM ---"));
 

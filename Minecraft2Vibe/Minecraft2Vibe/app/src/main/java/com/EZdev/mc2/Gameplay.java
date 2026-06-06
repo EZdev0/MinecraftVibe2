@@ -18,6 +18,7 @@ public class Gameplay {
 
     public float joyMoveX = 0, joyMoveY = 0;
     public boolean wantsToJump = false;
+    public boolean autoJump = false;
     public boolean isSprinting = false;
     public boolean isSneaking = false;
     public boolean isFlying = false;
@@ -260,6 +261,16 @@ public class Gameplay {
         float speed = (isSprinting ? 8f : (isSneaking ? 2f : 5f)) * dt;
         float yawRad = (float)Math.toRadians(yaw);
         float sinY = (float)Math.sin(yawRad), cosY = (float)Math.cos(yawRad);
+
+        if (autoJump && onGround && (joyMoveX != 0 || joyMoveY != 0)) {
+            float testMoveX = (sinY * -joyMoveY + cosY * joyMoveX) * speed;
+            float testMoveZ = (-cosY * -joyMoveY + sinY * joyMoveX) * speed;
+            if (checkCollision(world, camX + testMoveX, camY, camZ) || checkCollision(world, camX, camY, camZ + testMoveZ)) {
+                if (!checkCollision(world, camX + testMoveX, camY + 1.1f, camZ) && !checkCollision(world, camX, camY + 1.1f, camZ + testMoveZ)) {
+                    wantsToJump = true;
+                }
+            }
+        }
         float moveX = (sinY * -joyMoveY + cosY * joyMoveX) * speed;
         float moveZ = (-cosY * -joyMoveY + sinY * joyMoveX) * speed;
 

@@ -62,6 +62,7 @@ public class MyGdxGame implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        if (height == 0) height = 1;
         GLES20.glViewport(0, 0, width, height);
         screenRatio = (float)width/height;
         Matrix.perspectiveM(projectionMatrix, 0, 70f, screenRatio, 0.1f, 300f);
