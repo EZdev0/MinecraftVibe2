@@ -93,7 +93,7 @@ public class WorldLogic {
                             if (b == Blocks.TNT) {
                                 setBlock(bx, by, bz, Blocks.AIR);
                                 if (gameplayRef != null) {
-                                    Gameplay.ActiveTNT tnt = gameplayRef.obtainTNT(bx + 0.5f, by, bz + 0.5f);
+                                    Gameplay.ActiveTNT tnt = gameplayRef.obtainTNT(bx + 0.5f, by + 0.5f, bz + 0.5f);
                                     gameplayRef.tickingTNTs.add(tnt);
                                 }
                             } else if (b != Blocks.BEDROCK && b != Blocks.AIR) {
@@ -113,7 +113,7 @@ public class WorldLogic {
             int nx = x + n[0], ny = y + n[1], nz = z + n[2];
             if (getBlock(nx, ny, nz) == Blocks.TNT) {
                 setBlock(nx, ny, nz, Blocks.AIR);
-                g.tickingTNTs.add(g.obtainTNT(nx + 0.5f, ny, nz + 0.5f));
+                g.tickingTNTs.add(g.obtainTNT(nx + 0.5f, ny + 0.5f, nz + 0.5f));
             }
         }
     }
@@ -124,7 +124,7 @@ public class WorldLogic {
             int nx = x + n[0], ny = y + n[1], nz = z + n[2];
             if (getBlock(nx, ny, nz) == Blocks.FIRE) {
                 setBlock(x, y, z, Blocks.AIR);
-                g.tickingTNTs.add(g.obtainTNT(x + 0.5f, y, z + 0.5f));
+                g.tickingTNTs.add(g.obtainTNT(x + 0.5f, y + 0.5f, z + 0.5f));
                 return;
             }
         }
@@ -156,14 +156,31 @@ public class WorldLogic {
             for (Gameplay.ActiveTNT tnt : gameplay.tickingTNTs) {
                 Matrix.setIdentityM(modelMatrix, 0);
                 Matrix.translateM(modelMatrix, 0, tnt.x, tnt.y, tnt.z);
+
                 float scale = 1.0f + ((float) Math.sin(gameplay.gameTime * 15.0) * 0.05f);
+                if (tnt.timer < 0.5f) scale += (0.5f - tnt.timer) * 1.5f; // Expansion effect
                 Matrix.scaleM(modelMatrix, 0, scale, scale, scale);
+
                 Matrix.multiplyMM(finalMVP, 0, vpMatrix, 0, modelMatrix, 0);
                 GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
                 GLES20.glUniform1i(Booster.pTypeHandle, Blocks.TNT);
+
+                // Binding the dynamically generated TNT texture
+                if (Booster.tntTexId != -1) {
+                    GLES20.glUniform1i(Booster.useTexHandle, 1);
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, Booster.tntTexId);
+                    GLES20.glEnableVertexAttribArray(Booster.texCoordHandle);
+                    GLES20.glVertexAttribPointer(Booster.texCoordHandle, 2, GLES20.GL_FLOAT, false, 0, Booster.quadTexCoordBuffer);
+                }
+
                 GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, Booster.tntVertexBuffer);
                 GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, Booster.tntColorBuffer);
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
+
+                if (Booster.tntTexId != -1) {
+                    GLES20.glUniform1i(Booster.useTexHandle, 0);
+                    GLES20.glDisableVertexAttribArray(Booster.texCoordHandle);
+                }
             }
             GLES20.glUniform1i(Booster.isFlashingHandle, 0);
         }

@@ -53,10 +53,17 @@ public class Gameplay {
 
     public class ActiveTNT {
         public float x, y, z;
+        public float vx, vy, vz;
         public float timer = 3.0f;
         public ActiveTNT() {}
         public ActiveTNT(float x, float y, float z) { init(x, y, z); }
-        public void init(float x, float y, float z) { this.x = x; this.y = y; this.z = z; this.timer = 3.0f; }
+        public void init(float x, float y, float z) {
+            this.x = x; this.y = y; this.z = z;
+            this.vx = (random.nextFloat() - 0.5f) * 2f;
+            this.vy = 4.0f;
+            this.vz = (random.nextFloat() - 0.5f) * 2f;
+            this.timer = 3.0f;
+        }
     }
 
     public class ActiveFire {
@@ -142,6 +149,33 @@ public class Gameplay {
         for (int i = tickingTNTs.size() - 1; i >= 0; i--) {
             ActiveTNT tnt = tickingTNTs.get(i);
             tnt.timer -= dt;
+
+            if (world != null) {
+                tnt.vy -= 15f * dt; // Gravity
+                float nx = tnt.x + tnt.vx * dt;
+                float ny = tnt.y + tnt.vy * dt;
+                float nz = tnt.z + tnt.vz * dt;
+
+                if (!checkCollisionTNT(world, nx, tnt.y, tnt.z)) tnt.x = nx;
+                else tnt.vx *= 0.5f;
+
+                if (!checkCollisionTNT(world, tnt.x, tnt.y, nz)) tnt.z = nz;
+                else tnt.vz *= 0.5f;
+
+                if (!checkCollisionTNT(world, tnt.x, ny, tnt.z)) {
+                    tnt.y = ny;
+                } else {
+                    if (tnt.vy < 0) { // Hit ground
+                        tnt.y = (float) Math.floor(ny) + 0.501f;
+                        tnt.vx *= 0.5f; // Friction
+                        tnt.vz *= 0.5f;
+                    } else { // Hit ceiling
+                        tnt.y = (float) Math.floor(ny + 1.0f) - 0.501f;
+                    }
+                    tnt.vy = 0;
+                }
+            }
+
             if (tnt.timer <= 0) {
                 if (world != null) world.explode(tnt.x, tnt.y, tnt.z, 4.0f);
                 tickingTNTs.remove(i);
@@ -270,6 +304,27 @@ public class Gameplay {
             p.life -= dt; p.y += p.vy * dt;
             if (p.life <= 0) { list.remove(i); releaseParticle(p); }
         }
+    }
+
+    private boolean checkCollisionTNT(WorldLogic world, float x, float y, float z) {
+        if (world == null) return false;
+        float shrink = 0.05f;
+        int minX = (int) Math.floor(x - 0.5f + shrink);
+        int maxX = (int) Math.floor(x + 0.5f - shrink);
+        int minY = (int) Math.floor(y - 0.5f + shrink);
+        int maxY = (int) Math.floor(y + 0.5f - shrink);
+        int minZ = (int) Math.floor(z - 0.5f + shrink);
+        int maxZ = (int) Math.floor(z + 0.5f - shrink);
+
+        for (int bx = minX; bx <= maxX; bx++) {
+            for (int by = minY; by <= maxY; by++) {
+                for (int bz = minZ; bz <= maxZ; bz++) {
+                    byte block = world.getBlock(bx, by, bz);
+                    if (block > Blocks.AIR && block != Blocks.FIRE) return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean checkCollision(WorldLogic world, float x, float y, float z) {
