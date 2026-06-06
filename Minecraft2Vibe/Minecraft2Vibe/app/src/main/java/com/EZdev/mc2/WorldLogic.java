@@ -175,6 +175,37 @@ public class WorldLogic {
                 }
             }
         }
+
+        // --- Render Particles ---
+        if (Booster.tntVertexBuffer != null) {
+            GLES20.glUniform1i(Booster.isFlashingHandle, 0);
+            for (Gameplay.ActiveFireParticle p : gameplay.blockParticles) {
+                Matrix.setIdentityM(modelMatrix, 0);
+                Matrix.translateM(modelMatrix, 0, p.x, p.y, p.z);
+                float pScale = 0.1f * p.life;
+                Matrix.scaleM(modelMatrix, 0, pScale, pScale, pScale);
+                Matrix.multiplyMM(finalMVP, 0, vpMatrix, 0, modelMatrix, 0);
+                GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
+                GLES20.glUniform1i(Booster.pTypeHandle, p.type);
+                GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, Booster.tntVertexBuffer);
+                GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, Booster.tntColorBuffer);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
+            }
+
+            for (Gameplay.ActiveFireParticle p : gameplay.fireParticles) {
+                Matrix.setIdentityM(modelMatrix, 0);
+                Matrix.translateM(modelMatrix, 0, p.x, p.y, p.z);
+                float pScale = 0.15f * p.life;
+                Matrix.scaleM(modelMatrix, 0, pScale, pScale, pScale);
+                Matrix.multiplyMM(finalMVP, 0, vpMatrix, 0, modelMatrix, 0);
+                GLES20.glUniformMatrix4fv(Booster.mvpHandle, 1, false, finalMVP, 0);
+                GLES20.glUniform1i(Booster.pTypeHandle, Blocks.FIRE);
+                GLES20.glVertexAttribPointer(Booster.posHandle, 3, GLES20.GL_FLOAT, false, 0, Booster.tntVertexBuffer);
+                GLES20.glVertexAttribPointer(Booster.colorHandle, 4, GLES20.GL_FLOAT, false, 0, Booster.tntColorBuffer);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
+            }
+        }
+
         GLES20.glDisableVertexAttribArray(Booster.posHandle);
         GLES20.glDisableVertexAttribArray(Booster.colorHandle);
     }

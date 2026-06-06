@@ -20,6 +20,7 @@ Customize your experience in the settings menu:
 - **Music & SFX:** Independent toggles for atmospheric background music and block interaction sounds.
 - **Debug Info:** Displays real-time coordinates and FPS.
 - **GL Warnings:** Enables detailed reporting of OpenGL errors via the internal crash handler.
+- **Rendering Optimization**: Implemented high performance memory-friendly draw optimizations (e.g. `drawLetterT` vertices optimizations).
 
 ## 🎨 UI Editor
 The UI Editor allows you to freely move all controls (Buttons, Joysticks, Hotbar).
@@ -30,7 +31,7 @@ The UI Editor allows you to freely move all controls (Buttons, Joysticks, Hotbar
 - **Architecture:** Host-Client (P2P). The host acts as the server.
 - **Ports:** 9999 (TCP), 9998 (UDP), 8888 (UDP-Disc).
 - **Infrastructure:** No expensive APIs or keys needed – uses free master server concepts.
-- **Fire & TNT Logic:** Realistic fire spreading to WOOD and LEAVES, and chain-reaction TNT ignition.
+- **Fire & TNT Logic:** Realistic fire spreading to WOOD and LEAVES, and chain-reaction TNT ignition. Correct Y-axis bounding boxes implemented for solid structures.
 
 ## 🔧 Crash Management
 Integrated network diagnostic handler in the `CrashHandlerActivity`. If a connection error occurs, detailed logs including permission status are generated and can be copied to the clipboard with a single tap.
