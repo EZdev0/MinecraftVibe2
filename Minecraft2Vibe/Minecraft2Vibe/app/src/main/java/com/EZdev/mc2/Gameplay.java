@@ -86,11 +86,35 @@ public class Gameplay {
         }
     }
 
-    public class ItemEntity {
+    public static class ItemEntity {
         public float x, y, z, hoverOffset;
+        public float vy = 0f;
+        public float life = 300f; // 5 minutes despawn
         public byte type;
         public int count = 1;
-        public ItemEntity(float x, float y, float z, byte type) { this.x = x; this.y = y; this.z = z; this.type = type; this.hoverOffset = random.nextFloat() * 10f; }
+
+        public ItemEntity(float x, float y, float z, byte type) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.type = type;
+            this.hoverOffset = (float)Math.random() * 10f;
+        }
+
+        public void update(float dt, WorldLogic world) {
+            hoverOffset += dt;
+            life -= dt;
+            if (world != null) {
+                vy -= 15f * dt;
+                float nextY = y + vy * dt;
+                if (world.getBlock((int)Math.floor(x + 0.5f), (int)Math.floor(nextY), (int)Math.floor(z + 0.5f)) == Blocks.AIR) {
+                    y = nextY;
+                } else {
+                    vy = 0;
+                    y = (float)Math.floor(nextY) + 1.0f;
+                }
+            }
+        }
     }
 
     public ActiveTNT obtainTNT(float x, float y, float z) {
@@ -137,6 +161,26 @@ public class Gameplay {
     public void update(float dt, WorldLogic world) {
         gameTime += dt;
         if (!hasSpawned) spawnOnHighestBlock(world);
+
+        // Emergency un-stuck: if player spawned or joined inside blocks, destroy them
+        if (world != null && checkCollision(world, camX, camY, camZ)) {
+            float shrink = 0.05f;
+            int minX = (int) Math.floor(camX - playerWidth / 2f + shrink);
+            int maxX = (int) Math.floor(camX + playerWidth / 2f - shrink);
+            int minY = (int) Math.floor(camY);
+            int maxY = (int) Math.floor(camY + playerHeight - shrink);
+            int minZ = (int) Math.floor(camZ - playerWidth / 2f + shrink);
+            int maxZ = (int) Math.floor(camZ + playerWidth / 2f - shrink);
+            for (int bx = minX; bx <= maxX; bx++) {
+                for (int by = minY; by <= maxY; by++) {
+                    for (int bz = minZ; bz <= maxZ; bz++) {
+                        if (world.getBlock(bx, by, bz) > Blocks.AIR) {
+                            world.setBlock(bx, by, bz, Blocks.AIR);
+                        }
+                    }
+                }
+            }
+        }
 
         if (activity != null && activity.multiplayerManager != null) {
             activity.multiplayerManager.updateInterpolation(dt);
@@ -230,40 +274,36 @@ public class Gameplay {
         if (world != null) {
             for (int i = world.droppedItems.size() - 1; i >= 0; i--) {
                 ItemEntity item = world.droppedItems.get(i);
+                item.update(dt, world);
+
+                if (item.life <= 0) {
+                    world.droppedItems.remove(i);
+                    continue;
+                }
+
                 float dx = camX - (item.x + 0.5f);
                 float dy = camY - (item.y + 0.5f);
                 float dz = camZ - (item.z + 0.5f);
                 float distSq = dx * dx + dy * dy + dz * dz;
 
-                if (distSq < 2.0f) {
-                    if (activity != null && activity.soundManager != null) {
-                        activity.soundManager.playSoundForBlock(Blocks.GRASS); // Plop sound
-                    }
+                if (distSq < 2.0f && !isCreative) {
                     if (activity != null && activity.uiManager != null) {
-                        // Find slot
-                        boolean added = false;
-                        for (int j = 0; j < 6; j++) {
-                            if (activity.uiManager.blockIds[j] == item.type) {
-                                activity.uiManager.inventory[j] += item.count;
-                                added = true;
-                                break;
+                        int rest = activity.uiManager.addToInventory(item.type, item.count);
+                        if (rest < item.count) {
+                            if (activity.soundManager != null) {
+                                activity.soundManager.playSoundForBlock(Blocks.GRASS); // Plop sound
+                            }
+                            if (rest > 0) {
+                                item.count = rest;
+                                continue;
+                            } else {
+                                world.droppedItems.remove(i);
                             }
                         }
-                        if (!added) {
-                            for (int j = 0; j < 6; j++) {
-                                if (activity.uiManager.inventory[j] <= 0) {
-                                    activity.uiManager.blockIds[j] = item.type;
-                                    activity.uiManager.inventory[j] = item.count;
-                                    added = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (added) {
-                            activity.runOnUiThread(() -> activity.uiManager.updateHotbarUI());
-                        }
+                    } else {
+                        // In tests or headless, just consume it
+                        world.droppedItems.remove(i);
                     }
-                    world.droppedItems.remove(i);
                 }
             }
         }
