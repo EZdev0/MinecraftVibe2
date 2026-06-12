@@ -162,6 +162,26 @@ public class Gameplay {
         gameTime += dt;
         if (!hasSpawned) spawnOnHighestBlock(world);
 
+        // Emergency un-stuck: if player spawned or joined inside blocks, destroy them
+        if (world != null && checkCollision(world, camX, camY, camZ)) {
+            float shrink = 0.05f;
+            int minX = (int) Math.floor(camX - playerWidth / 2f + shrink);
+            int maxX = (int) Math.floor(camX + playerWidth / 2f - shrink);
+            int minY = (int) Math.floor(camY);
+            int maxY = (int) Math.floor(camY + playerHeight - shrink);
+            int minZ = (int) Math.floor(camZ - playerWidth / 2f + shrink);
+            int maxZ = (int) Math.floor(camZ + playerWidth / 2f - shrink);
+            for (int bx = minX; bx <= maxX; bx++) {
+                for (int by = minY; by <= maxY; by++) {
+                    for (int bz = minZ; bz <= maxZ; bz++) {
+                        if (world.getBlock(bx, by, bz) > Blocks.AIR) {
+                            world.setBlock(bx, by, bz, Blocks.AIR);
+                        }
+                    }
+                }
+            }
+        }
+
         if (activity != null && activity.multiplayerManager != null) {
             activity.multiplayerManager.updateInterpolation(dt);
             if (System.currentTimeMillis() - lastMultiplayerUpdate > 50) {
