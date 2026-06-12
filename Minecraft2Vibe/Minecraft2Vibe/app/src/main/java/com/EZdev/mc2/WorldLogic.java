@@ -371,11 +371,11 @@ public class WorldLogic {
     }
 
     public void spawnItemEntity(float x, float y, float z, byte type) {
-        droppedItems.add(new Gameplay().new ItemEntity(x, y, z, type));
+        droppedItems.add(new Gameplay.ItemEntity(x, y, z, type));
     }
 
     public void spawnItemEntity(float x, float y, float z, byte type, int count) {
-        Gameplay.ItemEntity item = new Gameplay().new ItemEntity(x, y, z, type);
+        Gameplay.ItemEntity item = new Gameplay.ItemEntity(x, y, z, type);
         item.count = Math.max(0, count);
         droppedItems.add(item);
     }

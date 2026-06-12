@@ -72,30 +72,47 @@ public class UIManager {
     }
 
     public int addToInventory(byte type, int amount) {
-        for(int i=0; i<blockIds.length; i++) {
-            if(blockIds[i] == type) {
-                inventory[i] += amount;
-                int rest = 0;
-                if(inventory[i] > 64 && inventory[i] != 999) {
-                    rest = inventory[i] - 64;
-                    inventory[i] = 64;
-                }
-
-                if (type == 6 && !prefs.getBoolean("FIRE_UNLOCKED", false)) {
-                    prefs.edit().putBoolean("FIRE_UNLOCKED", true).apply();
-                    inventory[5] = 999;
-                    activity.runOnUiThread(() -> android.widget.Toast.makeText(activity, "ACHIEVEMENT: FEUERZEUG FREIGESCHALTET!", android.widget.Toast.LENGTH_LONG).show());
-                }
-                if (type == 5 && !tntUnlocked) {
-                    tntUnlocked = true;
-                    prefs.edit().putBoolean("TNT_UNLOCKED", true).apply();
-                    activity.runOnUiThread(() -> android.widget.Toast.makeText(activity, "ACHIEVEMENT: TNT GEFUNDEN!", android.widget.Toast.LENGTH_LONG).show());
-                }
-
-                activity.runOnUiThread(this::updateHotbarUI);
-                return rest;
+        int targetSlot = -1;
+        for (int i = 0; i < blockIds.length; i++) {
+            if (blockIds[i] == type) {
+                targetSlot = i;
+                break;
             }
         }
+
+        if (targetSlot == -1) {
+            for (int i = 0; i < blockIds.length; i++) {
+                if (inventory[i] <= 0) {
+                    blockIds[i] = type;
+                    targetSlot = i;
+                    break;
+                }
+            }
+        }
+
+        if (targetSlot != -1) {
+            inventory[targetSlot] += amount;
+            int rest = 0;
+            if (inventory[targetSlot] > 64 && inventory[targetSlot] != 999) {
+                rest = inventory[targetSlot] - 64;
+                inventory[targetSlot] = 64;
+            }
+
+            if (type == 6 && !prefs.getBoolean("FIRE_UNLOCKED", false)) {
+                prefs.edit().putBoolean("FIRE_UNLOCKED", true).apply();
+                inventory[5] = 999;
+                activity.runOnUiThread(() -> android.widget.Toast.makeText(activity, "ACHIEVEMENT: FEUERZEUG FREIGESCHALTET!", android.widget.Toast.LENGTH_LONG).show());
+            }
+            if (type == 5 && !tntUnlocked) {
+                tntUnlocked = true;
+                prefs.edit().putBoolean("TNT_UNLOCKED", true).apply();
+                activity.runOnUiThread(() -> android.widget.Toast.makeText(activity, "ACHIEVEMENT: TNT GEFUNDEN!", android.widget.Toast.LENGTH_LONG).show());
+            }
+
+            activity.runOnUiThread(this::updateHotbarUI);
+            return rest;
+        }
+
         return amount;
     }
     public void setupUI(FrameLayout root) {
