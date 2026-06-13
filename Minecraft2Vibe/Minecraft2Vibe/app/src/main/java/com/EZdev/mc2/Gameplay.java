@@ -334,7 +334,31 @@ public class Gameplay {
         } else {
             if (velocityY < 0) {
                 onGround = true;
-                camY = (float) Math.floor(nextY) + 1.001f;
+                // We fell into a block. Snap to the top of the highest block we intersect.
+                float shrink = 0.05f;
+                int minX = (int) Math.floor(camX - playerWidth / 2f + shrink);
+                int maxX = (int) Math.floor(camX + playerWidth / 2f - shrink);
+                int minY = (int) Math.floor(nextY);
+                int maxY = (int) Math.floor(camY); // We were at camY before
+                int highestBlockY = minY - 1;
+
+                if (world != null) {
+                    for (int bx = minX; bx <= maxX; bx++) {
+                        for (int by = minY; by <= maxY; by++) {
+                            for (int bz = (int) Math.floor(camZ - playerWidth / 2f + shrink); bz <= (int) Math.floor(camZ + playerWidth / 2f - shrink); bz++) {
+                                if (world.getBlock(bx, by, bz) > Blocks.AIR) {
+                                    if (by > highestBlockY) highestBlockY = by;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (highestBlockY >= minY) {
+                    camY = highestBlockY + 1.001f;
+                } else {
+                    camY = (float) Math.floor(camY); // Fallback
+                }
             } else {
                 camY = (float) Math.floor(nextY + playerHeight) - playerHeight - 0.001f;
             }
